@@ -47,12 +47,18 @@ class PaymentRepository:
         )
 
     def get_invoice(self, invoice_id: UUID) -> Invoice | None:
-        """Obtiene una factura sin bloquearla, para consultas de solo lectura."""
-        return self.db.scalar(select(Invoice).where(Invoice.id == invoice_id))
+        """Obtiene una factura no eliminada, sin bloquearla."""
+        return self.db.scalar(
+            select(Invoice).where(Invoice.id == invoice_id, Invoice.deleted_at.is_(None))
+        )
 
     def get_invoice_for_update(self, invoice_id: UUID) -> Invoice | None:
-        """Bloquea la factura para serializar pagos concurrentes."""
-        return self.db.scalar(select(Invoice).where(Invoice.id == invoice_id).with_for_update())
+        """Bloquea una factura no eliminada para serializar pagos concurrentes."""
+        return self.db.scalar(
+            select(Invoice)
+            .where(Invoice.id == invoice_id, Invoice.deleted_at.is_(None))
+            .with_for_update()
+        )
 
     def create_payment(
         self,

@@ -189,6 +189,10 @@ con el mismo body devuelve la respuesta original y no duplica la factura; con un
 body distinto responde `409`. Las facturas nacen en `draft`/`unpaid`, sin número,
 y solo se numeran al emitirlas con `POST /invoices/{id}/issue`.
 
+`DELETE /invoices/{id}` es **soft delete**: solo aplica a borradores, conserva la
+fila con `deleted_at` no nulo y hace que `GET`/`LIST` dejen de mostrarla. Una
+factura emitida o anulada responde `409`.
+
 ```bash
 # IDs creados en los ejemplos de contactos/ítems/impuestos
 IDEMPOTENCY_KEY=$(python -c 'import uuid; print(uuid.uuid4())')
@@ -236,7 +240,8 @@ curl -s "$BASE/invoices/$INVOICE_ID"
 # Listar con paginación
 curl -s "$BASE/invoices?limit=20&offset=0"
 
-# Borrar: solo funciona si sigue en draft; si está emitida responde 409
+# Borrar: soft delete, solo funciona si sigue en draft; si está emitida
+# responde 409. La fila se conserva con deleted_at no nulo.
 curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/invoices/$INVOICE_ID"
 ```
 
@@ -323,6 +328,8 @@ La migración inicial crea las tablas `contacts`, `items`, `taxes`, `invoices`,
 `invoice_lines`, `payments`, `number_sequences` e `idempotency_keys`, además de
 los tipos ENUM de estado de factura. La migración `20261021_0002` añade
 `voided_reason` y `voided_at` a `invoices`; su `downgrade` elimina ambas columnas.
+La migración `20261021_0003` añade `deleted_at` y el índice parcial
+`ix_invoices_not_deleted`; su `downgrade` elimina el índice y la columna.
 
 ### Base de datos de test
 

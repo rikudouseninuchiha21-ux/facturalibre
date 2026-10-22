@@ -5,7 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
 from httpx import Response
@@ -294,6 +294,88 @@ def test_delete_only_allows_drafts(client: TestClient) -> None:
     listed_ids = {invoice["id"] for invoice in client.get("/api/v1/invoices").json()}
     assert draft_id not in listed_ids
     assert issued_id in listed_ids
+
+
+def test_delete_draft_soft_deletes(client: TestClient, db_session: Session) -> None:
+    contact_id, item_id = _setup_invoice_data(client)
+    draft = _post_invoice(client, _three_line_payload(contact_id, item_id))
+    invoice_id = str(draft.json()["id"])
+
+    deleted = client.delete(f"/api/v1/invoices/{invoice_id}")
+
+    assert deleted.status_code == 204
+    assert client.get(f"/api/v1/invoices/{invoice_id}").status_code == 404
+    listed_ids = {invoice["id"] for invoice in client.get("/api/v1/invoices").json()}
+    assert invoice_id not in listed_ids
+
+    row = db_session.execute(
+        select(Invoice.id, Invoice.version, Invoice.deleted_at).where(
+            Invoice.id == UUID(invoice_id)
+        )
+    ).one_or_none()
+    assert row is not None
+    assert row.deleted_at is not None
+    assert row.version == 2
+
+
+def test_delete_issued_returns_409(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+
+    response = client.delete(f"/api/v1/invoices/{invoice['id']}")
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Solo se eliminan borradores"}
+    assert client.get(f"/api/v1/invoices/{invoice['id']}").status_code == 200
+
+
+def test_issue_deleted_draft_returns_404(client: TestClient) -> None:
+    contact_id, item_id = _setup_invoice_data(client)
+    draft = _post_invoice(client, _three_line_payload(contact_id, item_id))
+    invoice_id = draft.json()["id"]
+    assert client.delete(f"/api/v1/invoices/{invoice_id}").status_code == 204
+
+    response = client.post(f"/api/v1/invoices/{invoice_id}/issue")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Factura no encontrada"}
+
+
+def test_pay_deleted_invoice_returns_404(client: TestClient) -> None:
+    contact_id, item_id = _setup_invoice_data(client)
+    draft = _post_invoice(client, _three_line_payload(contact_id, item_id))
+    invoice_id = draft.json()["id"]
+    assert client.delete(f"/api/v1/invoices/{invoice_id}").status_code == 204
+
+    response = client.post(
+        f"/api/v1/invoices/{invoice_id}/payments",
+        headers={"Idempotency-Key": str(uuid4())},
+        json={
+            "amount": "10.00",
+            "payment_date": date.today().isoformat(),
+            "method": "cash",
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Factura no encontrada"}
+
+
+def test_list_excludes_deleted(client: TestClient) -> None:
+    contact_id, item_id = _setup_invoice_data(client)
+    payload = _three_line_payload(contact_id, item_id)
+
+    kept = _post_invoice(client, payload)
+    deleted = _post_invoice(client, payload)
+    assert kept.status_code == 201, kept.text
+    assert deleted.status_code == 201, deleted.text
+    deleted_id = deleted.json()["id"]
+
+    assert client.delete(f"/api/v1/invoices/{deleted_id}").status_code == 204
+
+    listed = client.get("/api/v1/invoices")
+
+    assert listed.status_code == 200
+    assert [invoice["id"] for invoice in listed.json()] == [kept.json()["id"]]
 
 
 def test_due_date_before_issue_date_is_422(client: TestClient) -> None:

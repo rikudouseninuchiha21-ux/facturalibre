@@ -91,14 +91,17 @@ class InvoiceRepository:
 
     def get_by_id(self, invoice_id: UUID) -> Invoice | None:
         statement = (
-            select(Invoice).where(Invoice.id == invoice_id).options(selectinload(Invoice.lines))
+            select(Invoice)
+            .where(Invoice.id == invoice_id, Invoice.deleted_at.is_(None))
+            .options(selectinload(Invoice.lines))
         )
         return self.db.scalar(statement)
 
     def list(self, limit: int, offset: int) -> list[Invoice]:
-        """Lista facturas. El modelo actual no tiene deleted_at."""
+        """Lista facturas no eliminadas."""
         statement = (
             select(Invoice)
+            .where(Invoice.deleted_at.is_(None))
             .options(selectinload(Invoice.lines))
             .order_by(Invoice.created_at.desc(), Invoice.id)
             .limit(limit)
@@ -113,7 +116,11 @@ class InvoiceRepository:
         numeración y el formato de ocho dígitos son una decisión provisional del
         MVP; la numeración autorizada debe venir de la resolución configurada.
         """
-        invoice = self.db.scalar(select(Invoice).where(Invoice.id == invoice_id).with_for_update())
+        invoice = self.db.scalar(
+            select(Invoice)
+            .where(Invoice.id == invoice_id, Invoice.deleted_at.is_(None))
+            .with_for_update()
+        )
         if invoice is None:
             raise ResourceNotFoundError("Factura no encontrada")
         if invoice.lifecycle_status is not LifecycleStatus.DRAFT:
@@ -162,7 +169,11 @@ class InvoiceRepository:
         El lock serializa este void con pagos y con otros voids concurrentes.
         No modifica payment_status: en el MVP solo se anulan facturas sin pagos.
         """
-        invoice = self.db.scalar(select(Invoice).where(Invoice.id == invoice_id).with_for_update())
+        invoice = self.db.scalar(
+            select(Invoice)
+            .where(Invoice.id == invoice_id, Invoice.deleted_at.is_(None))
+            .with_for_update()
+        )
         if invoice is None:
             raise ResourceNotFoundError("Factura no encontrada")
         if invoice.lifecycle_status is LifecycleStatus.DRAFT:
@@ -191,19 +202,25 @@ class InvoiceRepository:
         return voided
 
     def delete_draft(self, invoice_id: UUID) -> None:
-        """Elimina físicamente una factura DRAFT.
+        """Elimina lógicamente una factura DRAFT.
 
-        REQUIERE VALIDACIÓN: el modelo Invoice de esta migración no tiene
-        deleted_at. Hoy el borrado de borradores es físico; si se requiere soft
-        delete para facturas, hace falta una migración específica.
+        La fila se conserva con deleted_at para que GET y LIST la excluyan. Solo
+        se permite sobre borradores; emitidas y anuladas responden 409.
         """
-        invoice = self.db.scalar(select(Invoice).where(Invoice.id == invoice_id).with_for_update())
+        invoice = self.db.scalar(
+            select(Invoice)
+            .where(Invoice.id == invoice_id, Invoice.deleted_at.is_(None))
+            .with_for_update()
+        )
         if invoice is None:
             raise ResourceNotFoundError("Factura no encontrada")
         if invoice.lifecycle_status is not LifecycleStatus.DRAFT:
             raise InvoiceStateError("Solo se eliminan borradores")
 
-        self.db.delete(invoice)
+        now = datetime.now(UTC)
+        invoice.deleted_at = now
+        invoice.version += 1
+        invoice.updated_at = now
         self.db.commit()
 
     def get_idempotency_key(self, key: str) -> IdempotencyKey | None:

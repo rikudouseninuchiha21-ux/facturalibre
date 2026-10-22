@@ -6,11 +6,11 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 3b-3: anulación de facturas emitidas sin pagos.
+Fase 3b-4: soft delete de facturas.
 
 - Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`), facturas
   (`invoices`) y pagos (`payments`): crear, emitir, consultar, anular y borrar
-  borradores; registrar, listar y eliminar pagos con idempotencia.
+  borradores con soft delete; registrar, listar y eliminar pagos con idempotencia.
 - PostgreSQL 16 en Docker, sin puerto expuesto al host.
 - Backend accesible solo en `127.0.0.1:8000` para desarrollo.
 - Ocho tablas de dominio y migraciones de Alembic.
