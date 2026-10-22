@@ -11,9 +11,10 @@ existe `GET /health`, el esquema de datos inicial y los CRUD de catálogos maest
 - Docker y Docker Compose (para la base de datos y el despliegue local).
 - PostgreSQL 16 para ejecutar migraciones y pruebas de esquema.
 
-## Ejecutar con Docker
+## Primera ejecución
 
-Desde la raíz del repositorio:
+En un checkout nuevo **no hace falta ejecutar Alembic a mano**. Desde la raíz del
+repositorio:
 
 ```bash
 cp .env.example .env
@@ -21,17 +22,28 @@ cp .env.example .env
 docker compose up --build
 ```
 
-El backend queda en `http://127.0.0.1:8000` y la base de datos **no** se expone al host.
+Al arrancar el backend, `entrypoint.sh` hace lo siguiente:
+
+1. Espera a que PostgreSQL acepte conexiones (máximo 30 segundos).
+2. Ejecuta `/app/.venv/bin/alembic upgrade head`.
+3. Inicia Uvicorn con el `CMD` de la imagen.
+
+El proceso es idempotente: si la base ya está migrada, Alembic no aplica nada. Si
+la migración falla, el contenedor se detiene con un error en vez de arrancar una
+API sin tablas.
+
+El backend queda en `http://127.0.0.1:8000` y la base de datos **no** se expone al
+host.
 
 ```bash
 curl http://127.0.0.1:8000/health
 # {"status":"ok"}
 ```
 
-Para aplicar las migraciones dentro del contenedor:
+Para comprobar que las migraciones se aplicaron:
 
 ```bash
-docker compose exec backend alembic upgrade head
+docker compose logs backend
 docker compose exec backend alembic current
 ```
 
@@ -229,6 +241,7 @@ backend/
     test_items.py              # CRUD y optimistic locking de ítems
     test_taxes.py              # CRUD y optimistic locking de impuestos
   Dockerfile
+  entrypoint.sh                # espera PostgreSQL, migra y cede el control al CMD
   pyproject.toml
 ```
 
@@ -238,7 +251,7 @@ backend/
   commitearlo para builds reproducibles.
 - El `Dockerfile` usa `uv` sin versión fijada todavía; antes de producción se
   debe fijar versión o digest.
-- Las migraciones no se ejecutan automáticamente al arrancar el contenedor:
-  se aplican explícitamente con `alembic upgrade head`.
+- Las migraciones se ejecutan automáticamente al arrancar el contenedor mediante
+  `entrypoint.sh`; no es necesario ejecutar `alembic upgrade head` a mano.
 - El esquema es de una sola instancia/tenant en esta fase. La multi-tenencia y
   la emisión electrónica DIAN (CUFE/CUDE/firma) quedan fuera de este paso.
