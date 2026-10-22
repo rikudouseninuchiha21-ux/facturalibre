@@ -19,9 +19,13 @@ class AccountingMapping:
     vat_payable: str
     cash: str
     bank: str
+    payroll_expense: str = "510506"
+    payroll_payable: str = "250505"
+    payroll_contributions: str = "237005"
 
 
-# Códigos provisionales, alineados con los grupos 1305, 4135, 2408, 1105 y 1110.
+# Códigos provisionales, alineados con los grupos 1305, 4135, 2408, 1105, 1110
+# y las cuentas de nómina 510506, 250505 y 237005.
 DEFAULT_ACCOUNTING_MAPPING = AccountingMapping(
     accounts_receivable="130505",
     sales_revenue="413505",

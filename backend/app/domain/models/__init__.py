@@ -19,6 +19,12 @@ from app.domain.models.invoice_line import InvoiceLine
 from app.domain.models.item import Item
 from app.domain.models.number_sequence import NumberSequence
 from app.domain.models.payment import Payment
+from app.domain.models.payroll import (
+    Employee,
+    PayrollDetail,
+    PayrollPeriod,
+    PayrollPeriodStatus,
+)
 from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
 from app.domain.models.tax import Tax
 from app.domain.models.warehouse import Warehouse
@@ -32,6 +38,7 @@ __all__ = [
     "AccountNature",
     "AccountType",
     "Contact",
+    "Employee",
     "IdempotencyKey",
     "Invoice",
     "InvoiceLine",
@@ -40,6 +47,9 @@ __all__ = [
     "NumberSequence",
     "Payment",
     "PaymentStatus",
+    "PayrollDetail",
+    "PayrollPeriod",
+    "PayrollPeriodStatus",
     "StockBalance",
     "StockMovement",
     "StockMovementType",

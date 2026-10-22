@@ -19,3 +19,7 @@ class InventoryError(Exception):
 
 class InsufficientStockError(InventoryError):
     """La bodega no tiene cantidad suficiente para una salida de stock."""
+
+
+class PayrollError(Exception):
+    """Operación de nómina inválida o periodo no liquidable."""

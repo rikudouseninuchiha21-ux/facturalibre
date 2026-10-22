@@ -28,12 +28,15 @@ EXPECTED_TABLES = {
     "accounting_entries",
     "accounting_entry_lines",
     "contacts",
+    "employees",
     "idempotency_keys",
     "invoice_lines",
     "invoices",
     "items",
     "number_sequences",
     "payments",
+    "payroll_details",
+    "payroll_periods",
     "stock_balances",
     "stock_movements",
     "taxes",
@@ -42,6 +45,7 @@ EXPECTED_TABLES = {
 
 MONETARY_COLUMNS: dict[str, tuple[str, ...]] = {
     "accounting_entry_lines": ("debit", "credit"),
+    "employees": ("base_salary",),
     "items": ("unit_price",),
     "invoices": ("subtotal", "tax_total", "total", "balance"),
     "invoice_lines": (
@@ -52,6 +56,12 @@ MONETARY_COLUMNS: dict[str, tuple[str, ...]] = {
         "line_total",
     ),
     "payments": ("amount",),
+    "payroll_details": (
+        "base_salary",
+        "health_deduction",
+        "pension_deduction",
+        "net_pay",
+    ),
     "stock_balances": ("quantity",),
     "stock_movements": ("quantity", "unit_cost"),
     "taxes": ("rate",),
@@ -70,7 +80,7 @@ def engine() -> Iterator[Engine]:
 
 
 def test_all_tables_exist(engine: Engine) -> None:
-    """El inspector ve las ocho tablas de negocio creadas por la migración."""
+    """El inspector ve las tablas de negocio creadas por las migraciones."""
     table_names = set(inspect(engine).get_table_names())
     assert EXPECTED_TABLES <= table_names
 

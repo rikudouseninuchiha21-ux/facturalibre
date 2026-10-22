@@ -6,16 +6,19 @@ from fastapi.responses import JSONResponse
 from app.api.v1 import (
     accounting,
     contacts,
+    employees,
     inventory,
     invoices,
     items,
     payments,
+    payroll,
     taxes,
     warehouses,
 )
 from app.domain.exceptions import (
     InventoryError,
     InvoiceStateError,
+    PayrollError,
     ResourceNotFoundError,
     VersionConflictError,
 )
@@ -30,6 +33,8 @@ app.include_router(payments.router, prefix="/api/v1")
 app.include_router(accounting.router, prefix="/api/v1")
 app.include_router(warehouses.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
+app.include_router(employees.router, prefix="/api/v1")
+app.include_router(payroll.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)
@@ -74,6 +79,18 @@ async def inventory_error_handler(
     exc: InventoryError,
 ) -> JSONResponse:
     """Traduce stock insuficiente o bodega inactiva a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(PayrollError)
+async def payroll_error_handler(
+    _request: Request,
+    exc: PayrollError,
+) -> JSONResponse:
+    """Traduce un periodo ya liquidado o sin empleados a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},

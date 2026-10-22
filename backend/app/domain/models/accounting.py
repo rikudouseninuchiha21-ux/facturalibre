@@ -50,6 +50,7 @@ class AccountingSourceType(enum.StrEnum):
     PAYMENT = "PAYMENT"
     VOID = "VOID"
     PAYMENT_REVERSAL = "PAYMENT_REVERSAL"
+    PAYROLL = "PAYROLL"
 
 
 class AccountingEntryStatus(enum.StrEnum):

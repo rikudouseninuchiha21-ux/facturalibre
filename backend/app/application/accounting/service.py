@@ -7,6 +7,7 @@ operación de facturación también se revierte.
 
 from __future__ import annotations
 
+import calendar
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -29,6 +30,7 @@ from app.domain.models.accounting import (
 )
 from app.domain.models.invoice import Invoice
 from app.domain.models.payment import Payment
+from app.domain.models.payroll import PayrollPeriod
 
 ZERO = Decimal("0.00")
 
@@ -172,6 +174,59 @@ class AccountingService:
             description=(f"Reversión eliminación pago factura {invoice.number or invoice.id}"),
             source_type=AccountingSourceType.PAYMENT_REVERSAL,
             source_id=payment.id,
+        )
+
+    def record_payroll(self, period: PayrollPeriod) -> AccountingEntry | None:
+        """Genera el asiento de liquidación de un periodo de nómina.
+
+        Débito al gasto de sueldos por el total devengado; crédito a salarios
+        por pagar por el neto y crédito a aportes de salud y pensión por las
+        deducciones. El asiento se apoya en el detalle ya calculado y usa el
+        último día del periodo como fecha contable.
+
+        REQUIERE VALIDACIÓN: la cuenta 237005 agrupa aportes de salud y pensión
+        del empleado. La retención en la fuente y los parafiscales del empleador
+        no forman parte de esta fase y requerirían cuentas y asientos propios.
+        """
+        details = period.details
+        if not details:
+            return None
+
+        gross = round_money(sum((detail.base_salary for detail in details), ZERO))
+        if gross <= ZERO:
+            return None
+
+        net = round_money(sum((detail.net_pay for detail in details), ZERO))
+        contributions = round_money(
+            sum(
+                (detail.health_deduction + detail.pension_deduction for detail in details),
+                ZERO,
+            )
+        )
+
+        lines = [
+            JournalLine(account_code=self.mapping.payroll_expense, debit=gross),
+        ]
+        if net > ZERO:
+            lines.append(JournalLine(account_code=self.mapping.payroll_payable, credit=net))
+        if contributions > ZERO:
+            lines.append(
+                JournalLine(
+                    account_code=self.mapping.payroll_contributions,
+                    credit=contributions,
+                )
+            )
+
+        return self._post_entry(
+            entry_date=date(
+                period.year,
+                period.month,
+                calendar.monthrange(period.year, period.month)[1],
+            ),
+            description=f"Liquidación de nómina {period.month:02d}/{period.year}",
+            source_type=AccountingSourceType.PAYROLL,
+            source_id=period.id,
+            lines=lines,
         )
 
     def _reverse_entry(

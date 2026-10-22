@@ -3,9 +3,10 @@
 Backend del MVP: FastAPI, SQLAlchemy 2, Alembic y PostgreSQL 16. En esta etapa
 existe `GET /health`, el esquema de datos inicial, los CRUD de catálogos maestros
 (`contacts`, `items`, `taxes`), la creación/emisión/anulación de facturas, los
-pagos sobre facturas emitidas y el núcleo de inventario (`warehouses`,
-`stock_movements`, `stock_balances`). **Todavía no hay notas crédito, devolución
-de pagos ni transferencias documentales.**
+pagos sobre facturas emitidas, el núcleo de inventario (`warehouses`,
+`stock_movements`, `stock_balances`) y el núcleo de nómina (`employees`,
+`payroll_periods`, `payroll_details`). **Todavía no hay notas crédito, devolución
+de pagos, transferencias documentales, prestaciones sociales ni parafiscales.**
 
 ## Requisitos
 
@@ -334,6 +335,59 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 Ejemplo numérico: una factura con total `119.00` que recibe un pago de `50.00`
 queda con balance `69.00` y `payment_status` en `partially_paid`.
 
+## Endpoints de nómina
+
+El núcleo de nómina liquida un periodo mensual para todos los empleados activos.
+Salud y pensión se calculan como 4 % del salario base cada una, con
+`ROUND_HALF_UP` a dos decimales; el neto es el salario base menos ambas
+deducciones. Al calcular se genera un asiento contable balanceado:
+
+- Débito `510506` (Sueldos) por el total devengado.
+- Crédito `250505` (Salarios por pagar) por el neto.
+- Crédito `237005` (Aportes a salud y pensión) por las deducciones.
+
+El periodo pasa de `DRAFT` a `CLOSED` y no puede recalcularse. La liquidación y
+el asiento se ejecutan en la misma transacción: si falla la contabilidad, no se
+persisten el detalle ni el cambio de estado.
+
+```bash
+# Crear empleado
+curl -s -X POST "$BASE/employees" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "document": "CC-1001",
+    "first_name": "Ana",
+    "last_name": "Pérez",
+    "email": "ana.perez@example.com",
+    "base_salary": "123.45",
+    "start_date": "2026-01-15"
+  }'
+
+# Listar empleados (opcional: is_active=true|false)
+curl -s "$BASE/employees?limit=20&offset=0"
+
+# Actualizar o desactivar empleado
+curl -s -X PATCH "$BASE/employees/$EMPLOYEE_ID" \
+  -H 'Content-Type: application/json' \
+  -d '{"base_salary":"150.00"}'
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/employees/$EMPLOYEE_ID"
+
+# Abrir periodo (mes 10 del año 2026)
+curl -s -X POST "$BASE/payroll/periods" \
+  -H 'Content-Type: application/json' \
+  -d '{"month":10,"year":2026}'
+
+# Calcular nómina: genera detalle y asiento contable
+curl -s -X POST "$BASE/payroll/periods/$PERIOD_ID/calculate"
+
+# Consultar el periodo con su detalle y totales
+curl -s "$BASE/payroll/periods/$PERIOD_ID"
+```
+
+No hay endpoint separado de cierre: el cálculo exitoso deja el periodo en
+`CLOSED`. Un periodo duplicado, ya cerrado o sin empleados activos responde
+`409`.
+
 ## Ejecutar solo el backend con uv
 
 Necesitas una instancia de PostgreSQL accesible. La URL se lee de `DATABASE_URL`
@@ -382,13 +436,16 @@ La migración `20261021_0003` añade `deleted_at` y el índice parcial
 `ix_invoices_not_deleted`; su `downgrade` elimina el índice y la columna. La
 migración `20261022_0004` crea el catálogo PUC, asientos y movimientos contables.
 La migración `20261022_0005` crea `warehouses`, `stock_movements`,
-`stock_balances` y el ENUM `stock_movement_type`.
+`stock_balances` y el ENUM `stock_movement_type`. La migración `20261022_0006`
+crea `employees`, `payroll_periods`, `payroll_details`, el ENUM
+`payroll_period_status`, agrega `PAYROLL` al origen de asientos y siembra las
+cuentas PUC `510506`, `250505` y `237005` con sus padres.
 
 ### Base de datos de test
 
 `tests/test_schema.py`, los tests CRUD, los tests de facturas, pagos,
-contabilidad e inventario requieren una base PostgreSQL real y **separada** de
-la de desarrollo. La variable `TEST_DATABASE_URL` no se lee de `.env`: se pasa
+contabilidad, inventario y nómina requieren una base PostgreSQL real y
+**separada** de la de desarrollo. La variable `TEST_DATABASE_URL` no se lee de `.env`: se pasa
 por el entorno. Un ejemplo con un contenedor temporal, sin tocar
 `docker-compose.yml`:
 
@@ -434,13 +491,15 @@ backend/
     domain/
       models/                  # Contact, Item, Tax, Invoice, InvoiceLine, Payment,
                                # NumberSequence, IdempotencyKey, Warehouse,
-                               # StockMovement y StockBalance
+                               # StockMovement, StockBalance, Employee,
+                               # PayrollPeriod y PayrollDetail
       *_repository.py           # consultas y updates con SQLAlchemy 2
       calculations.py           # redondeo, totales y estado de pago
-      exceptions.py            # errores de recurso ausente, versión, estado e inventario
+      exceptions.py            # errores de recurso, versión, estado, inventario y nómina
     application/
       *_schemas.py             # schemas Pydantic v2 de catálogos, facturas y pagos
       inventory/               # InventoryService y schemas de inventario
+      payroll/                 # PayrollService y schemas de nómina
     infrastructure/
       database.py              # engine, SessionLocal, Base y get_db()
       migrations/              # env.py, plantilla y versiones de Alembic
@@ -452,6 +511,8 @@ backend/
       inventory.py             # movimientos y saldos de inventario
       invoices.py              # crear, emitir, anular, consultar y borrar borradores
       payments.py              # pagos sobre facturas emitidas
+      employees.py             # CRUD de empleados
+      payroll.py               # periodos y cálculo de nómina
   tests/
     conftest.py                # PostgreSQL de test y sesión transaccional
     test_health.py             # smoke test de /health
@@ -463,6 +524,7 @@ backend/
     test_payments.py           # pagos, saldos, idempotencia y borrado
     test_accounting.py         # asientos automáticos y atomicidad
     test_inventory.py          # movimientos, saldos y descuento al emitir
+    test_payroll.py            # empleados, cálculo decimal y asiento de nómina
   Dockerfile
   entrypoint.sh                # espera PostgreSQL, migra y cede el control al CMD
   pyproject.toml
