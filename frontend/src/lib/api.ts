@@ -25,6 +25,16 @@ export interface Contact {
   updated_at: string;
 }
 
+export interface ContactCreateInput {
+  name: string;
+  email?: string;
+  tax_id?: string;
+}
+
+export interface VoidInvoiceInput {
+  reason: string;
+}
+
 export interface Item {
   id: string;
   name: string;
@@ -100,6 +110,59 @@ function getBaseUrl(): string {
   );
 }
 
+function formatErrorDetail(detail: unknown): string | null {
+  if (typeof detail === "string") {
+    return detail;
+  }
+
+  if (Array.isArray(detail)) {
+    const messages = detail.map((entry) => {
+      if (typeof entry !== "object" || entry === null) {
+        return String(entry);
+      }
+
+      const item = entry as { loc?: unknown; msg?: unknown };
+      const message =
+        typeof item.msg === "string" ? item.msg : "Error de validación";
+
+      if (!Array.isArray(item.loc)) {
+        return message;
+      }
+
+      const location = item.loc
+        .filter(
+          (part): part is string | number =>
+            typeof part === "string" || typeof part === "number",
+        )
+        .filter((part) => part !== "body")
+        .join(".");
+
+      return location ? `${location}: ${message}` : message;
+    });
+
+    return messages.join("; ");
+  }
+
+  if (detail !== undefined && detail !== null) {
+    return JSON.stringify(detail) ?? String(detail);
+  }
+
+  return null;
+}
+
+async function getErrorDetail(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const body = (await response.json()) as { detail?: unknown };
+    return formatErrorDetail(body.detail) ?? fallback;
+  } catch {
+    // La respuesta de error no era JSON; se conserva el mensaje HTTP.
+    return fallback;
+  }
+}
+
 async function apiGet<T>(path: string): Promise<T> {
   const response = await fetch(`${getBaseUrl()}${API_PREFIX}${path}`, {
     headers: { Accept: "application/json" },
@@ -107,21 +170,35 @@ async function apiGet<T>(path: string): Promise<T> {
   });
 
   if (!response.ok) {
-    let detail = `${response.status} ${response.statusText}`.trim();
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    const detail = await getErrorDetail(response, fallback);
 
-    try {
-      const body = (await response.json()) as { detail?: unknown };
-      if (typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // La respuesta de error no era JSON; se conserva el mensaje HTTP.
-    }
+    throw new ApiError(`Error al consultar ${path}: ${detail}`, response.status);
+  }
 
-    throw new ApiError(
-      `Error al consultar ${path}: ${detail}`,
-      response.status,
-    );
+  return (await response.json()) as T;
+}
+
+async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+  const response = await fetch(`${getBaseUrl()}${API_PREFIX}${path}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    const detail = await getErrorDetail(response, fallback);
+
+    throw new ApiError(detail, response.status);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
   }
 
   return (await response.json()) as T;
@@ -129,6 +206,10 @@ async function apiGet<T>(path: string): Promise<T> {
 
 export function getContacts(): Promise<Contact[]> {
   return apiGet<Contact[]>("/contacts");
+}
+
+export function createContact(payload: ContactCreateInput): Promise<Contact> {
+  return apiPost<Contact>("/contacts", payload);
 }
 
 export function getItems(): Promise<Item[]> {
@@ -141,4 +222,18 @@ export function getTaxes(): Promise<Tax[]> {
 
 export function getInvoices(): Promise<Invoice[]> {
   return apiGet<Invoice[]>("/invoices");
+}
+
+export function issueInvoice(invoiceId: string): Promise<Invoice> {
+  return apiPost<Invoice>(`/invoices/${encodeURIComponent(invoiceId)}/issue`);
+}
+
+export function voidInvoice(
+  invoiceId: string,
+  payload: VoidInvoiceInput,
+): Promise<Invoice> {
+  return apiPost<Invoice>(
+    `/invoices/${encodeURIComponent(invoiceId)}/void`,
+    payload,
+  );
 }

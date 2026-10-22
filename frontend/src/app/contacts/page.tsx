@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ContactForm } from "@/components/contacts/ContactForm";
 import {
   Card,
   CardContent,
@@ -49,6 +50,18 @@ export default async function ContactsPage() {
 
       <Card>
         <CardHeader>
+          <CardTitle>Nuevo Contacto</CardTitle>
+          <CardDescription>
+            Registra un cliente o proveedor. El nombre es obligatorio.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ContactForm />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
           <CardTitle>Listado</CardTitle>
           <CardDescription>
             {error
@@ -70,7 +83,7 @@ export default async function ContactsPage() {
                 Todavía no hay contactos
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Crea el primer contacto a través de la API para verlo aquí.
+                Usa el formulario de arriba para crear el primer contacto.
               </p>
             </div>
           ) : (

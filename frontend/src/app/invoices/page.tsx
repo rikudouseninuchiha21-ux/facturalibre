@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { InvoiceActions } from "@/components/invoices/InvoiceActions";
 import {
   Card,
   CardContent,
@@ -106,6 +107,7 @@ export default async function InvoicesPage() {
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -122,6 +124,12 @@ export default async function InvoicesPage() {
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatCurrency(invoice.balance, invoice.currency)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <InvoiceActions
+                        invoiceId={invoice.id}
+                        status={invoice.lifecycle_status}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
