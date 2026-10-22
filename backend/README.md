@@ -49,6 +49,57 @@ docker compose logs backend
 docker compose exec backend alembic current
 ```
 
+## Desarrollo local con recarga automática
+
+El repositorio incluye `docker-compose.override.yml` en la raíz. Docker Compose
+lo fusiona automáticamente cuando se ejecuta `docker compose` sin `-f`, así que
+el backend de desarrollo:
+
+- Monta `./backend/app` en `/app/app` y `./backend/tests` en `/app/tests`.
+- Ejecuta Uvicorn con `--reload` y `--reload-dir /app/app`.
+- Conserva el entrypoint: PostgreSQL se espera y Alembic migra antes de arrancar.
+
+Después del primer build, los cambios en `backend/app/` se recargan solos. No
+hace falta reconstruir la imagen ni reiniciar el contenedor:
+
+```bash
+# Primera vez o después de cambiar Dockerfile/pyproject.toml
+docker compose up -d --build
+
+# Día a día: el código se recarga automáticamente
+docker compose up -d
+docker compose logs -f backend
+```
+
+Para comprobar la recarga sin editar código, en otra terminal:
+
+```bash
+touch backend/app/main.py
+```
+
+En los logs del backend debe aparecer un mensaje de `WatchFiles detected changes`
+seguido de `Reloading...`.
+
+Los cambios en dependencias (`backend/pyproject.toml`), en el `Dockerfile` o en
+`entrypoint.sh` sí requieren `docker compose up -d --build`, porque viven dentro
+de la imagen y no en los volúmenes de desarrollo.
+
+Para volver al modo producción, sin recarga automática y sin los volúmenes de
+desarrollo, se ignora explícitamente el override:
+
+```bash
+docker compose -f docker-compose.yml up -d --build
+```
+
+Para verificar la configuración fusionada:
+
+```bash
+docker compose config
+```
+
+El bloque `backend` debe mostrar el comando con `--reload` y los dos volúmenes
+`bind` hacia `backend/app` y `backend/tests`.
+
 ## Endpoints de catálogos
 
 Base local: `http://127.0.0.1:8000/api/v1`.

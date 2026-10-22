@@ -1,0 +1,21 @@
+# Solo para desarrollo local. En producción NO usar este override.
+#
+# Docker Compose fusiona este archivo automáticamente con docker-compose.yml
+# cuando se ejecuta `docker compose up` sin `-f`. El entrypoint se conserva:
+# solo se reemplaza el CMD para añadir la recarga automática de Uvicorn.
+services:
+  backend:
+    volumes:
+      - ./backend/app:/app/app:rw
+      - ./backend/tests:/app/tests:rw
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --reload
+      # Limita el watcher al código de la aplicación; evita recorrer .venv.
+      - --reload-dir
+      - /app/app
