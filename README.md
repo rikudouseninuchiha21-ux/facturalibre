@@ -6,13 +6,14 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 4a: estructura e infraestructura mínima.
+Fase 4b: estructura, infraestructura y esquema de datos inicial.
 
 - Backend FastAPI con un único endpoint: `GET /health`.
 - PostgreSQL 16 en Docker, sin puerto expuesto al host.
 - Backend accesible solo en `127.0.0.1:8000` para desarrollo.
+- Ocho tablas de dominio y su primera migración de Alembic.
 - Frontend todavía no scaffolded; solo existe `frontend/README.md`.
-- Sin lógica de negocio, sin tablas, sin migraciones y sin endpoints de facturación.
+- Sin lógica de negocio ni endpoints de facturación.
 
 ## Requisitos
 
@@ -37,6 +38,12 @@ curl http://127.0.0.1:8000/health
 ```
 
 La base de datos **no** está publicada en el host: solo el backend puede hablar con ella dentro de la red de Compose.
+
+Para aplicar el esquema de datos:
+
+```bash
+docker compose exec backend alembic upgrade head
+```
 
 Para ver logs:
 
@@ -64,7 +71,8 @@ uv sync
 uv run pytest
 ```
 
-La única prueba actual verifica `GET /health`.
+Las pruebas de `/health` no necesitan base de datos. Las pruebas de esquema usan
+`TEST_DATABASE_URL` contra un PostgreSQL real; consulta `backend/README.md`.
 
 ## Calidad de código
 

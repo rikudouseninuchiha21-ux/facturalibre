@@ -35,6 +35,7 @@ RUN groupadd --system --gid 1000 appuser \
 WORKDIR /app
 
 COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv
+COPY --chown=appuser:appuser alembic.ini ./alembic.ini
 COPY --chown=appuser:appuser app ./app
 
 USER appuser
