@@ -2,9 +2,10 @@
 
 Backend del MVP: FastAPI, SQLAlchemy 2, Alembic y PostgreSQL 16. En esta etapa
 existe `GET /health`, el esquema de datos inicial, los CRUD de catálogos maestros
-(`contacts`, `items`, `taxes`), la creación/emisión/anulación de facturas y los
-pagos sobre facturas emitidas. **Todavía no hay notas crédito ni pagos
-multi-factura.**
+(`contacts`, `items`, `taxes`), la creación/emisión/anulación de facturas, los
+pagos sobre facturas emitidas y el núcleo de inventario (`warehouses`,
+`stock_movements`, `stock_balances`). **Todavía no hay notas crédito, devolución
+de pagos ni transferencias documentales.**
 
 ## Requisitos
 
@@ -182,6 +183,55 @@ curl -s -X PATCH "$BASE/taxes/$TAX_ID" \
 curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/taxes/$TAX_ID"
 ```
 
+## Endpoints de inventario
+
+El inventario usa un libro de movimientos (`stock_movements`) y una proyección
+de saldos (`stock_balances`) por ítem y bodega. No existe un campo de stock
+editable en el ítem. Los movimientos `IN`, `TRANSFER_IN` y `ADJUSTMENT`
+incrementan; `OUT` y `TRANSFER_OUT` validan que haya cantidad suficiente y
+decrementan. Toda la operación es transaccional.
+
+```bash
+# Crear bodega
+curl -s -X POST "$BASE/warehouses" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Bodega principal","code":"PRINCIPAL"}'
+
+# Listar bodegas (opcional: is_active=true|false)
+curl -s "$BASE/warehouses?limit=20&offset=0"
+
+# Actualizar bodega
+curl -s -X PATCH "$BASE/warehouses/$WAREHOUSE_ID" \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Bodega central"}'
+
+# Baja lógica: la bodega queda inactiva y conserva su historial
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/warehouses/$WAREHOUSE_ID"
+
+# Registrar entrada de 10 unidades
+curl -s -X POST "$BASE/inventory/movements" \
+  -H 'Content-Type: application/json' \
+  -d "{
+    \"item_id\": \"$ITEM_ID\",
+    \"warehouse_id\": \"$WAREHOUSE_ID\",
+    \"movement_type\": \"IN\",
+    \"quantity\": \"10.0000\",
+    \"unit_cost\": \"25.5000\",
+    \"reference\": \"INV-001\"
+  }"
+
+# Consultar saldos (paginado y filtrable por bodega e ítem)
+curl -s "$BASE/inventory/balances?warehouse_id=$WAREHOUSE_ID&limit=20&offset=0"
+
+# Listar movimientos
+curl -s "$BASE/inventory/movements?warehouse_id=$WAREHOUSE_ID&limit=20&offset=0"
+```
+
+Al emitir una factura se genera un movimiento `OUT` por cada línea. La bodega
+usada es la activa con código `PRINCIPAL`; si no existe, la bodega activa más
+antigua. Si no hay bodega activa o stock suficiente, la emisión responde `409` y
+la factura permanece en `draft`, sin movimiento, asiento ni número.
+
 ## Endpoints de facturas
 
 Crear una factura requiere el header `Idempotency-Key` con un UUID. La misma Key
@@ -329,14 +379,18 @@ La migración inicial crea las tablas `contacts`, `items`, `taxes`, `invoices`,
 los tipos ENUM de estado de factura. La migración `20261021_0002` añade
 `voided_reason` y `voided_at` a `invoices`; su `downgrade` elimina ambas columnas.
 La migración `20261021_0003` añade `deleted_at` y el índice parcial
-`ix_invoices_not_deleted`; su `downgrade` elimina el índice y la columna.
+`ix_invoices_not_deleted`; su `downgrade` elimina el índice y la columna. La
+migración `20261022_0004` crea el catálogo PUC, asientos y movimientos contables.
+La migración `20261022_0005` crea `warehouses`, `stock_movements`,
+`stock_balances` y el ENUM `stock_movement_type`.
 
 ### Base de datos de test
 
-`tests/test_schema.py`, los tests CRUD, los tests de facturas y los tests de pagos
-requieren una base PostgreSQL real y **separada** de la de desarrollo. La variable
-`TEST_DATABASE_URL` no se lee de `.env`: se pasa por el entorno. Un ejemplo con
-un contenedor temporal, sin tocar `docker-compose.yml`:
+`tests/test_schema.py`, los tests CRUD, los tests de facturas, pagos,
+contabilidad e inventario requieren una base PostgreSQL real y **separada** de
+la de desarrollo. La variable `TEST_DATABASE_URL` no se lee de `.env`: se pasa
+por el entorno. Un ejemplo con un contenedor temporal, sin tocar
+`docker-compose.yml`:
 
 ```bash
 docker run --rm -d --name facturalibre-test-db \
@@ -379,12 +433,14 @@ backend/
     core/config.py             # variables de entorno con pydantic-settings
     domain/
       models/                  # Contact, Item, Tax, Invoice, InvoiceLine, Payment,
-                               # NumberSequence e IdempotencyKey
+                               # NumberSequence, IdempotencyKey, Warehouse,
+                               # StockMovement y StockBalance
       *_repository.py           # consultas y updates con SQLAlchemy 2
       calculations.py           # redondeo, totales y estado de pago
-      exceptions.py            # errores de recurso ausente, versión y estado
+      exceptions.py            # errores de recurso ausente, versión, estado e inventario
     application/
       *_schemas.py             # schemas Pydantic v2 de catálogos, facturas y pagos
+      inventory/               # InventoryService y schemas de inventario
     infrastructure/
       database.py              # engine, SessionLocal, Base y get_db()
       migrations/              # env.py, plantilla y versiones de Alembic
@@ -392,6 +448,8 @@ backend/
       contacts.py              # CRUD de contactos
       items.py                 # CRUD de ítems
       taxes.py                 # CRUD de impuestos
+      warehouses.py            # CRUD de bodegas
+      inventory.py             # movimientos y saldos de inventario
       invoices.py              # crear, emitir, anular, consultar y borrar borradores
       payments.py              # pagos sobre facturas emitidas
   tests/
@@ -403,6 +461,8 @@ backend/
     test_taxes.py              # CRUD y optimistic locking de impuestos
     test_invoices.py           # cálculos, idempotencia, numeración y estados
     test_payments.py           # pagos, saldos, idempotencia y borrado
+    test_accounting.py         # asientos automáticos y atomicidad
+    test_inventory.py          # movimientos, saldos y descuento al emitir
   Dockerfile
   entrypoint.sh                # espera PostgreSQL, migra y cede el control al CMD
   pyproject.toml

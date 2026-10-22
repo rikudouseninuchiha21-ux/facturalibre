@@ -19,7 +19,9 @@ from app.domain.models.invoice_line import InvoiceLine
 from app.domain.models.item import Item
 from app.domain.models.number_sequence import NumberSequence
 from app.domain.models.payment import Payment
+from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
 from app.domain.models.tax import Tax
+from app.domain.models.warehouse import Warehouse
 
 __all__ = [
     "AccountingAccount",
@@ -38,5 +40,9 @@ __all__ = [
     "NumberSequence",
     "Payment",
     "PaymentStatus",
+    "StockBalance",
+    "StockMovement",
+    "StockMovementType",
     "Tax",
+    "Warehouse",
 ]

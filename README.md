@@ -6,14 +6,16 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 4C-1: scaffold del frontend.
+Fase 5B-1: núcleo del módulo de inventarios.
 
 - Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`), facturas
   (`invoices`) y pagos (`payments`): crear, emitir, consultar, anular y borrar
   borradores con soft delete; registrar, listar y eliminar pagos con idempotencia.
+- Inventario con bodegas, libro de movimientos y saldos por ítem/bodega. Emitir
+  una factura descuenta stock y revierte toda la operación si no alcanza.
 - PostgreSQL 16 en Docker, sin puerto expuesto al host.
 - Backend accesible solo en `127.0.0.1:8000` para desarrollo.
-- Ocho tablas de dominio y migraciones de Alembic.
+- Once tablas de dominio y migraciones de Alembic.
 - Frontend Next.js 16 con App Router, TypeScript, Tailwind CSS y `pnpm`.
   Incluye dashboard, listado de contactos y listado de facturas.
 - Sin formularios, autenticación ni estado global en el frontend todavía.

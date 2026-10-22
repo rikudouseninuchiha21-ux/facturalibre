@@ -28,6 +28,25 @@ def _money(value: object) -> Decimal:
     return Decimal(str(value)).quantize(TWOPLACES)
 
 
+def _stock_item(client: TestClient, item_id: str, quantity: str = "100") -> None:
+    """Crea la bodega principal y carga stock inicial para los tests de emisión."""
+    warehouse = client.post(
+        "/api/v1/warehouses",
+        json={"name": "Bodega principal", "code": "PRINCIPAL"},
+    )
+    assert warehouse.status_code == 201, warehouse.text
+    movement = client.post(
+        "/api/v1/inventory/movements",
+        json={
+            "item_id": item_id,
+            "warehouse_id": warehouse.json()["id"],
+            "movement_type": "IN",
+            "quantity": quantity,
+        },
+    )
+    assert movement.status_code == 201, movement.text
+
+
 def _create_invoice(client: TestClient, total: str = "100.00") -> dict[str, Any]:
     """Crea una factura DRAFT con una línea sin impuesto."""
     today = date.today()
@@ -47,6 +66,7 @@ def _create_invoice(client: TestClient, total: str = "100.00") -> dict[str, Any]
         },
     )
     assert item.status_code == 201, item.text
+    _stock_item(client, str(item.json()["id"]))
 
     response = client.post(
         "/api/v1/invoices",

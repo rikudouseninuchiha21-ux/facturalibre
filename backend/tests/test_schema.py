@@ -34,7 +34,10 @@ EXPECTED_TABLES = {
     "items",
     "number_sequences",
     "payments",
+    "stock_balances",
+    "stock_movements",
     "taxes",
+    "warehouses",
 }
 
 MONETARY_COLUMNS: dict[str, tuple[str, ...]] = {
@@ -49,6 +52,8 @@ MONETARY_COLUMNS: dict[str, tuple[str, ...]] = {
         "line_total",
     ),
     "payments": ("amount",),
+    "stock_balances": ("quantity",),
+    "stock_movements": ("quantity", "unit_cost"),
     "taxes": ("rate",),
 }
 

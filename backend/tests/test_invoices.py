@@ -60,10 +60,30 @@ def _create_item(client: TestClient, tax_id: str) -> dict[str, Any]:
     return response.json()
 
 
+def _stock_item(client: TestClient, item_id: str, quantity: str = "100") -> None:
+    """Crea la bodega principal y carga stock inicial para los tests de emisión."""
+    warehouse = client.post(
+        "/api/v1/warehouses",
+        json={"name": "Bodega principal", "code": "PRINCIPAL"},
+    )
+    assert warehouse.status_code == 201, warehouse.text
+    movement = client.post(
+        "/api/v1/inventory/movements",
+        json={
+            "item_id": item_id,
+            "warehouse_id": warehouse.json()["id"],
+            "movement_type": "IN",
+            "quantity": quantity,
+        },
+    )
+    assert movement.status_code == 201, movement.text
+
+
 def _setup_invoice_data(client: TestClient) -> tuple[str, str]:
     contact = _create_contact(client)
     tax = _create_tax(client)
     item = _create_item(client, tax_id=str(tax["id"]))
+    _stock_item(client, str(item["id"]))
     return str(contact["id"]), str(item["id"])
 
 

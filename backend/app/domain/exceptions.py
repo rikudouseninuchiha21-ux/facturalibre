@@ -11,3 +11,11 @@ class VersionConflictError(Exception):
 
 class InvoiceStateError(Exception):
     """La operación no está permitida para el estado actual de la factura."""
+
+
+class InventoryError(Exception):
+    """Operación de inventario inválida o imposible de completar."""
+
+
+class InsufficientStockError(InventoryError):
+    """La bodega no tiene cantidad suficiente para una salida de stock."""

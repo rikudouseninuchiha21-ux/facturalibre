@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.application.accounting.service import AccountingService
+from app.application.inventory.service import InventoryService
 from app.application.invoice_schemas import (
     InvoiceCreate,
     InvoiceRead,
@@ -177,9 +178,14 @@ def issue_invoice(
     db: DbSession,
     repository: InvoiceRepositoryDep,
 ) -> InvoiceRead:
-    """Emite una factura DRAFT y genera su asiento contable en la misma transacción."""
+    """Emite una factura, descuenta inventario y genera el asiento contable.
+
+    Las tres operaciones comparten la misma transacción: si falta stock o falla
+    la contabilidad, la factura vuelve a quedar en borrador sin movimientos.
+    """
     with operation_transaction(db):
         invoice = repository.issue(invoice_id)
+        InventoryService(db).register_invoice_issue(invoice)
         AccountingService(db).record_invoice_issued(invoice)
 
     issued = repository.get_by_id(invoice_id)
