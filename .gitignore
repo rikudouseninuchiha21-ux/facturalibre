@@ -1,0 +1,30 @@
+# Entorno
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+build/
+
+# Logs
+*.log
+
+# Sistema
+.DS_Store
