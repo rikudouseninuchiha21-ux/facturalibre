@@ -6,14 +6,14 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 4b: estructura, infraestructura y esquema de datos inicial.
+Fase 3a: CRUD de catálogos maestros sobre el esquema de datos inicial.
 
-- Backend FastAPI con un único endpoint: `GET /health`.
+- Backend FastAPI con `GET /health` y CRUD de catálogos (`contacts`, `items`, `taxes`).
 - PostgreSQL 16 en Docker, sin puerto expuesto al host.
 - Backend accesible solo en `127.0.0.1:8000` para desarrollo.
 - Ocho tablas de dominio y su primera migración de Alembic.
 - Frontend todavía no scaffolded; solo existe `frontend/README.md`.
-- Sin lógica de negocio ni endpoints de facturación.
+- Sin facturas, pagos ni numeración todavía.
 
 ## Requisitos
 
@@ -71,8 +71,8 @@ uv sync
 uv run pytest
 ```
 
-Las pruebas de `/health` no necesitan base de datos. Las pruebas de esquema usan
-`TEST_DATABASE_URL` contra un PostgreSQL real; consulta `backend/README.md`.
+Las pruebas de `/health` no necesitan base de datos. Las pruebas de esquema y de
+CRUD usan `TEST_DATABASE_URL` contra un PostgreSQL real; consulta `backend/README.md`.
 
 ## Calidad de código
 
