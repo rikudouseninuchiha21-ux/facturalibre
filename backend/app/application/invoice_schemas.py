@@ -55,6 +55,14 @@ class InvoiceCreate(BaseModel):
         return self
 
 
+class VoidInvoiceRequest(BaseModel):
+    """Motivo obligatorio para anular una factura emitida."""
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    reason: str = Field(min_length=1, max_length=500)
+
+
 class InvoiceLineRead(BaseModel):
     """Representación pública de una línea de factura."""
 
@@ -85,6 +93,8 @@ class InvoiceRead(BaseModel):
     currency: str
     lifecycle_status: LifecycleStatus
     payment_status: PaymentStatus
+    voided_reason: str | None
+    voided_at: datetime | None
     subtotal: Decimal
     tax_total: Decimal
     total: Decimal

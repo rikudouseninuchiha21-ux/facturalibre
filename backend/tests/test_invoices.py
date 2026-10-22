@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
@@ -106,6 +107,27 @@ def _post_invoice(
         "/api/v1/invoices",
         json=payload,
         headers={"Idempotency-Key": key or str(uuid4())},
+    )
+
+
+def _issued_invoice(client: TestClient) -> dict[str, object]:
+    contact_id, item_id = _setup_invoice_data(client)
+    created = _post_invoice(client, _three_line_payload(contact_id, item_id))
+    assert created.status_code == 201, created.text
+
+    issued = client.post(f"/api/v1/invoices/{created.json()['id']}/issue")
+    assert issued.status_code == 200, issued.text
+    return issued.json()
+
+
+def _void(
+    client: TestClient,
+    invoice_id: object,
+    reason: str = "Error en monto",
+) -> Response:
+    return client.post(
+        f"/api/v1/invoices/{invoice_id}/void",
+        json={"reason": reason},
     )
 
 
@@ -337,3 +359,126 @@ def test_calculation_rounding_matches_expected_values() -> None:
     assert totals.tax_total == Decimal("37.24")
     assert totals.total == Decimal("233.24")
     assert totals.balance == Decimal("233.24")
+
+
+def test_void_issued_invoice_without_payments(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+    issued_version = invoice["version"]
+
+    response = _void(client, invoice["id"], "Error en monto")
+
+    assert response.status_code == 200, response.text
+    voided = response.json()
+    assert voided["lifecycle_status"] == "void"
+    assert voided["voided_reason"] == "Error en monto"
+    assert voided["voided_at"] is not None
+    assert voided["version"] == issued_version + 1
+    assert voided["payment_status"] == "unpaid"
+
+
+def test_get_invoice_shows_void_fields(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+    assert _void(client, invoice["id"], "Cliente canceló").status_code == 200
+
+    fetched = client.get(f"/api/v1/invoices/{invoice['id']}")
+
+    assert fetched.status_code == 200
+    data = fetched.json()
+    assert data["lifecycle_status"] == "void"
+    assert data["voided_reason"] == "Cliente canceló"
+    assert data["voided_at"] is not None
+
+
+def test_void_draft_invoice_returns_409(client: TestClient) -> None:
+    contact_id, item_id = _setup_invoice_data(client)
+    draft = _post_invoice(client, _three_line_payload(contact_id, item_id))
+
+    response = _void(client, draft.json()["id"])
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "No se puede anular un borrador, elimínelo",
+    }
+
+
+def test_void_already_void_invoice_returns_409(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+    first = _void(client, invoice["id"])
+    assert first.status_code == 200, first.text
+
+    repeated = _void(client, invoice["id"], "Segundo intento")
+
+    assert repeated.status_code == 409
+    assert repeated.json() == {"detail": "Factura ya anulada"}
+
+
+def test_void_invoice_with_payment_returns_409(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+    payment = client.post(
+        f"/api/v1/invoices/{invoice['id']}/payments",
+        headers={"Idempotency-Key": str(uuid4())},
+        json={
+            "amount": "10.00",
+            "payment_date": date.today().isoformat(),
+            "method": "cash",
+        },
+    )
+    assert payment.status_code == 201, payment.text
+
+    response = _void(client, invoice["id"])
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "Factura con pagos. Use nota crédito (no implementada en MVP)",
+    }
+    still_issued = client.get(f"/api/v1/invoices/{invoice['id']}").json()
+    assert still_issued["lifecycle_status"] == "issued"
+    assert still_issued["payment_status"] == "partially_paid"
+
+
+def test_void_missing_reason_is_422(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+
+    response = client.post(f"/api/v1/invoices/{invoice['id']}/void", json={})
+
+    assert response.status_code == 422
+
+
+def test_void_empty_reason_is_422(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+
+    for reason in ("", "   "):
+        response = client.post(
+            f"/api/v1/invoices/{invoice['id']}/void",
+            json={"reason": reason},
+        )
+        assert response.status_code == 422
+
+
+def test_issue_void_invoice_returns_409(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+    assert _void(client, invoice["id"]).status_code == 200
+
+    response = client.post(f"/api/v1/invoices/{invoice['id']}/issue")
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": "Solo se emiten facturas en estado borrador",
+    }
+
+
+def test_delete_void_invoice_returns_409(client: TestClient) -> None:
+    invoice = _issued_invoice(client)
+    assert _void(client, invoice["id"]).status_code == 200
+
+    response = client.delete(f"/api/v1/invoices/{invoice['id']}")
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Solo se eliminan borradores"}
+
+
+def test_void_missing_invoice_returns_404(client: TestClient) -> None:
+    response = _void(client, uuid4())
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Factura no encontrada"}

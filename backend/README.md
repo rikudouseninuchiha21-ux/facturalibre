@@ -2,8 +2,8 @@
 
 Backend del MVP: FastAPI, SQLAlchemy 2, Alembic y PostgreSQL 16. En esta etapa
 existe `GET /health`, el esquema de datos inicial, los CRUD de catálogos maestros
-(`contacts`, `items`, `taxes`), la creación/emisión de facturas y los pagos sobre
-facturas emitidas. **Todavía no hay notas crédito, anulación ni pagos
+(`contacts`, `items`, `taxes`), la creación/emisión/anulación de facturas y los
+pagos sobre facturas emitidas. **Todavía no hay notas crédito ni pagos
 multi-factura.**
 
 ## Requisitos
@@ -224,6 +224,12 @@ curl -s -X POST "$BASE/invoices" \
 # Reemplaza INVOICE_ID por el id devuelto al crear la factura.
 curl -s -X POST "$BASE/invoices/$INVOICE_ID/issue"
 
+# Anular una factura emitida que no tenga pagos. El motivo es obligatorio
+# (1 a 500 caracteres). Si tiene pagos responde 409: no hay devolución en el MVP.
+curl -s -X POST "$BASE/invoices/$INVOICE_ID/void" \
+  -H 'Content-Type: application/json' \
+  -d '{"reason":"Error en monto"}'
+
 # Consultar una factura con sus líneas
 curl -s "$BASE/invoices/$INVOICE_ID"
 
@@ -315,7 +321,8 @@ uv run alembic upgrade head          # vuelve a aplicar todo
 
 La migración inicial crea las tablas `contacts`, `items`, `taxes`, `invoices`,
 `invoice_lines`, `payments`, `number_sequences` e `idempotency_keys`, además de
-los tipos ENUM de estado de factura.
+los tipos ENUM de estado de factura. La migración `20261021_0002` añade
+`voided_reason` y `voided_at` a `invoices`; su `downgrade` elimina ambas columnas.
 
 ### Base de datos de test
 
@@ -378,7 +385,7 @@ backend/
       contacts.py              # CRUD de contactos
       items.py                 # CRUD de ítems
       taxes.py                 # CRUD de impuestos
-      invoices.py              # crear, emitir, consultar y borrar borradores
+      invoices.py              # crear, emitir, anular, consultar y borrar borradores
       payments.py              # pagos sobre facturas emitidas
   tests/
     conftest.py                # PostgreSQL de test y sesión transaccional

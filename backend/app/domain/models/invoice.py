@@ -113,6 +113,10 @@ class Invoice(Base):
         index=True,
     )
 
+    # Solo se llenan cuando la factura se anula.
+    voided_reason: Mapped[str | None] = mapped_column(String(500))
+    voided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
     subtotal: Mapped[Decimal] = mapped_column(
         Numeric(18, 2), nullable=False, server_default=text("0")
     )

@@ -17,6 +17,7 @@ from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
 from app.domain.models.invoice_line import InvoiceLine
 from app.domain.models.number_sequence import NumberSequence
+from app.domain.models.payment import Payment
 
 INVOICE_SEQUENCE_NAME = "invoice"
 INVOICE_SEQUENCE_PREFIX = "FV"
@@ -154,6 +155,40 @@ class InvoiceRepository:
         if issued is None:
             raise ResourceNotFoundError("Factura no encontrada")
         return issued
+
+    def void_invoice(self, invoice_id: UUID, reason: str) -> Invoice:
+        """Anula una factura emitida sin pagos, bloqueando la fila.
+
+        El lock serializa este void con pagos y con otros voids concurrentes.
+        No modifica payment_status: en el MVP solo se anulan facturas sin pagos.
+        """
+        invoice = self.db.scalar(select(Invoice).where(Invoice.id == invoice_id).with_for_update())
+        if invoice is None:
+            raise ResourceNotFoundError("Factura no encontrada")
+        if invoice.lifecycle_status is LifecycleStatus.DRAFT:
+            raise InvoiceStateError("No se puede anular un borrador, elimínelo")
+        if invoice.lifecycle_status is LifecycleStatus.VOID:
+            raise InvoiceStateError("Factura ya anulada")
+
+        payment_id = self.db.scalar(
+            select(Payment.id).where(Payment.invoice_id == invoice_id).limit(1)
+        )
+        if payment_id is not None:
+            raise InvoiceStateError("Factura con pagos. Use nota crédito (no implementada en MVP)")
+
+        now = datetime.now(UTC)
+        invoice.lifecycle_status = LifecycleStatus.VOID
+        invoice.voided_reason = reason
+        invoice.voided_at = now
+        invoice.version += 1
+        invoice.updated_at = now
+
+        self.db.commit()
+        self.db.refresh(invoice)
+        voided = self.get_by_id(invoice_id)
+        if voided is None:
+            raise ResourceNotFoundError("Factura no encontrada")
+        return voided
 
     def delete_draft(self, invoice_id: UUID) -> None:
         """Elimina físicamente una factura DRAFT.

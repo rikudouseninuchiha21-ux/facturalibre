@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.application.invoice_schemas import (
     InvoiceCreate,
     InvoiceRead,
+    VoidInvoiceRequest,
     canonical_body_hash,
 )
 from app.domain.calculations import (
@@ -175,6 +176,17 @@ def issue_invoice(
 ) -> InvoiceRead:
     """Emite una factura DRAFT y le asigna número."""
     invoice = repository.issue(invoice_id)
+    return InvoiceRead.model_validate(invoice)
+
+
+@router.post("/{invoice_id}/void", response_model=InvoiceRead)
+def void_invoice(
+    invoice_id: UUID,
+    payload: VoidInvoiceRequest,
+    repository: InvoiceRepositoryDep,
+) -> InvoiceRead:
+    """Anula una factura emitida que no tenga pagos."""
+    invoice = repository.void_invoice(invoice_id, payload.reason)
     return InvoiceRead.model_validate(invoice)
 
 
