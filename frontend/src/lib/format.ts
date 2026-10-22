@@ -17,6 +17,25 @@ export function formatCurrency(value: string, currency = "COP"): string {
   }
 }
 
+const MONTH_NAMES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+] as const;
+
+export function formatMonth(month: number): string {
+  return MONTH_NAMES[month - 1] ?? `Mes ${month}`;
+}
+
 export function formatQuantity(value: string): string {
   const amount = Number(value);
 

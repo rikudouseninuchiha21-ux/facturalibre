@@ -134,6 +134,61 @@ export interface StockMovement {
   created_at: string;
 }
 
+export interface Employee {
+  id: string;
+  document: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  base_salary: string;
+  start_date: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface EmployeeCreateInput {
+  document: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  base_salary: string;
+  start_date: string;
+  is_active?: boolean;
+}
+
+export type PayrollPeriodStatus = "DRAFT" | "CLOSED";
+
+export interface PayrollDetail {
+  id: string;
+  period_id: string;
+  employee_id: string;
+  employee_name: string;
+  employee_document: string;
+  base_salary: string;
+  health_deduction: string;
+  pension_deduction: string;
+  net_pay: string;
+  created_at: string;
+}
+
+export interface PayrollPeriod {
+  id: string;
+  month: number;
+  year: number;
+  status: PayrollPeriodStatus;
+  created_at: string;
+  details: PayrollDetail[];
+  total_base: string;
+  total_health: string;
+  total_pension: string;
+  total_net: string;
+}
+
+export interface PayrollPeriodCreateInput {
+  month: number;
+  year: number;
+}
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -301,4 +356,28 @@ export function registerMovement(
   payload: StockMovementInput,
 ): Promise<StockMovement> {
   return apiPost<StockMovement>("/inventory/movements", payload);
+}
+
+export function getEmployees(): Promise<Employee[]> {
+  return apiGet<Employee[]>("/employees");
+}
+
+export function createEmployee(payload: EmployeeCreateInput): Promise<Employee> {
+  return apiPost<Employee>("/employees", payload);
+}
+
+export function getPayrollPeriods(): Promise<PayrollPeriod[]> {
+  return apiGet<PayrollPeriod[]>("/payroll/periods");
+}
+
+export function createPayrollPeriod(
+  payload: PayrollPeriodCreateInput,
+): Promise<PayrollPeriod> {
+  return apiPost<PayrollPeriod>("/payroll/periods", payload);
+}
+
+export function calculatePayroll(periodId: string): Promise<PayrollPeriod> {
+  return apiPost<PayrollPeriod>(
+    `/payroll/periods/${encodeURIComponent(periodId)}/calculate`,
+  );
 }

@@ -33,6 +33,18 @@ const sections = [
     description:
       "Consulta los saldos por producto y bodega, y registra entradas o salidas.",
   },
+  {
+    href: "/employees",
+    title: "Empleados",
+    description:
+      "Registra los empleados activos y consulta su documento y salario base.",
+  },
+  {
+    href: "/payroll",
+    title: "Nómina",
+    description:
+      "Abre periodos mensuales, calcula deducciones y consulta el estado del cierre.",
+  },
 ];
 
 export default function HomePage() {
@@ -47,7 +59,8 @@ export default function HomePage() {
         </h1>
         <p className="mt-3 text-base leading-7 text-slate-600">
           Interfaz administrativa para consultar y operar los contactos, las
-          facturas, las bodegas y el inventario gestionados por la API.
+          facturas, las bodegas, el inventario, los empleados y la nómina
+          gestionados por la API.
         </p>
       </section>
 
@@ -82,18 +95,18 @@ export default function HomePage() {
         <CardHeader>
           <CardTitle>Estado de la fase</CardTitle>
           <CardDescription>
-            Fase 5B-2: bodegas, saldos y movimientos de inventario en la
-            interfaz.
+            Fase 5C-2: empleados y liquidación básica de nómina en la interfaz.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
             <li>
-              Consulta de contactos, facturas, bodegas y saldos de inventario.
+              Consulta de contactos, facturas, bodegas, inventario y empleados.
             </li>
             <li>
-              Formularios para crear contactos, bodegas y movimientos de stock.
+              Formularios para crear empleados y periodos de nómina.
             </li>
+            <li>Cálculo de nómina con actualización del estado del periodo.</li>
             <li>Proxy same-origin para evitar CORS en el navegador.</li>
             <li>Sin autenticación ni estado global.</li>
           </ul>
