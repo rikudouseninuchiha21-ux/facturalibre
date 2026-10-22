@@ -6,15 +6,16 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 3b-1: facturas en borrador, emisión y consulta sobre el esquema inicial.
+Fase 3b-2: pagos sobre facturas emitidas.
 
-- Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`) y facturas
-  (`invoices`): crear, emitir, consultar y borrar borradores.
+- Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`), facturas
+  (`invoices`) y pagos (`payments`): crear, emitir, consultar y borrar
+  borradores; registrar, listar y eliminar pagos con idempotencia.
 - PostgreSQL 16 en Docker, sin puerto expuesto al host.
 - Backend accesible solo en `127.0.0.1:8000` para desarrollo.
 - Ocho tablas de dominio y su primera migración de Alembic.
 - Frontend todavía no scaffolded; solo existe `frontend/README.md`.
-- Sin pagos, anulación ni notas crédito todavía.
+- Sin anulación ni notas crédito todavía.
 
 ## Requisitos
 
@@ -72,8 +73,8 @@ uv sync
 uv run pytest
 ```
 
-Las pruebas de `/health` no necesitan base de datos. Las pruebas de esquema y de
-CRUD y facturas usan `TEST_DATABASE_URL` contra un PostgreSQL real; consulta
+Las pruebas de `/health` no necesitan base de datos. Las pruebas de esquema, CRUD,
+facturas y pagos usan `TEST_DATABASE_URL` contra un PostgreSQL real; consulta
 `backend/README.md`.
 
 ## Calidad de código

@@ -12,6 +12,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 
+from app.domain.models.invoice import PaymentStatus
+
 CENT = Decimal("0.01")
 ONE_HUNDRED = Decimal("100")
 ZERO_MONEY = Decimal("0.00")
@@ -79,3 +81,12 @@ def calculate_invoice_totals(lines: Iterable[LineAmounts]) -> InvoiceAmounts:
         total=round_money(total),
         balance=round_money(total),
     )
+
+
+def payment_status_for_balance(*, total: Decimal, balance: Decimal) -> PaymentStatus:
+    """Deriva el estado de pago a partir del saldo de la factura."""
+    if balance == ZERO_MONEY:
+        return PaymentStatus.PAID
+    if balance < total:
+        return PaymentStatus.PARTIALLY_PAID
+    return PaymentStatus.UNPAID

@@ -1,8 +1,10 @@
 # Backend — FacturaLibre
 
 Backend del MVP: FastAPI, SQLAlchemy 2, Alembic y PostgreSQL 16. En esta etapa
-existe `GET /health`, el esquema de datos inicial y los CRUD de catálogos maestros
-(`contacts`, `items`, `taxes`). **Todavía no hay facturas, pagos ni numeración.**
+existe `GET /health`, el esquema de datos inicial, los CRUD de catálogos maestros
+(`contacts`, `items`, `taxes`), la creación/emisión de facturas y los pagos sobre
+facturas emitidas. **Todavía no hay notas crédito, anulación ni pagos
+multi-factura.**
 
 ## Requisitos
 
@@ -181,6 +183,45 @@ curl -s "$BASE/invoices?limit=20&offset=0"
 curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/invoices/$INVOICE_ID"
 ```
 
+## Endpoints de pagos
+
+Los pagos solo se aceptan sobre facturas `issued`. El `POST` requiere el header
+`Idempotency-Key` con un UUID: la misma Key con el mismo body devuelve el pago
+original sin duplicarlo; con otro body responde `409`. El monto debe ser mayor
+que cero, tener máximo dos decimales, no superar el saldo de la factura y usar
+una fecha de pago no futura. Un sobrepago responde `422` y una factura que no
+está emitida responde `409`.
+
+Cada pago actualiza el saldo, el `payment_status`, la `version` y el
+`updated_at` de la factura en la misma transacción. Eliminar un pago vuelve a
+calcular esos valores y responde `404` si el pago ya no existe.
+
+```bash
+# Pagar una factura emitida. Reemplaza INVOICE_ID por el id de la factura.
+PAYMENT_KEY=$(python -c 'import uuid; print(uuid.uuid4())')
+
+curl -s -X POST "$BASE/invoices/$INVOICE_ID/payments" \
+  -H 'Content-Type: application/json' \
+  -H "Idempotency-Key: $PAYMENT_KEY" \
+  -d '{
+    "amount": "50.00",
+    "payment_date": "2026-10-21",
+    "method": "transfer",
+    "reference": "TRX-001"
+  }'
+
+# Listar pagos por fecha descendente, con paginación
+curl -s "$BASE/invoices/$INVOICE_ID/payments?limit=20&offset=0"
+
+# Eliminar un pago (hard delete); vuelve a calcular saldo y estado
+# Reemplaza PAYMENT_ID por el id devuelto al crear el pago.
+curl -s -o /dev/null -w '%{http_code}\n' \
+  -X DELETE "$BASE/invoices/$INVOICE_ID/payments/$PAYMENT_ID"
+```
+
+Ejemplo numérico: una factura con total `119.00` que recibe un pago de `50.00`
+queda con balance `69.00` y `payment_status` en `partially_paid`.
+
 ## Ejecutar solo el backend con uv
 
 Necesitas una instancia de PostgreSQL accesible. La URL se lee de `DATABASE_URL`
@@ -227,8 +268,8 @@ los tipos ENUM de estado de factura.
 
 ### Base de datos de test
 
-`tests/test_schema.py`, los tests CRUD y los tests de facturas requieren una base
-PostgreSQL real y **separada** de la de desarrollo. La variable
+`tests/test_schema.py`, los tests CRUD, los tests de facturas y los tests de pagos
+requieren una base PostgreSQL real y **separada** de la de desarrollo. La variable
 `TEST_DATABASE_URL` no se lee de `.env`: se pasa por el entorno. Un ejemplo con
 un contenedor temporal, sin tocar `docker-compose.yml`:
 
@@ -275,10 +316,10 @@ backend/
       models/                  # Contact, Item, Tax, Invoice, InvoiceLine, Payment,
                                # NumberSequence e IdempotencyKey
       *_repository.py           # consultas y updates con SQLAlchemy 2
-      calculations.py           # redondeo y totales puros de facturas
+      calculations.py           # redondeo, totales y estado de pago
       exceptions.py            # errores de recurso ausente, versión y estado
     application/
-      *_schemas.py             # schemas Pydantic v2 de catálogos y facturas
+      *_schemas.py             # schemas Pydantic v2 de catálogos, facturas y pagos
     infrastructure/
       database.py              # engine, SessionLocal, Base y get_db()
       migrations/              # env.py, plantilla y versiones de Alembic
@@ -287,6 +328,7 @@ backend/
       items.py                 # CRUD de ítems
       taxes.py                 # CRUD de impuestos
       invoices.py              # crear, emitir, consultar y borrar borradores
+      payments.py              # pagos sobre facturas emitidas
   tests/
     conftest.py                # PostgreSQL de test y sesión transaccional
     test_health.py             # smoke test de /health
@@ -295,6 +337,7 @@ backend/
     test_items.py              # CRUD y optimistic locking de ítems
     test_taxes.py              # CRUD y optimistic locking de impuestos
     test_invoices.py           # cálculos, idempotencia, numeración y estados
+    test_payments.py           # pagos, saldos, idempotencia y borrado
   Dockerfile
   entrypoint.sh                # espera PostgreSQL, migra y cede el control al CMD
   pyproject.toml
