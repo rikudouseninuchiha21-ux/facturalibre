@@ -89,6 +89,51 @@ export interface Invoice {
   lines: InvoiceLine[];
 }
 
+export interface Warehouse {
+  id: string;
+  name: string;
+  code: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WarehouseCreateInput {
+  name: string;
+  code: string;
+}
+
+export type StockMovementType = "IN" | "OUT";
+
+export interface StockBalance {
+  item_id: string;
+  item_name: string;
+  warehouse_id: string;
+  warehouse_name: string;
+  quantity: string;
+  updated_at: string;
+}
+
+export interface StockMovementInput {
+  item_id: string;
+  warehouse_id: string;
+  movement_type: StockMovementType;
+  quantity: string;
+  unit_cost?: string;
+  reference?: string;
+}
+
+export interface StockMovement {
+  id: string;
+  item_id: string;
+  warehouse_id: string;
+  movement_type: StockMovementType;
+  quantity: string;
+  unit_cost: string | null;
+  reference: string | null;
+  created_at: string;
+}
+
 export class ApiError extends Error {
   readonly status: number;
 
@@ -236,4 +281,24 @@ export function voidInvoice(
     `/invoices/${encodeURIComponent(invoiceId)}/void`,
     payload,
   );
+}
+
+export function getWarehouses(): Promise<Warehouse[]> {
+  return apiGet<Warehouse[]>("/warehouses");
+}
+
+export function createWarehouse(
+  payload: WarehouseCreateInput,
+): Promise<Warehouse> {
+  return apiPost<Warehouse>("/warehouses", payload);
+}
+
+export function getStockBalances(): Promise<StockBalance[]> {
+  return apiGet<StockBalance[]>("/inventory/balances");
+}
+
+export function registerMovement(
+  payload: StockMovementInput,
+): Promise<StockMovement> {
+  return apiPost<StockMovement>("/inventory/movements", payload);
 }

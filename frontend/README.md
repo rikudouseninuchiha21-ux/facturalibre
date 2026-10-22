@@ -1,7 +1,8 @@
 # Frontend — FacturaLibre MVP
 
-Interfaz administrativa mínima para consultar contactos y facturas desde la API
-de FacturaLibre.
+Interfaz administrativa para consultar contactos, facturas, bodegas e inventario,
+y registrar contactos, bodegas y movimientos de stock desde la API de
+FacturaLibre.
 
 ## Stack
 
@@ -20,24 +21,32 @@ frontend/
 │   ├── app/
 │   │   ├── layout.tsx
 │   │   ├── page.tsx                 # Dashboard
-│   │   ├── contacts/page.tsx        # Listado de contactos
-│   │   └── invoices/page.tsx        # Listado de facturas
-│   ├── components/ui/
-│   │   ├── button.tsx
-│   │   ├── card.tsx
-│   │   └── table.tsx
+│   │   ├── contacts/page.tsx        # Contactos + formulario
+│   │   ├── invoices/page.tsx        # Listado de facturas
+│   │   ├── warehouses/page.tsx      # Bodegas + formulario
+│   │   └── inventory/page.tsx       # Saldos + formulario de movimientos
+│   ├── components/
+│   │   ├── contacts/ContactForm.tsx
+│   │   ├── inventory/MovementForm.tsx
+│   │   ├── invoices/InvoiceActions.tsx
+│   │   ├── warehouses/WarehouseForm.tsx
+│   │   └── ui/
+│   │       ├── button.tsx
+│   │       ├── card.tsx
+│   │       └── table.tsx
 │   └── lib/
 │       ├── api.ts                   # Cliente HTTP y tipos de la API
-│       └── format.ts                # Formato de moneda
+│       └── format.ts                # Formato de moneda y cantidades
 ├── Dockerfile
 ├── next.config.mjs
 ├── package.json
 └── pnpm-lock.yaml
 ```
 
-Las páginas `/contacts` y `/invoices` son Server Components. Consultan el backend
-en cada petición (`cache: "no-store"`), por lo que siempre muestran datos
-actuales.
+Las páginas de listado son Server Components. Consultan el backend en cada
+petición (`cache: "no-store"`), por lo que siempre muestran datos actuales. Los
+formularios son Client Components y refrescan la página con `router.refresh()`
+después de guardar.
 
 ## Arranque con Docker
 
@@ -128,18 +137,25 @@ curl -i http://127.0.0.1:3000/api/v1/contacts
 ```
 
 La respuesta debe ser `HTTP/1.1 200 OK` y un arreglo JSON de contactos. También
-puedes verificar las páginas:
+puedes verificar las páginas y los endpoints de inventario:
 
 ```bash
 curl -I http://127.0.0.1:3000/contacts
 curl -I http://127.0.0.1:3000/invoices
+curl -I http://127.0.0.1:3000/warehouses
+curl -I http://127.0.0.1:3000/inventory
+curl -s http://127.0.0.1:3000/api/v1/warehouses
+curl -s http://127.0.0.1:3000/api/v1/inventory/balances
 ```
 
-Después abre <http://127.0.0.1:3000/contacts> y
-<http://127.0.0.1:3000/invoices>.
+Después abre <http://127.0.0.1:3000/warehouses> y crea una bodega con código
+`PRINCIPAL`. Luego entra a <http://127.0.0.1:3000/inventory> para registrar una
+entrada `IN` y comprobar que aparece el saldo. Una salida `OUT` mayor que el
+stock disponible debe mostrar el error `Stock insuficiente...` sin modificar la
+tabla.
 
-Si el listado está vacío, crea datos mediante la API; el scaffold no incluye
-formularios de creación.
+Si no hay ítems disponibles, créalos mediante `POST /api/v1/items`; el frontend
+actual no incluye formulario de ítems.
 
 ## Calidad
 
@@ -151,6 +167,7 @@ pnpm build
 
 ## Alcance actual
 
-Este scaffold incluye únicamente consultas de lectura. No incluye formularios de
-creación o edición, autenticación, estado global ni lógica de negocio. Esas
-partes corresponden a fases posteriores.
+Incluye consultas de contactos, facturas, bodegas y saldos de inventario;
+creación de contactos y bodegas; emisión y anulación de facturas; y registro de
+movimientos de stock `IN`/`OUT`. No incluye autenticación, estado global ni
+formularios de ítems, impuestos o edición de bodegas.

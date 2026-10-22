@@ -16,3 +16,16 @@ export function formatCurrency(value: string, currency = "COP"): string {
     return `${value} ${currency}`;
   }
 }
+
+export function formatQuantity(value: string): string {
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount)) {
+    return value;
+  }
+
+  return new Intl.NumberFormat("es-CO", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 4,
+  }).format(amount);
+}

@@ -13,13 +13,25 @@ const sections = [
     href: "/contacts",
     title: "Contactos",
     description:
-      "Consulta los clientes y proveedores registrados en el backend.",
+      "Consulta los clientes y proveedores registrados y crea nuevos contactos.",
   },
   {
     href: "/invoices",
     title: "Facturas",
     description:
       "Revisa el estado, el total y el saldo pendiente de cada factura.",
+  },
+  {
+    href: "/warehouses",
+    title: "Bodegas",
+    description:
+      "Crea y consulta las ubicaciones donde se mantiene el stock de los productos.",
+  },
+  {
+    href: "/inventory",
+    title: "Inventario",
+    description:
+      "Consulta los saldos por producto y bodega, y registra entradas o salidas.",
   },
 ];
 
@@ -34,10 +46,8 @@ export default function HomePage() {
           FacturaLibre - MVP
         </h1>
         <p className="mt-3 text-base leading-7 text-slate-600">
-          Interfaz administrativa mínima para consultar la información
-          gestionada por la API. Esta primera parte del frontend prioriza el
-          listado de datos; los formularios y la autenticación llegan en fases
-          posteriores.
+          Interfaz administrativa para consultar y operar los contactos, las
+          facturas, las bodegas y el inventario gestionados por la API.
         </p>
       </section>
 
@@ -59,7 +69,7 @@ export default function HomePage() {
                 </CardHeader>
                 <CardContent>
                   <span className="text-sm font-semibold text-blue-600 group-hover:text-blue-700">
-                    Ver listado <span aria-hidden="true">→</span>
+                    Abrir módulo <span aria-hidden="true">→</span>
                   </span>
                 </CardContent>
               </Card>
@@ -72,15 +82,19 @@ export default function HomePage() {
         <CardHeader>
           <CardTitle>Estado de la fase</CardTitle>
           <CardDescription>
-            Scaffold de Next.js con App Router, TypeScript, Tailwind CSS y
-            componentes reutilizables.
+            Fase 5B-2: bodegas, saldos y movimientos de inventario en la
+            interfaz.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-            <li>Consulta de contactos y facturas desde el backend.</li>
+            <li>
+              Consulta de contactos, facturas, bodegas y saldos de inventario.
+            </li>
+            <li>
+              Formularios para crear contactos, bodegas y movimientos de stock.
+            </li>
             <li>Proxy same-origin para evitar CORS en el navegador.</li>
-            <li>Sin formularios de creación o edición.</li>
             <li>Sin autenticación ni estado global.</li>
           </ul>
         </CardContent>

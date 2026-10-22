@@ -15,6 +15,8 @@ export const metadata: Metadata = {
 const navigation = [
   { href: "/contacts", label: "Contactos" },
   { href: "/invoices", label: "Facturas" },
+  { href: "/warehouses", label: "Bodegas" },
+  { href: "/inventory", label: "Inventario" },
 ];
 
 export default function RootLayout({
@@ -27,7 +29,7 @@ export default function RootLayout({
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
             <Link
               href="/"
-              className="flex items-center gap-2 text-lg font-semibold tracking-tight"
+              className="flex shrink-0 items-center gap-2 text-lg font-semibold tracking-tight"
             >
               <span
                 aria-hidden="true"
@@ -40,7 +42,7 @@ export default function RootLayout({
 
             <nav
               aria-label="Navegación principal"
-              className="flex items-center gap-1 text-sm font-medium"
+              className="flex flex-wrap items-center justify-end gap-1 text-sm font-medium"
             >
               {navigation.map((item) => (
                 <Link
@@ -61,7 +63,7 @@ export default function RootLayout({
 
         <footer className="border-t border-slate-200 bg-white">
           <div className="mx-auto w-full max-w-6xl px-4 py-5 text-sm text-slate-500 sm:px-6 lg:px-8">
-            FacturaLibre MVP · Fase 4C
+            FacturaLibre MVP · Fase 5B-2
           </div>
         </footer>
       </body>
