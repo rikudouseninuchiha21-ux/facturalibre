@@ -1,8 +1,9 @@
 # Solo para desarrollo local. En producción NO usar este override.
 #
 # Docker Compose fusiona este archivo automáticamente con docker-compose.yml
-# cuando se ejecuta `docker compose up` sin `-f`. El entrypoint se conserva:
-# solo se reemplaza el CMD para añadir la recarga automática de Uvicorn.
+# cuando se ejecuta `docker compose up` sin `-f`. En el backend se conserva el
+# entrypoint y solo se reemplaza el CMD para añadir la recarga de Uvicorn. En el
+# frontend se usa la etapa dev y se monta src/ para el hot-reload de Next.js.
 services:
   backend:
     volumes:
@@ -19,3 +20,20 @@ services:
       # Limita el watcher al código de la aplicación; evita recorrer .venv.
       - --reload-dir
       - /app/app
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      # La etapa dev incluye dependencias de desarrollo y el código fuente.
+      target: dev
+      args:
+        BACKEND_INTERNAL_URL: "http://backend:8000"
+    volumes:
+      # Next.js recarga automáticamente al cambiar archivos de src/.
+      - ./frontend/src:/app/src:rw
+    command:
+      - pnpm
+      - dev
+      - --hostname
+      - 0.0.0.0

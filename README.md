@@ -6,7 +6,7 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 3b-4: soft delete de facturas.
+Fase 4C-1: scaffold del frontend.
 
 - Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`), facturas
   (`invoices`) y pagos (`payments`): crear, emitir, consultar, anular y borrar
@@ -14,14 +14,16 @@ Fase 3b-4: soft delete de facturas.
 - PostgreSQL 16 en Docker, sin puerto expuesto al host.
 - Backend accesible solo en `127.0.0.1:8000` para desarrollo.
 - Ocho tablas de dominio y migraciones de Alembic.
-- Frontend todavía no scaffolded; solo existe `frontend/README.md`.
+- Frontend Next.js 16 con App Router, TypeScript, Tailwind CSS y `pnpm`.
+  Incluye dashboard, listado de contactos y listado de facturas.
+- Sin formularios, autenticación ni estado global en el frontend todavía.
 - Sin notas crédito ni devolución de pagos todavía.
 
 ## Requisitos
 
 - Docker Engine con Docker Compose v2.
 - `uv` para ejecutar el backend fuera de Docker.
-- `pnpm` para el frontend, cuando se cree en la siguiente fase.
+- `pnpm` 10 y Node.js 20.9+ para ejecutar el frontend fuera de Docker.
 - Python 3.12+ solo si corres el backend localmente.
 
 ## Arranque rápido
@@ -32,12 +34,18 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Cuando ambos servicios estén sanos:
+Cuando los servicios estén sanos:
 
 ```bash
 curl http://127.0.0.1:8000/health
 # {"status":"ok"}
+
+curl -I http://127.0.0.1:3000/
+# HTTP/1.1 200 OK
 ```
+
+El frontend queda disponible en <http://127.0.0.1:3000>. El rewrite de Next.js
+reenvía `/api/v1/*` al backend, así que el navegador no necesita CORS.
 
 La base de datos **no** está publicada en el host: solo el backend puede hablar con ella dentro de la red de Compose.
 
@@ -50,7 +58,7 @@ docker compose exec backend alembic upgrade head
 Para ver logs:
 
 ```bash
-docker compose logs -f backend
+docker compose logs -f backend frontend
 ```
 
 Para detener:
@@ -86,6 +94,14 @@ uv run ruff format --check .
 uv run mypy app
 ```
 
+Frontend:
+
+```bash
+cd frontend
+pnpm lint
+pnpm build
+```
+
 ## Estructura
 
 ```text
@@ -103,8 +119,14 @@ uv run mypy app
 │   ├── pyproject.toml
 │   └── README.md
 ├── frontend/
-│   ├── README.md
-│   └── .gitkeep
+│   ├── src/
+│   │   ├── app/
+│   │   ├── components/ui/
+│   │   └── lib/
+│   ├── Dockerfile
+│   ├── next.config.mjs
+│   ├── package.json
+│   └── README.md
 ├── specs/
 ├── docker-compose.yml
 ├── .env.example
@@ -123,4 +145,5 @@ uv run mypy app
 - El backend lee `DATABASE_URL` desde el entorno; Docker Compose la construye con las variables `POSTGRES_*`.
 - El `Dockerfile` instala `uv` sin fijar versión todavía; se fijará antes de producción.
 - No hay `uv.lock` en esta etapa; se genera al ejecutar `uv sync` y conviene commitearlo.
-- El frontend se creará con `create-next-app` en un sub-paso posterior.
+- El frontend usa `BACKEND_INTERNAL_URL` para el rewrite y los Server Components;
+  en Docker Compose vale `http://backend:8000`.

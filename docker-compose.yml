@@ -46,19 +46,23 @@ services:
     networks:
       - internal
 
-  # El frontend se activa en un sub-paso posterior, cuando exista el scaffold de Next.js.
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   restart: unless-stopped
-  #   depends_on:
-  #     backend:
-  #       condition: service_healthy
-  #   ports:
-  #     - "127.0.0.1:3000:3000"
-  #   networks:
-  #     - internal
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # Se usa tanto en el rewrite de Next.js como en los Server Components.
+        BACKEND_INTERNAL_URL: "http://backend:8000"
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_INTERNAL_URL: "http://backend:8000"
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - internal
 
 volumes:
   postgres_data:
