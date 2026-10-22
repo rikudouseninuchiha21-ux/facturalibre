@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterator
-from contextlib import contextmanager
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -12,6 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.application.accounting.service import AccountingService
 from app.application.payment_schemas import (
     PaymentCreate,
     PaymentRead,
@@ -23,6 +22,7 @@ from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.invoice import LifecycleStatus
 from app.domain.payment_repository import PaymentRepository
 from app.infrastructure.database import get_db
+from app.infrastructure.transactions import operation_transaction
 
 router = APIRouter(prefix="/invoices", tags=["payments"])
 
@@ -41,23 +41,6 @@ def get_payment_repository(db: DbSession) -> PaymentRepository:
 
 
 PaymentRepositoryDep = Annotated[PaymentRepository, Depends(get_payment_repository)]
-
-
-@contextmanager
-def _operation_transaction(db: Session) -> Iterator[None]:
-    """Agrupa pago + factura + idempotencia en una sola transacción.
-
-    En producción cada petición tiene una sesión nueva, así que se abre la
-    transacción de nivel superior. En tests la sesión se comparte entre
-    peticiones; si ya hay una transacción abierta se usa un savepoint para
-    mantener el aislamiento y el rollback del test.
-    """
-    if db.in_transaction():
-        with db.begin_nested():
-            yield
-    else:
-        with db.begin():
-            yield
 
 
 def _replay_response(
@@ -98,7 +81,7 @@ def create_payment(
     response_body: dict[str, Any] | None = None
 
     try:
-        with _operation_transaction(db):
+        with operation_transaction(db):
             response_body = _replay_response(
                 repository.get_idempotency_key(key),
                 request_hash,
@@ -133,6 +116,7 @@ def create_payment(
                         reference=payload.reference,
                     )
                     repository.recalculate_invoice(invoice)
+                    AccountingService(db).record_payment(payment, invoice)
                     response_body = PaymentRead.model_validate(payment).model_dump(mode="json")
                     repository.add_idempotency_key(
                         key=key,
@@ -187,7 +171,7 @@ def delete_payment(
     repository: PaymentRepositoryDep,
 ) -> Response:
     """Elimina un pago y recalcula la factura en la misma transacción."""
-    with _operation_transaction(db):
+    with operation_transaction(db):
         invoice = repository.get_invoice_for_update(invoice_id)
         if invoice is None:
             raise ResourceNotFoundError("Factura no encontrada")
@@ -198,6 +182,7 @@ def delete_payment(
         if payment is None:
             raise ResourceNotFoundError("Pago no encontrado")
 
+        AccountingService(db).record_payment_reversal(payment, invoice)
         repository.delete_payment(payment)
         repository.recalculate_invoice(invoice)
 

@@ -24,6 +24,9 @@ pytestmark = pytest.mark.skipif(
 )
 
 EXPECTED_TABLES = {
+    "accounting_accounts",
+    "accounting_entries",
+    "accounting_entry_lines",
     "contacts",
     "idempotency_keys",
     "invoice_lines",
@@ -35,6 +38,7 @@ EXPECTED_TABLES = {
 }
 
 MONETARY_COLUMNS: dict[str, tuple[str, ...]] = {
+    "accounting_entry_lines": ("debit", "credit"),
     "items": ("unit_price",),
     "invoices": ("subtotal", "tax_total", "total", "balance"),
     "invoice_lines": (

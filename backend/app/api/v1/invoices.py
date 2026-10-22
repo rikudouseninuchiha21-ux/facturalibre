@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.application.accounting.service import AccountingService
 from app.application.invoice_schemas import (
     InvoiceCreate,
     InvoiceRead,
@@ -25,6 +26,7 @@ from app.domain.exceptions import ResourceNotFoundError
 from app.domain.invoice_repository import InvoiceRepository, NewInvoiceLine
 from app.domain.item_repository import ItemRepository
 from app.infrastructure.database import get_db
+from app.infrastructure.transactions import operation_transaction
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -172,22 +174,36 @@ def create_invoice(
 @router.post("/{invoice_id}/issue", response_model=InvoiceRead)
 def issue_invoice(
     invoice_id: UUID,
+    db: DbSession,
     repository: InvoiceRepositoryDep,
 ) -> InvoiceRead:
-    """Emite una factura DRAFT y le asigna número."""
-    invoice = repository.issue(invoice_id)
-    return InvoiceRead.model_validate(invoice)
+    """Emite una factura DRAFT y genera su asiento contable en la misma transacción."""
+    with operation_transaction(db):
+        invoice = repository.issue(invoice_id)
+        AccountingService(db).record_invoice_issued(invoice)
+
+    issued = repository.get_by_id(invoice_id)
+    if issued is None:
+        raise ResourceNotFoundError("Factura no encontrada")
+    return InvoiceRead.model_validate(issued)
 
 
 @router.post("/{invoice_id}/void", response_model=InvoiceRead)
 def void_invoice(
     invoice_id: UUID,
     payload: VoidInvoiceRequest,
+    db: DbSession,
     repository: InvoiceRepositoryDep,
 ) -> InvoiceRead:
-    """Anula una factura emitida que no tenga pagos."""
-    invoice = repository.void_invoice(invoice_id, payload.reason)
-    return InvoiceRead.model_validate(invoice)
+    """Anula una factura y genera el contra-asiento en la misma transacción."""
+    with operation_transaction(db):
+        invoice = repository.void_invoice(invoice_id, payload.reason)
+        AccountingService(db).record_invoice_void(invoice)
+
+    voided = repository.get_by_id(invoice_id)
+    if voided is None:
+        raise ResourceNotFoundError("Factura no encontrada")
+    return InvoiceRead.model_validate(voided)
 
 
 @router.get("/{invoice_id}", response_model=InvoiceRead)

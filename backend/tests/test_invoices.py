@@ -5,6 +5,7 @@ from __future__ import annotations
 from copy import deepcopy
 from datetime import date
 from decimal import Decimal
+from typing import Any
 from uuid import UUID, uuid4
 
 from fastapi.testclient import TestClient
@@ -27,7 +28,7 @@ def _money(value: object) -> Decimal:
     return Decimal(str(value)).quantize(TWOPLACES)
 
 
-def _create_contact(client: TestClient) -> dict[str, object]:
+def _create_contact(client: TestClient) -> dict[str, Any]:
     response = client.post(
         "/api/v1/contacts",
         json={"name": "Cliente Factura", "email": "factura@example.com"},
@@ -36,7 +37,7 @@ def _create_contact(client: TestClient) -> dict[str, object]:
     return response.json()
 
 
-def _create_tax(client: TestClient) -> dict[str, object]:
+def _create_tax(client: TestClient) -> dict[str, Any]:
     response = client.post(
         "/api/v1/taxes",
         json={"name": "IVA 19 %", "rate": "19.0000"},
@@ -45,7 +46,7 @@ def _create_tax(client: TestClient) -> dict[str, object]:
     return response.json()
 
 
-def _create_item(client: TestClient, tax_id: str) -> dict[str, object]:
+def _create_item(client: TestClient, tax_id: str) -> dict[str, Any]:
     response = client.post(
         "/api/v1/items",
         json={
@@ -66,7 +67,7 @@ def _setup_invoice_data(client: TestClient) -> tuple[str, str]:
     return str(contact["id"]), str(item["id"])
 
 
-def _three_line_payload(contact_id: str, item_id: str) -> dict[str, object]:
+def _three_line_payload(contact_id: str, item_id: str) -> dict[str, Any]:
     return {
         "contact_id": contact_id,
         "issue_date": "2026-10-21",
@@ -100,7 +101,7 @@ def _three_line_payload(contact_id: str, item_id: str) -> dict[str, object]:
 
 def _post_invoice(
     client: TestClient,
-    payload: dict[str, object],
+    payload: dict[str, Any],
     key: str | None = None,
 ) -> Response:
     return client.post(
@@ -110,7 +111,7 @@ def _post_invoice(
     )
 
 
-def _issued_invoice(client: TestClient) -> dict[str, object]:
+def _issued_invoice(client: TestClient) -> dict[str, Any]:
     contact_id, item_id = _setup_invoice_data(client)
     created = _post_invoice(client, _three_line_payload(contact_id, item_id))
     assert created.status_code == 201, created.text

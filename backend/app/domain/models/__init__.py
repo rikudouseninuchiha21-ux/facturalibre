@@ -3,6 +3,15 @@
 Importar este paquete registra todas las tablas en ``Base.metadata``.
 """
 
+from app.domain.models.accounting import (
+    AccountingAccount,
+    AccountingEntry,
+    AccountingEntryLine,
+    AccountingEntryStatus,
+    AccountingSourceType,
+    AccountNature,
+    AccountType,
+)
 from app.domain.models.contact import Contact
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
@@ -13,6 +22,13 @@ from app.domain.models.payment import Payment
 from app.domain.models.tax import Tax
 
 __all__ = [
+    "AccountingAccount",
+    "AccountingEntry",
+    "AccountingEntryLine",
+    "AccountingEntryStatus",
+    "AccountingSourceType",
+    "AccountNature",
+    "AccountType",
     "Contact",
     "IdempotencyKey",
     "Invoice",

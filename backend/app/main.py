@@ -3,7 +3,7 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from app.api.v1 import contacts, invoices, items, payments, taxes
+from app.api.v1 import accounting, contacts, invoices, items, payments, taxes
 from app.domain.exceptions import (
     InvoiceStateError,
     ResourceNotFoundError,
@@ -17,6 +17,7 @@ app.include_router(items.router, prefix="/api/v1")
 app.include_router(taxes.router, prefix="/api/v1")
 app.include_router(invoices.router, prefix="/api/v1")
 app.include_router(payments.router, prefix="/api/v1")
+app.include_router(accounting.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)

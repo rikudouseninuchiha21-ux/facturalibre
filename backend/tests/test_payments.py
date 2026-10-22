@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Any
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
@@ -27,7 +28,7 @@ def _money(value: object) -> Decimal:
     return Decimal(str(value)).quantize(TWOPLACES)
 
 
-def _create_invoice(client: TestClient, total: str = "100.00") -> dict[str, object]:
+def _create_invoice(client: TestClient, total: str = "100.00") -> dict[str, Any]:
     """Crea una factura DRAFT con una línea sin impuesto."""
     today = date.today()
     contact = client.post(
@@ -69,7 +70,7 @@ def _create_invoice(client: TestClient, total: str = "100.00") -> dict[str, obje
     return response.json()
 
 
-def _issued_invoice(client: TestClient, total: str = "100.00") -> dict[str, object]:
+def _issued_invoice(client: TestClient, total: str = "100.00") -> dict[str, Any]:
     invoice = _create_invoice(client, total)
     response = client.post(f"/api/v1/invoices/{invoice['id']}/issue")
     assert response.status_code == 200, response.text
@@ -100,7 +101,7 @@ def _pay(
     )
 
 
-def _get_invoice(client: TestClient, invoice_id: object) -> dict[str, object]:
+def _get_invoice(client: TestClient, invoice_id: object) -> dict[str, Any]:
     response = client.get(f"/api/v1/invoices/{invoice_id}")
     assert response.status_code == 200, response.text
     return response.json()

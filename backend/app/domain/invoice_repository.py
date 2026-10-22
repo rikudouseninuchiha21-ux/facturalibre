@@ -156,12 +156,10 @@ class InvoiceRepository:
         invoice.version += 1
         invoice.updated_at = datetime.now(UTC)
 
-        self.db.commit()
-        self.db.refresh(invoice)
-        issued = self.get_by_id(invoice_id)
-        if issued is None:
-            raise ResourceNotFoundError("Factura no encontrada")
-        return issued
+        # La capa de API confirma la transacción después de generar el asiento
+        # contable; así emisión y contabilidad son atómicas.
+        self.db.flush()
+        return invoice
 
     def void_invoice(self, invoice_id: UUID, reason: str) -> Invoice:
         """Anula una factura emitida sin pagos, bloqueando la fila.
@@ -194,12 +192,9 @@ class InvoiceRepository:
         invoice.version += 1
         invoice.updated_at = now
 
-        self.db.commit()
-        self.db.refresh(invoice)
-        voided = self.get_by_id(invoice_id)
-        if voided is None:
-            raise ResourceNotFoundError("Factura no encontrada")
-        return voided
+        # La API genera el contra-asiento y confirma en la misma transacción.
+        self.db.flush()
+        return invoice
 
     def delete_draft(self, invoice_id: UUID) -> None:
         """Elimina lógicamente una factura DRAFT.
