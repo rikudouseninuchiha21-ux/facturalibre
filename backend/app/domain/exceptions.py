@@ -7,3 +7,7 @@ class ResourceNotFoundError(Exception):
 
 class VersionConflictError(Exception):
     """La versión enviada no coincide con la versión actual del recurso."""
+
+
+class InvoiceStateError(Exception):
+    """La operación no está permitida para el estado actual de la factura."""

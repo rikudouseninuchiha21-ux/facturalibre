@@ -129,6 +129,58 @@ curl -s -X PATCH "$BASE/taxes/$TAX_ID" \
 curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/taxes/$TAX_ID"
 ```
 
+## Endpoints de facturas
+
+Crear una factura requiere el header `Idempotency-Key` con un UUID. La misma Key
+con el mismo body devuelve la respuesta original y no duplica la factura; con un
+body distinto responde `409`. Las facturas nacen en `draft`/`unpaid`, sin número,
+y solo se numeran al emitirlas con `POST /invoices/{id}/issue`.
+
+```bash
+# IDs creados en los ejemplos de contactos/ítems/impuestos
+IDEMPOTENCY_KEY=$(python -c 'import uuid; print(uuid.uuid4())')
+
+# Crear factura con 2 líneas. Si no se envía tax_rate, se usa el del ítem.
+curl -s -X POST "$BASE/invoices" \
+  -H 'Content-Type: application/json' \
+  -H "Idempotency-Key: $IDEMPOTENCY_KEY" \
+  -d "{
+    \"contact_id\": \"$CONTACT_ID\",
+    \"issue_date\": \"2026-10-21\",
+    \"due_date\": \"2026-11-20\",
+    \"currency\": \"COP\",
+    \"lines\": [
+      {
+        \"item_id\": \"$ITEM_ID\",
+        \"quantity\": \"3\",
+        \"unit_price\": \"10.10\",
+        \"discount_percent\": \"10\"
+      },
+      {
+        \"item_id\": \"$ITEM_ID\",
+        \"description\": \"Línea con IVA explícito\",
+        \"quantity\": \"2.5\",
+        \"unit_price\": \"19.99\",
+        \"discount_percent\": \"0\",
+        \"tax_rate\": \"19\"
+      }
+    ]
+  }"
+
+# Emitir: asigna FV00000001, FV00000002, etc.
+# Reemplaza INVOICE_ID por el id devuelto al crear la factura.
+curl -s -X POST "$BASE/invoices/$INVOICE_ID/issue"
+
+# Consultar una factura con sus líneas
+curl -s "$BASE/invoices/$INVOICE_ID"
+
+# Listar con paginación
+curl -s "$BASE/invoices?limit=20&offset=0"
+
+# Borrar: solo funciona si sigue en draft; si está emitida responde 409
+curl -s -o /dev/null -w '%{http_code}\n' -X DELETE "$BASE/invoices/$INVOICE_ID"
+```
+
 ## Ejecutar solo el backend con uv
 
 Necesitas una instancia de PostgreSQL accesible. La URL se lee de `DATABASE_URL`
@@ -175,10 +227,10 @@ los tipos ENUM de estado de factura.
 
 ### Base de datos de test
 
-`tests/test_schema.py` y los tests CRUD requieren una base PostgreSQL real y
-**separada** de la de desarrollo. La variable `TEST_DATABASE_URL` no se lee de
-`.env`: se pasa por el entorno. Un ejemplo con un contenedor temporal, sin tocar
-`docker-compose.yml`:
+`tests/test_schema.py`, los tests CRUD y los tests de facturas requieren una base
+PostgreSQL real y **separada** de la de desarrollo. La variable
+`TEST_DATABASE_URL` no se lee de `.env`: se pasa por el entorno. Un ejemplo con
+un contenedor temporal, sin tocar `docker-compose.yml`:
 
 ```bash
 docker run --rm -d --name facturalibre-test-db \
@@ -223,9 +275,10 @@ backend/
       models/                  # Contact, Item, Tax, Invoice, InvoiceLine, Payment,
                                # NumberSequence e IdempotencyKey
       *_repository.py           # consultas y updates con SQLAlchemy 2
-      exceptions.py            # errores de recurso ausente y versión obsoleta
+      calculations.py           # redondeo y totales puros de facturas
+      exceptions.py            # errores de recurso ausente, versión y estado
     application/
-      *_schemas.py             # schemas Pydantic v2 de contactos, ítems e impuestos
+      *_schemas.py             # schemas Pydantic v2 de catálogos y facturas
     infrastructure/
       database.py              # engine, SessionLocal, Base y get_db()
       migrations/              # env.py, plantilla y versiones de Alembic
@@ -233,6 +286,7 @@ backend/
       contacts.py              # CRUD de contactos
       items.py                 # CRUD de ítems
       taxes.py                 # CRUD de impuestos
+      invoices.py              # crear, emitir, consultar y borrar borradores
   tests/
     conftest.py                # PostgreSQL de test y sesión transaccional
     test_health.py             # smoke test de /health
@@ -240,6 +294,7 @@ backend/
     test_contacts.py           # CRUD y optimistic locking de contactos
     test_items.py              # CRUD y optimistic locking de ítems
     test_taxes.py              # CRUD y optimistic locking de impuestos
+    test_invoices.py           # cálculos, idempotencia, numeración y estados
   Dockerfile
   entrypoint.sh                # espera PostgreSQL, migra y cede el control al CMD
   pyproject.toml
