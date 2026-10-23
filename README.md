@@ -6,7 +6,7 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 6: autenticación con sesiones opacas y cookies HTTP-only.
+Fase 7: creación de facturas en borrador desde la interfaz.
 
 - Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`), facturas
   (`invoices`) y pagos (`payments`): crear, emitir, consultar, anular y borrar
@@ -24,7 +24,9 @@ Fase 6: autenticación con sesiones opacas y cookies HTTP-only.
 - Tablas de dominio y migraciones de Alembic.
 - Frontend Next.js 16 con App Router, TypeScript, Tailwind CSS y `pnpm`.
   Incluye dashboard, contactos, facturas, bodegas, inventario, empleados y
-  nómina, con login, logout y rutas protegidas por middleware.
+  nómina, con login, logout y rutas protegidas por middleware. La creación de
+  facturas en borrador usa líneas dinámicas, cálculo de totales en el navegador
+  e idempotencia en el `POST /api/v1/invoices`.
 - Sin notas crédito ni devolución de pagos todavía.
 
 ## Requisitos

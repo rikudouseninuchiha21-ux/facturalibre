@@ -95,7 +95,7 @@ export default function HomePage() {
         <CardHeader>
           <CardTitle>Estado de la fase</CardTitle>
           <CardDescription>
-            Fase 6: autenticación con sesiones opacas y cookies HTTP-only.
+            Fase 7: creación de facturas en borrador desde la interfaz.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -107,6 +107,9 @@ export default function HomePage() {
               Formularios para crear empleados y periodos de nómina.
             </li>
             <li>Cálculo de nómina con actualización del estado del periodo.</li>
+            <li>
+              Facturas con líneas dinámicas, impuestos y totales en tiempo real.
+            </li>
             <li>Proxy same-origin para evitar CORS en el navegador.</li>
             <li>Login, logout y rutas protegidas por cookie de sesión.</li>
           </ul>

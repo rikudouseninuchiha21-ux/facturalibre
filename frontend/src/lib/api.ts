@@ -52,6 +52,23 @@ export interface VoidInvoiceInput {
   reason: string;
 }
 
+export interface InvoiceLineInput {
+  item_id: string;
+  description?: string;
+  quantity: string;
+  unit_price: string;
+  discount_percent: string;
+  tax_rate: string;
+}
+
+export interface InvoiceCreateInput {
+  contact_id: string;
+  issue_date: string;
+  due_date: string;
+  currency: "COP";
+  lines: InvoiceLineInput[];
+}
+
 export interface Item {
   id: string;
   name: string;
@@ -304,12 +321,21 @@ async function apiGet<T>(path: string, cookieHeader?: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function apiPost<T>(path: string, body?: unknown): Promise<T> {
+interface ApiPostOptions {
+  headers?: Record<string, string>;
+}
+
+async function apiPost<T>(
+  path: string,
+  body?: unknown,
+  options?: ApiPostOptions,
+): Promise<T> {
   const response = await fetch(`${getBaseUrl()}${API_PREFIX}${path}`, {
     method: "POST",
     headers: {
       Accept: "application/json",
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      ...options?.headers,
     },
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: "include",
@@ -338,16 +364,25 @@ export function createContact(payload: ContactCreateInput): Promise<Contact> {
   return apiPost<Contact>("/contacts", payload);
 }
 
-export function getItems(): Promise<Item[]> {
-  return apiGet<Item[]>("/items");
+export function getItems(cookieHeader?: string): Promise<Item[]> {
+  return apiGet<Item[]>("/items", cookieHeader);
 }
 
-export function getTaxes(): Promise<Tax[]> {
-  return apiGet<Tax[]>("/taxes");
+export function getTaxes(cookieHeader?: string): Promise<Tax[]> {
+  return apiGet<Tax[]>("/taxes", cookieHeader);
 }
 
 export function getInvoices(cookieHeader?: string): Promise<Invoice[]> {
   return apiGet<Invoice[]>("/invoices", cookieHeader);
+}
+
+export function createInvoice(
+  payload: InvoiceCreateInput,
+  idempotencyKey: string,
+): Promise<Invoice> {
+  return apiPost<Invoice>("/invoices", payload, {
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
 }
 
 export function issueInvoice(invoiceId: string): Promise<Invoice> {

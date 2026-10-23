@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { InvoiceActions } from "@/components/invoices/InvoiceActions";
 import {
@@ -65,14 +66,23 @@ export default async function InvoicesPage() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950">
-          Facturas
-        </h1>
-        <p className="mt-2 max-w-2xl text-slate-600">
-          Facturas registradas, con su estado de ciclo de vida y saldo
-          pendiente.
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+            Facturas
+          </h1>
+          <p className="mt-2 max-w-2xl text-slate-600">
+            Facturas registradas, con su estado de ciclo de vida y saldo
+            pendiente.
+          </p>
+        </div>
+        <Link
+          href="/invoices/new"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+        >
+          <span aria-hidden="true">+</span>
+          Nueva Factura
+        </Link>
       </header>
 
       <Card>
@@ -98,7 +108,7 @@ export default async function InvoicesPage() {
                 Todavía no hay facturas
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Crea la primera factura a través de la API para verla aquí.
+                Usa el botón “Nueva Factura” para crear el primer borrador.
               </p>
             </div>
           ) : (

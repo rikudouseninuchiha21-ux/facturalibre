@@ -1,8 +1,8 @@
 # Frontend — FacturaLibre MVP
 
 Interfaz administrativa autenticada para consultar contactos, facturas, bodegas e
-inventario, y registrar contactos, bodegas, empleados, periodos de nómina y
-movimientos de stock desde la API de FacturaLibre.
+inventario, y registrar contactos, bodegas, empleados, periodos de nómina,
+movimientos de stock y facturas en borrador desde la API de FacturaLibre.
 
 ## Stack
 
@@ -25,6 +25,7 @@ frontend/
 │   │   ├── register/page.tsx        # Bootstrap del primer administrador
 │   │   ├── contacts/page.tsx        # Contactos + formulario
 │   │   ├── invoices/page.tsx        # Listado de facturas
+│   │   ├── invoices/new/page.tsx    # Datos para crear una factura
 │   │   ├── warehouses/page.tsx      # Bodegas + formulario
 │   │   ├── inventory/page.tsx       # Saldos + formulario de movimientos
 │   │   ├── employees/page.tsx       # Empleados + formulario
@@ -37,6 +38,7 @@ frontend/
 │   │   ├── contacts/ContactForm.tsx
 │   │   ├── inventory/MovementForm.tsx
 │   │   ├── invoices/InvoiceActions.tsx
+│   │   ├── invoices/InvoiceCreateForm.tsx
 │   │   ├── warehouses/WarehouseForm.tsx
 │   │   └── ui/
 │   │       ├── button.tsx
@@ -79,6 +81,22 @@ después de guardar.
 > Next.js 16 marca la convención `middleware.ts` como deprecada en favor de
 > `proxy.ts`. Se mantiene `middleware.ts` en esta fase; la migración queda
 > pendiente.
+
+## Creación de facturas
+
+`/invoices/new` carga contactos, ítems e impuestos en un Server Component y los
+pasa a `InvoiceCreateForm`. El formulario administra las líneas con
+`useReducer`; cada línea toma nombre, precio y tasa de impuesto del ítem, aunque
+los tres valores siguen siendo editables.
+
+Los importes se calculan con `Number` solo para la vista previa y se redondean a
+dos decimales por línea, replicando el backend. Los valores decimales se envían
+como strings para no perder precisión. Antes del `POST` se genera una
+`Idempotency-Key` UUID v4; se conserva mientras el formulario no cambie para que
+un reintento no duplique la factura.
+
+Al guardar, el formulario redirige a `/invoices` y ejecuta `router.refresh()`.
+La factura queda en estado `draft` hasta que se emita desde el listado.
 
 ## Arranque con Docker
 
@@ -187,6 +205,7 @@ Las páginas disponibles son:
 /
 /contacts
 /invoices
+/invoices/new
 /warehouses
 /inventory
 /employees
@@ -221,6 +240,7 @@ pnpm build
 Incluye autenticación con login/logout, bootstrap del primer administrador,
 protección de páginas y endpoints, consultas de contactos, facturas, bodegas,
 saldos de inventario, empleados y nómina; creación de contactos, bodegas,
-movimientos de stock, empleados y periodos de nómina; y emisión y anulación de
-facturas. No incluye CSRF explícito, rate limiting, alta administrativa de más
-usuarios, roles ni formularios de ítems, impuestos o edición de bodegas.
+movimientos de stock, empleados, periodos de nómina y facturas en borrador; y
+emisión y anulación de facturas. No incluye CSRF explícito, rate limiting, alta
+administrativa de más usuarios, roles ni formularios de ítems, impuestos o
+edición de bodegas.
