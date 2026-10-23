@@ -80,6 +80,13 @@ export interface Item {
   updated_at: string;
 }
 
+export interface ItemCreateInput {
+  name: string;
+  description?: string;
+  unit_price: string;
+  tax_id?: string;
+}
+
 export interface Tax {
   id: string;
   name: string;
@@ -87,6 +94,11 @@ export interface Tax {
   version: number;
   created_at: string;
   updated_at: string;
+}
+
+export interface TaxCreateInput {
+  name: string;
+  rate: string;
 }
 
 export interface InvoiceLine {
@@ -368,8 +380,16 @@ export function getItems(cookieHeader?: string): Promise<Item[]> {
   return apiGet<Item[]>("/items", cookieHeader);
 }
 
+export function createItem(payload: ItemCreateInput): Promise<Item> {
+  return apiPost<Item>("/items", payload);
+}
+
 export function getTaxes(cookieHeader?: string): Promise<Tax[]> {
   return apiGet<Tax[]>("/taxes", cookieHeader);
+}
+
+export function createTax(payload: TaxCreateInput): Promise<Tax> {
+  return apiPost<Tax>("/taxes", payload);
 }
 
 export function getInvoices(cookieHeader?: string): Promise<Invoice[]> {

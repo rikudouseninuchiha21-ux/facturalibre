@@ -16,6 +16,18 @@ const sections = [
       "Consulta los clientes y proveedores registrados y crea nuevos contactos.",
   },
   {
+    href: "/items",
+    title: "Ítems",
+    description:
+      "Crea productos y servicios con su precio y el impuesto que aplica por defecto.",
+  },
+  {
+    href: "/taxes",
+    title: "Impuestos",
+    description:
+      "Administra las tasas disponibles para calcular los impuestos de las facturas.",
+  },
+  {
     href: "/invoices",
     title: "Facturas",
     description:
@@ -58,9 +70,9 @@ export default function HomePage() {
           FacturaLibre - MVP
         </h1>
         <p className="mt-3 text-base leading-7 text-slate-600">
-          Interfaz administrativa para consultar y operar los contactos, las
-          facturas, las bodegas, el inventario, los empleados y la nómina
-          gestionados por la API.
+          Interfaz administrativa para consultar y operar los contactos, los
+          ítems, los impuestos, las facturas, las bodegas, el inventario, los
+          empleados y la nómina gestionados por la API.
         </p>
       </section>
 
@@ -95,13 +107,14 @@ export default function HomePage() {
         <CardHeader>
           <CardTitle>Estado de la fase</CardTitle>
           <CardDescription>
-            Fase 7: creación de facturas en borrador desde la interfaz.
+            Fase 8: interfaz de gestión de ítems e impuestos.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
             <li>
-              Consulta de contactos, facturas, bodegas, inventario y empleados.
+              Consulta de contactos, ítems, impuestos, facturas, bodegas,
+              inventario y empleados.
             </li>
             <li>
               Formularios para crear empleados y periodos de nómina.
@@ -109,6 +122,9 @@ export default function HomePage() {
             <li>Cálculo de nómina con actualización del estado del periodo.</li>
             <li>
               Facturas con líneas dinámicas, impuestos y totales en tiempo real.
+            </li>
+            <li>
+              Catálogos de ítems e impuestos con precio, tasa y asociación.
             </li>
             <li>Proxy same-origin para evitar CORS en el navegador.</li>
             <li>Login, logout y rutas protegidas por cookie de sesión.</li>

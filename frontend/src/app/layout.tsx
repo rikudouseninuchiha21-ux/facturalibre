@@ -18,6 +18,8 @@ export const metadata: Metadata = {
 
 const navigation = [
   { href: "/contacts", label: "Contactos" },
+  { href: "/items", label: "Ítems" },
+  { href: "/taxes", label: "Impuestos" },
   { href: "/invoices", label: "Facturas" },
   { href: "/warehouses", label: "Bodegas" },
   { href: "/inventory", label: "Inventario" },
@@ -98,7 +100,7 @@ export default async function RootLayout({
 
         <footer className="border-t border-slate-200 bg-white">
           <div className="mx-auto w-full max-w-6xl px-4 py-5 text-sm text-slate-500 sm:px-6 lg:px-8">
-            FacturaLibre MVP · Fase 7
+            FacturaLibre MVP · Fase 8
           </div>
         </footer>
       </body>

@@ -48,3 +48,16 @@ export function formatQuantity(value: string): string {
     maximumFractionDigits: 4,
   }).format(amount);
 }
+
+export function formatTaxRate(value: string): string {
+  const rate = Number(value);
+
+  if (!Number.isFinite(rate)) {
+    return `${value} %`;
+  }
+
+  return `${new Intl.NumberFormat("es-CO", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(rate)} %`;
+}

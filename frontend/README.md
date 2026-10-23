@@ -1,8 +1,9 @@
 # Frontend — FacturaLibre MVP
 
-Interfaz administrativa autenticada para consultar contactos, facturas, bodegas e
-inventario, y registrar contactos, bodegas, empleados, periodos de nómina,
-movimientos de stock y facturas en borrador desde la API de FacturaLibre.
+Interfaz administrativa autenticada para consultar contactos, ítems, impuestos,
+facturas, bodegas e inventario, y registrar contactos, ítems, impuestos,
+bodegas, empleados, periodos de nómina, movimientos de stock y facturas en
+borrador desde la API de FacturaLibre.
 
 ## Stack
 
@@ -24,6 +25,8 @@ frontend/
 │   │   ├── login/page.tsx           # Inicio de sesión
 │   │   ├── register/page.tsx        # Bootstrap del primer administrador
 │   │   ├── contacts/page.tsx        # Contactos + formulario
+│   │   ├── items/page.tsx           # Ítems + formulario
+│   │   ├── taxes/page.tsx           # Impuestos + formulario
 │   │   ├── invoices/page.tsx        # Listado de facturas
 │   │   ├── invoices/new/page.tsx    # Datos para crear una factura
 │   │   ├── warehouses/page.tsx      # Bodegas + formulario
@@ -39,6 +42,8 @@ frontend/
 │   │   ├── inventory/MovementForm.tsx
 │   │   ├── invoices/InvoiceActions.tsx
 │   │   ├── invoices/InvoiceCreateForm.tsx
+│   │   ├── items/ItemForm.tsx
+│   │   ├── taxes/TaxForm.tsx
 │   │   ├── warehouses/WarehouseForm.tsx
 │   │   └── ui/
 │   │       ├── button.tsx
@@ -204,6 +209,8 @@ Las páginas disponibles son:
 /register
 /
 /contacts
+/items
+/taxes
 /invoices
 /invoices/new
 /warehouses
@@ -224,8 +231,9 @@ login y enviarlo explícitamente con `-H "Cookie: facturalibre_session=..."`,
 porque `curl` no reenvía cookies `Secure` sobre HTTP. En producción el sitio debe
 servirse por HTTPS.
 
-Si no hay ítems disponibles, créalos mediante `POST /api/v1/items`; el frontend
-actual no incluye formulario de ítems.
+Los ítems y los impuestos se administran desde `/items` y `/taxes`. Crea primero
+el impuesto si quieres asociarlo a un ítem; el selector del formulario de ítems
+se carga con los impuestos activos.
 
 ## Calidad
 
@@ -238,9 +246,9 @@ pnpm build
 ## Alcance actual
 
 Incluye autenticación con login/logout, bootstrap del primer administrador,
-protección de páginas y endpoints, consultas de contactos, facturas, bodegas,
-saldos de inventario, empleados y nómina; creación de contactos, bodegas,
-movimientos de stock, empleados, periodos de nómina y facturas en borrador; y
-emisión y anulación de facturas. No incluye CSRF explícito, rate limiting, alta
-administrativa de más usuarios, roles ni formularios de ítems, impuestos o
+protección de páginas y endpoints, consultas de contactos, ítems, impuestos,
+facturas, bodegas, saldos de inventario, empleados y nómina; creación de
+contactos, ítems, impuestos, bodegas, movimientos de stock, empleados, periodos
+de nómina y facturas en borrador; y emisión y anulación de facturas. No incluye
+CSRF explícito, rate limiting, alta administrativa de más usuarios, roles ni
 edición de bodegas.
