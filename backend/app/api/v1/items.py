@@ -6,13 +6,18 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.item_schemas import ItemCreate, ItemRead, ItemUpdate
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.item_repository import ItemRepository
 from app.domain.tax_repository import TaxRepository
 from app.infrastructure.database import get_db
 
-router = APIRouter(prefix="/items", tags=["items"])
+router = APIRouter(
+    prefix="/items",
+    tags=["items"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 

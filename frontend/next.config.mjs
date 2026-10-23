@@ -11,6 +11,10 @@ const backendInternalUrl = (
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // El README usa 127.0.0.1 y el frontend se publica en ese host. Sin esta
+  // allowlist, Next.js 16 bloquea los recursos de desarrollo y el formulario
+  // no se hidrata, provocando un submit GET nativo.
+  allowedDevOrigins: ["127.0.0.1"],
   async rewrites() {
     return [
       {

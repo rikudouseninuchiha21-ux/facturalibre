@@ -6,12 +6,17 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.tax_schemas import TaxCreate, TaxRead, TaxUpdate
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.tax_repository import TaxRepository
 from app.infrastructure.database import get_db
 
-router = APIRouter(prefix="/taxes", tags=["taxes"])
+router = APIRouter(
+    prefix="/taxes",
+    tags=["taxes"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 

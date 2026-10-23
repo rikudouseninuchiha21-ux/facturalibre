@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getWarehouses, type Warehouse } from "@/lib/api";
+import { getSessionCookieHeader } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +40,13 @@ function WarehouseStatus({ isActive }: { isActive: boolean }) {
 }
 
 export default async function WarehousesPage() {
+  const cookieHeader = await getSessionCookieHeader();
+
   let warehouses: Warehouse[] = [];
   let error: string | null = null;
 
   try {
-    warehouses = await getWarehouses();
+    warehouses = await getWarehouses(cookieHeader);
   } catch (cause) {
     error =
       cause instanceof Error

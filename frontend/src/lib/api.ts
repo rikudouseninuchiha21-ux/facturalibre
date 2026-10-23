@@ -11,6 +11,23 @@
 
 const API_PREFIX = "/api/v1";
 
+export interface User {
+  id: string;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface LoginInput {
+  email: string;
+  password: string;
+}
+
+export interface RegisterInput extends LoginInput {
+  full_name: string;
+}
+
 export type LifecycleStatus = "draft" | "issued" | "void";
 
 export type PaymentStatus = "unpaid" | "partially_paid" | "paid" | "overpaid";
@@ -263,9 +280,17 @@ async function getErrorDetail(
   }
 }
 
-async function apiGet<T>(path: string): Promise<T> {
+async function apiGet<T>(path: string, cookieHeader?: string): Promise<T> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (cookieHeader) {
+    // En Server Components no existe un cookie jar: se reenvía la cookie
+    // recibida por Next.js para que el backend autentique la petición.
+    headers.Cookie = cookieHeader;
+  }
+
   const response = await fetch(`${getBaseUrl()}${API_PREFIX}${path}`, {
-    headers: { Accept: "application/json" },
+    headers,
+    credentials: "include",
     cache: "no-store",
   });
 
@@ -287,6 +312,7 @@ async function apiPost<T>(path: string, body?: unknown): Promise<T> {
       ...(body === undefined ? {} : { "Content-Type": "application/json" }),
     },
     body: body === undefined ? undefined : JSON.stringify(body),
+    credentials: "include",
     cache: "no-store",
   });
 
@@ -304,8 +330,8 @@ async function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return (await response.json()) as T;
 }
 
-export function getContacts(): Promise<Contact[]> {
-  return apiGet<Contact[]>("/contacts");
+export function getContacts(cookieHeader?: string): Promise<Contact[]> {
+  return apiGet<Contact[]>("/contacts", cookieHeader);
 }
 
 export function createContact(payload: ContactCreateInput): Promise<Contact> {
@@ -320,8 +346,8 @@ export function getTaxes(): Promise<Tax[]> {
   return apiGet<Tax[]>("/taxes");
 }
 
-export function getInvoices(): Promise<Invoice[]> {
-  return apiGet<Invoice[]>("/invoices");
+export function getInvoices(cookieHeader?: string): Promise<Invoice[]> {
+  return apiGet<Invoice[]>("/invoices", cookieHeader);
 }
 
 export function issueInvoice(invoiceId: string): Promise<Invoice> {
@@ -338,8 +364,8 @@ export function voidInvoice(
   );
 }
 
-export function getWarehouses(): Promise<Warehouse[]> {
-  return apiGet<Warehouse[]>("/warehouses");
+export function getWarehouses(cookieHeader?: string): Promise<Warehouse[]> {
+  return apiGet<Warehouse[]>("/warehouses", cookieHeader);
 }
 
 export function createWarehouse(
@@ -348,8 +374,10 @@ export function createWarehouse(
   return apiPost<Warehouse>("/warehouses", payload);
 }
 
-export function getStockBalances(): Promise<StockBalance[]> {
-  return apiGet<StockBalance[]>("/inventory/balances");
+export function getStockBalances(
+  cookieHeader?: string,
+): Promise<StockBalance[]> {
+  return apiGet<StockBalance[]>("/inventory/balances", cookieHeader);
 }
 
 export function registerMovement(
@@ -358,16 +386,18 @@ export function registerMovement(
   return apiPost<StockMovement>("/inventory/movements", payload);
 }
 
-export function getEmployees(): Promise<Employee[]> {
-  return apiGet<Employee[]>("/employees");
+export function getEmployees(cookieHeader?: string): Promise<Employee[]> {
+  return apiGet<Employee[]>("/employees", cookieHeader);
 }
 
 export function createEmployee(payload: EmployeeCreateInput): Promise<Employee> {
   return apiPost<Employee>("/employees", payload);
 }
 
-export function getPayrollPeriods(): Promise<PayrollPeriod[]> {
-  return apiGet<PayrollPeriod[]>("/payroll/periods");
+export function getPayrollPeriods(
+  cookieHeader?: string,
+): Promise<PayrollPeriod[]> {
+  return apiGet<PayrollPeriod[]>("/payroll/periods", cookieHeader);
 }
 
 export function createPayrollPeriod(
@@ -380,4 +410,20 @@ export function calculatePayroll(periodId: string): Promise<PayrollPeriod> {
   return apiPost<PayrollPeriod>(
     `/payroll/periods/${encodeURIComponent(periodId)}/calculate`,
   );
+}
+
+export function register(payload: RegisterInput): Promise<User> {
+  return apiPost<User>("/auth/register", payload);
+}
+
+export function login(payload: LoginInput): Promise<User> {
+  return apiPost<User>("/auth/login", payload);
+}
+
+export function logout(): Promise<void> {
+  return apiPost<void>("/auth/logout");
+}
+
+export function getCurrentUser(cookieHeader?: string): Promise<User> {
+  return apiGet<User>("/auth/me", cookieHeader);
 }

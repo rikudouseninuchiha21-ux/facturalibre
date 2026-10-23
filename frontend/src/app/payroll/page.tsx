@@ -22,6 +22,7 @@ import {
   type PayrollPeriod,
   type PayrollPeriodStatus,
 } from "@/lib/api";
+import { getSessionCookieHeader } from "@/lib/server-auth";
 import { formatMonth } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -51,11 +52,13 @@ function PayrollStatus({ status }: { status: PayrollPeriodStatus }) {
 }
 
 export default async function PayrollPage() {
+  const cookieHeader = await getSessionCookieHeader();
+
   let periods: PayrollPeriod[] = [];
   let error: string | null = null;
 
   try {
-    periods = await getPayrollPeriods();
+    periods = await getPayrollPeriods(cookieHeader);
   } catch (cause) {
     error =
       cause instanceof Error

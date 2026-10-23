@@ -6,12 +6,17 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.contact_schemas import ContactCreate, ContactRead, ContactUpdate
 from app.domain.contact_repository import ContactRepository
 from app.domain.exceptions import ResourceNotFoundError
 from app.infrastructure.database import get_db
 
-router = APIRouter(prefix="/contacts", tags=["contacts"])
+router = APIRouter(
+    prefix="/contacts",
+    tags=["contacts"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 

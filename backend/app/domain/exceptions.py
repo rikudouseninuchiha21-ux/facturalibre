@@ -23,3 +23,19 @@ class InsufficientStockError(InventoryError):
 
 class PayrollError(Exception):
     """Operación de nómina inválida o periodo no liquidable."""
+
+
+class AuthError(Exception):
+    """Error de autenticación o registro."""
+
+
+class EmailAlreadyRegisteredError(AuthError):
+    """El email ya pertenece a un usuario."""
+
+
+class RegistrationClosedError(AuthError):
+    """El registro público ya fue cerrado tras el primer usuario."""
+
+
+class InvalidCredentialsError(AuthError):
+    """Email, contraseña o usuario inactivo."""

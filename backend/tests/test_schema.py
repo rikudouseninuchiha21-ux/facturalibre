@@ -37,9 +37,11 @@ EXPECTED_TABLES = {
     "payments",
     "payroll_details",
     "payroll_periods",
+    "sessions",
     "stock_balances",
     "stock_movements",
     "taxes",
+    "users",
     "warehouses",
 }
 

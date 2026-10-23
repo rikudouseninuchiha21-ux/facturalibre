@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.inventory.schemas import (
     WarehouseCreate,
     WarehouseRead,
@@ -16,7 +17,11 @@ from app.domain.exceptions import ResourceNotFoundError
 from app.domain.warehouse_repository import WarehouseRepository
 from app.infrastructure.database import get_db
 
-router = APIRouter(prefix="/warehouses", tags=["warehouses"])
+router = APIRouter(
+    prefix="/warehouses",
+    tags=["warehouses"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 WAREHOUSE_CODE_CONFLICT = "El código de bodega ya existe"

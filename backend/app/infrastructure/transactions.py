@@ -17,9 +17,15 @@ def operation_transaction(db: Session) -> Iterator[None]:
     peticiones; si ya hay una transacción abierta se usa un savepoint para
     mantener el aislamiento y el rollback del test.
     """
-    if db.in_transaction():
-        with db.begin_nested():
-            yield
-    else:
-        with db.begin():
-            yield
+    try:
+        if db.in_transaction():
+            with db.begin_nested():
+                yield
+        else:
+            with db.begin():
+                yield
+    except Exception:
+        # Un rollback de savepoint puede dejar instancias obsoletas en el
+        # identity map. Expirarlas fuerza a leer el estado realmente persistido.
+        db.expire_all()
+        raise

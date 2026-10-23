@@ -1,8 +1,8 @@
 # Frontend — FacturaLibre MVP
 
-Interfaz administrativa para consultar contactos, facturas, bodegas e inventario,
-y registrar contactos, bodegas y movimientos de stock desde la API de
-FacturaLibre.
+Interfaz administrativa autenticada para consultar contactos, facturas, bodegas e
+inventario, y registrar contactos, bodegas, empleados, periodos de nómina y
+movimientos de stock desde la API de FacturaLibre.
 
 ## Stack
 
@@ -19,13 +19,21 @@ FacturaLibre.
 frontend/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx
+│   │   ├── layout.tsx               # Header con usuario y logout
 │   │   ├── page.tsx                 # Dashboard
+│   │   ├── login/page.tsx           # Inicio de sesión
+│   │   ├── register/page.tsx        # Bootstrap del primer administrador
 │   │   ├── contacts/page.tsx        # Contactos + formulario
 │   │   ├── invoices/page.tsx        # Listado de facturas
 │   │   ├── warehouses/page.tsx      # Bodegas + formulario
-│   │   └── inventory/page.tsx       # Saldos + formulario de movimientos
+│   │   ├── inventory/page.tsx       # Saldos + formulario de movimientos
+│   │   ├── employees/page.tsx       # Empleados + formulario
+│   │   └── payroll/page.tsx         # Periodos de nómina
 │   ├── components/
+│   │   ├── auth/
+│   │   │   ├── LoginForm.tsx
+│   │   │   ├── RegisterForm.tsx
+│   │   │   └── LogoutButton.tsx
 │   │   ├── contacts/ContactForm.tsx
 │   │   ├── inventory/MovementForm.tsx
 │   │   ├── invoices/InvoiceActions.tsx
@@ -34,9 +42,12 @@ frontend/
 │   │       ├── button.tsx
 │   │       ├── card.tsx
 │   │       └── table.tsx
-│   └── lib/
-│       ├── api.ts                   # Cliente HTTP y tipos de la API
-│       └── format.ts                # Formato de moneda y cantidades
+│   ├── lib/
+│   │   ├── api.ts                   # Cliente HTTP y tipos de la API
+│   │   ├── format.ts                # Formato de moneda y cantidades
+│   │   ├── server-auth.ts           # Reenvío de cookie en Server Components
+│   │   └── session.ts               # Nombre compartido de la cookie
+│   └── middleware.ts                # Protección perimetral de páginas
 ├── Dockerfile
 ├── next.config.mjs
 ├── package.json
@@ -47,6 +58,27 @@ Las páginas de listado son Server Components. Consultan el backend en cada
 petición (`cache: "no-store"`), por lo que siempre muestran datos actuales. Los
 formularios son Client Components y refrescan la página con `router.refresh()`
 después de guardar.
+
+## Autenticación
+
+- El primer usuario se crea en `/register`. El backend solo permite ese bootstrap;
+  cuando ya existe un usuario, el registro público responde `403`.
+- `/login` crea una sesión opaca de 24 horas. El backend envía la cookie
+  `facturalibre_session` con `HttpOnly`, `Secure` y `SameSite=Lax`.
+- `src/middleware.ts` redirige a `/login` cualquier página sin cookie. Solo
+  `/login` y `/register` son públicas.
+- El middleware comprueba presencia, no validez. La sesión real se valida en el
+  backend; un endpoint de negocio sin sesión válida responde `401`.
+- En el navegador, `src/lib/api.ts` envía `credentials: "include"` en cada
+  petición.
+- En Server Components no existe un cookie jar. `getSessionCookieHeader()` lee la
+  cookie con `next/headers` y `api.ts` la reenvía al backend.
+- El header muestra el usuario autenticado y el botón de logout. Logout revoca la
+  sesión en la base de datos y elimina la cookie.
+
+> Next.js 16 marca la convención `middleware.ts` como deprecada en favor de
+> `proxy.ts`. Se mantiene `middleware.ts` en esta fase; la migración queda
+> pendiente.
 
 ## Arranque con Docker
 
@@ -130,22 +162,35 @@ El rewrite conserva la ruta completa:
 
 ## Verificar la conexión con el backend
 
-Con el frontend y el backend en marcha:
+Con el frontend y el backend en marcha, una petición sin sesión ya no debe
+devolver datos:
 
 ```bash
 curl -i http://127.0.0.1:3000/api/v1/contacts
+# HTTP/1.1 401 Unauthorized
 ```
 
-La respuesta debe ser `HTTP/1.1 200 OK` y un arreglo JSON de contactos. También
-puedes verificar las páginas y los endpoints de inventario:
+Abre <http://127.0.0.1:3000/register> y crea el administrador inicial. Después de
+registrarte, el dashboard debe mostrar tu nombre en el header. Las rutas de
+negocio ya deben cargar datos:
 
 ```bash
 curl -I http://127.0.0.1:3000/contacts
-curl -I http://127.0.0.1:3000/invoices
-curl -I http://127.0.0.1:3000/warehouses
-curl -I http://127.0.0.1:3000/inventory
-curl -s http://127.0.0.1:3000/api/v1/warehouses
-curl -s http://127.0.0.1:3000/api/v1/inventory/balances
+# HTTP/1.1 307 Temporary Redirect -> /login (sin cookie)
+```
+
+Las páginas disponibles son:
+
+```text
+/login
+/register
+/
+/contacts
+/invoices
+/warehouses
+/inventory
+/employees
+/payroll
 ```
 
 Después abre <http://127.0.0.1:3000/warehouses> y crea una bodega con código
@@ -153,6 +198,12 @@ Después abre <http://127.0.0.1:3000/warehouses> y crea una bodega con código
 entrada `IN` y comprobar que aparece el saldo. Una salida `OUT` mayor que el
 stock disponible debe mostrar el error `Stock insuficiente...` sin modificar la
 tabla.
+
+El navegador envía la cookie automáticamente. Para probar los endpoints con
+`curl` sobre HTTP local hay que extraer el token del header `Set-Cookie` del
+login y enviarlo explícitamente con `-H "Cookie: facturalibre_session=..."`,
+porque `curl` no reenvía cookies `Secure` sobre HTTP. En producción el sitio debe
+servirse por HTTPS.
 
 Si no hay ítems disponibles, créalos mediante `POST /api/v1/items`; el frontend
 actual no incluye formulario de ítems.
@@ -167,7 +218,9 @@ pnpm build
 
 ## Alcance actual
 
-Incluye consultas de contactos, facturas, bodegas y saldos de inventario;
-creación de contactos y bodegas; emisión y anulación de facturas; y registro de
-movimientos de stock `IN`/`OUT`. No incluye autenticación, estado global ni
-formularios de ítems, impuestos o edición de bodegas.
+Incluye autenticación con login/logout, bootstrap del primer administrador,
+protección de páginas y endpoints, consultas de contactos, facturas, bodegas,
+saldos de inventario, empleados y nómina; creación de contactos, bodegas,
+movimientos de stock, empleados y periodos de nómina; y emisión y anulación de
+facturas. No incluye CSRF explícito, rate limiting, alta administrativa de más
+usuarios, roles ni formularios de ítems, impuestos o edición de bodegas.

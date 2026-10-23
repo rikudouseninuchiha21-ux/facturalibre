@@ -6,19 +6,25 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 5B-1: núcleo del módulo de inventarios.
+Fase 6: autenticación con sesiones opacas y cookies HTTP-only.
 
 - Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`), facturas
   (`invoices`) y pagos (`payments`): crear, emitir, consultar, anular y borrar
   borradores con soft delete; registrar, listar y eliminar pagos con idempotencia.
 - Inventario con bodegas, libro de movimientos y saldos por ítem/bodega. Emitir
   una factura descuenta stock y revierte toda la operación si no alcanza.
+- Autenticación con usuarios, sesiones revocables en base de datos y cookie
+  `HttpOnly`, `Secure` y `SameSite=Lax` de 24 horas.
+- Bootstrap del primer administrador mediante `/register`; después de ese primer
+  usuario el registro público queda cerrado y el acceso es por `/login`.
+- Todos los endpoints de negocio exigen sesión; `/health` y `/api/v1/auth/*`
+  permanecen públicos.
 - PostgreSQL 16 en Docker, sin puerto expuesto al host.
 - Backend accesible solo en `127.0.0.1:8000` para desarrollo.
-- Once tablas de dominio y migraciones de Alembic.
+- Tablas de dominio y migraciones de Alembic.
 - Frontend Next.js 16 con App Router, TypeScript, Tailwind CSS y `pnpm`.
-  Incluye dashboard, listado de contactos y listado de facturas.
-- Sin formularios, autenticación ni estado global en el frontend todavía.
+  Incluye dashboard, contactos, facturas, bodegas, inventario, empleados y
+  nómina, con login, logout y rutas protegidas por middleware.
 - Sin notas crédito ni devolución de pagos todavía.
 
 ## Requisitos
@@ -42,12 +48,19 @@ Cuando los servicios estén sanos:
 curl http://127.0.0.1:8000/health
 # {"status":"ok"}
 
-curl -I http://127.0.0.1:3000/
+curl -I http://127.0.0.1:3000/login
 # HTTP/1.1 200 OK
 ```
 
-El frontend queda disponible en <http://127.0.0.1:3000>. El rewrite de Next.js
-reenvía `/api/v1/*` al backend, así que el navegador no necesita CORS.
+El frontend queda disponible en <http://127.0.0.1:3000>. La primera vez abre
+<http://127.0.0.1:3000/register> para crear el administrador inicial. Después
+usa <http://127.0.0.1:3000/login>. Las rutas de negocio redirigen a `/login`
+cuando no hay cookie de sesión. El rewrite de Next.js reenvía `/api/v1/*` al
+backend, así que el navegador no necesita CORS.
+
+> La cookie de sesión es `Secure`. El navegador la acepta en `localhost` y
+> `127.0.0.1` como orígenes de confianza, pero un despliegue real debe servirse
+> por HTTPS.
 
 La base de datos **no** está publicada en el host: solo el backend puede hablar con ella dentro de la red de Compose.
 
@@ -84,8 +97,8 @@ uv run pytest
 ```
 
 Las pruebas de `/health` no necesitan base de datos. Las pruebas de esquema, CRUD,
-facturas y pagos usan `TEST_DATABASE_URL` contra un PostgreSQL real; consulta
-`backend/README.md`.
+facturas, pagos, inventario, nómina y autenticación usan `TEST_DATABASE_URL`
+contra un PostgreSQL real; consulta `backend/README.md`.
 
 ## Calidad de código
 
@@ -123,8 +136,9 @@ pnpm build
 ├── frontend/
 │   ├── src/
 │   │   ├── app/
-│   │   ├── components/ui/
-│   │   └── lib/
+│   │   ├── components/
+│   │   ├── lib/
+│   │   └── middleware.ts
 │   ├── Dockerfile
 │   ├── next.config.mjs
 │   ├── package.json
@@ -146,6 +160,9 @@ pnpm build
 - La contraseña de `.env.example` es un marcador, no una credencial real.
 - El backend lee `DATABASE_URL` desde el entorno; Docker Compose la construye con las variables `POSTGRES_*`.
 - El `Dockerfile` instala `uv` sin fijar versión todavía; se fijará antes de producción.
-- No hay `uv.lock` en esta etapa; se genera al ejecutar `uv sync` y conviene commitearlo.
+- `backend/uv.lock` está versionado. `bcrypt` se fija en 4.0.1 por compatibilidad
+  con `passlib` 1.7.4; la migración a Argon2id está pendiente según ADR-005.
 - El frontend usa `BACKEND_INTERNAL_URL` para el rewrite y los Server Components;
   en Docker Compose vale `http://backend:8000`.
+- Las mutaciones autenticadas aún no tienen protección CSRF explícita ni rate
+  limiting. No usar este MVP en producción sin completar esos controles.

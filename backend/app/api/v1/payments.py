@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.accounting.service import AccountingService
 from app.application.payment_schemas import (
     PaymentCreate,
@@ -24,7 +25,11 @@ from app.domain.payment_repository import PaymentRepository
 from app.infrastructure.database import get_db
 from app.infrastructure.transactions import operation_transaction
 
-router = APIRouter(prefix="/invoices", tags=["payments"])
+router = APIRouter(
+    prefix="/invoices",
+    tags=["payments"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 IdempotencyKeyHeader = Annotated[UUID, Header(alias="Idempotency-Key")]

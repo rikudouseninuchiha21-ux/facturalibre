@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getInvoices, type Invoice, type LifecycleStatus } from "@/lib/api";
+import { getSessionCookieHeader } from "@/lib/server-auth";
 import { formatCurrency } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -48,11 +49,13 @@ function LifecycleBadge({ status }: { status: LifecycleStatus }) {
 }
 
 export default async function InvoicesPage() {
+  const cookieHeader = await getSessionCookieHeader();
+
   let invoices: Invoice[] = [];
   let error: string | null = null;
 
   try {
-    invoices = await getInvoices();
+    invoices = await getInvoices(cookieHeader);
   } catch (cause) {
     error =
       cause instanceof Error

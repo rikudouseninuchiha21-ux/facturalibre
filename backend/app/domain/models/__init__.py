@@ -12,6 +12,7 @@ from app.domain.models.accounting import (
     AccountNature,
     AccountType,
 )
+from app.domain.models.auth import AuthSession, User
 from app.domain.models.contact import Contact
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
@@ -37,6 +38,7 @@ __all__ = [
     "AccountingSourceType",
     "AccountNature",
     "AccountType",
+    "AuthSession",
     "Contact",
     "Employee",
     "IdempotencyKey",
@@ -54,5 +56,6 @@ __all__ = [
     "StockMovement",
     "StockMovementType",
     "Tax",
+    "User",
     "Warehouse",
 ]

@@ -1,7 +1,8 @@
 # Backend — FacturaLibre
 
 Backend del MVP: FastAPI, SQLAlchemy 2, Alembic y PostgreSQL 16. En esta etapa
-existe `GET /health`, el esquema de datos inicial, los CRUD de catálogos maestros
+existe `GET /health`, autenticación con usuarios y sesiones opacas
+(`users`, `sessions`), el esquema de datos inicial, los CRUD de catálogos maestros
 (`contacts`, `items`, `taxes`), la creación/emisión/anulación de facturas, los
 pagos sobre facturas emitidas, el núcleo de inventario (`warehouses`,
 `stock_movements`, `stock_balances`) y el núcleo de nómina (`employees`,
@@ -101,6 +102,48 @@ docker compose config
 
 El bloque `backend` debe mostrar el comando con `--reload` y los dos volúmenes
 `bind` hacia `backend/app` y `backend/tests`.
+
+## Autenticación
+
+`/health` y `/api/v1/auth/*` son públicos. **Todos los demás endpoints de
+negocio bajo `/api/v1` requieren una sesión válida**; sin cookie responden
+`401`.
+
+El registro público solo sirve para crear el primer administrador. Una vez que
+existe un usuario, un email nuevo responde `403` y un email duplicado `409`.
+
+```bash
+BASE=http://127.0.0.1:8000/api/v1
+
+# Solo funciona si aún no existe ningún usuario
+curl -s -X POST "$BASE/auth/register" \
+  -H 'Content-Type: application/json' \
+  -d '{"full_name":"Administrador","email":"admin@example.com","password":"PruebaSegura123"}'
+
+# Login: devuelve Set-Cookie con facturalibre_session
+curl -i -X POST "$BASE/auth/login" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@example.com","password":"PruebaSegura123"}'
+
+# Extrae el token del Set-Cookie para los siguientes ejemplos
+TOKEN=$(curl -s -D - -o /dev/null -X POST "$BASE/auth/login" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@example.com","password":"PruebaSegura123"}' \
+  | sed -n 's/^[Ss]et-[Cc]ookie: facturalibre_session=\([^;]*\).*/\1/p')
+
+# Usuario actual (requiere cookie)
+curl -s "$BASE/auth/me" -H "Cookie: facturalibre_session=$TOKEN"
+
+# Logout: revoca la sesión y borra la cookie
+curl -i -X POST "$BASE/auth/logout" -H "Cookie: facturalibre_session=$TOKEN"
+```
+
+La cookie es `HttpOnly`, `Secure`, `SameSite=Lax`, dura 24 horas y contiene un
+UUID v4. En la tabla `sessions` solo se guarda su SHA-256; el token original no se
+persiste. Para los ejemplos de endpoints siguientes, añade la cookie con
+`-H "Cookie: facturalibre_session=$TOKEN"`. En HTTP local, `curl -b` no reenvía
+automáticamente una cookie `Secure`; en el navegador sobre `localhost` o
+`127.0.0.1` sí funciona, y en producción el sitio debe servirse por HTTPS.
 
 ## Endpoints de catálogos
 
@@ -439,11 +482,12 @@ La migración `20261022_0005` crea `warehouses`, `stock_movements`,
 `stock_balances` y el ENUM `stock_movement_type`. La migración `20261022_0006`
 crea `employees`, `payroll_periods`, `payroll_details`, el ENUM
 `payroll_period_status`, agrega `PAYROLL` al origen de asientos y siembra las
-cuentas PUC `510506`, `250505` y `237005` con sus padres.
+cuentas PUC `510506`, `250505` y `237005` con sus padres. La migración
+`20261022_0007` crea `users` y `sessions` para autenticación con sesiones opacas.
 
 ### Base de datos de test
 
-`tests/test_schema.py`, los tests CRUD, los tests de facturas, pagos,
+`tests/test_schema.py`, los tests CRUD, los tests de autenticación, facturas, pagos,
 contabilidad, inventario y nómina requieren una base PostgreSQL real y
 **separada** de la de desarrollo. La variable `TEST_DATABASE_URL` no se lee de `.env`: se pasa
 por el entorno. Un ejemplo con un contenedor temporal, sin tocar
@@ -492,31 +536,37 @@ backend/
       models/                  # Contact, Item, Tax, Invoice, InvoiceLine, Payment,
                                # NumberSequence, IdempotencyKey, Warehouse,
                                # StockMovement, StockBalance, Employee,
-                               # PayrollPeriod y PayrollDetail
+                               # PayrollPeriod, PayrollDetail, User y AuthSession
       *_repository.py           # consultas y updates con SQLAlchemy 2
       calculations.py           # redondeo, totales y estado de pago
       exceptions.py            # errores de recurso, versión, estado, inventario y nómina
     application/
       *_schemas.py             # schemas Pydantic v2 de catálogos, facturas y pagos
+      auth/                    # seguridad bcrypt, servicio y schemas de sesión
       inventory/               # InventoryService y schemas de inventario
       payroll/                 # PayrollService y schemas de nómina
     infrastructure/
       database.py              # engine, SessionLocal, Base y get_db()
+      transactions.py          # operation_transaction con savepoint en tests
       migrations/              # env.py, plantilla y versiones de Alembic
-    api/v1/
-      contacts.py              # CRUD de contactos
-      items.py                 # CRUD de ítems
-      taxes.py                 # CRUD de impuestos
-      warehouses.py            # CRUD de bodegas
-      inventory.py             # movimientos y saldos de inventario
-      invoices.py              # crear, emitir, anular, consultar y borrar borradores
-      payments.py              # pagos sobre facturas emitidas
-      employees.py             # CRUD de empleados
-      payroll.py               # periodos y cálculo de nómina
+    api/
+      dependencies/auth.py     # get_current_user y CurrentUser
+      v1/
+        auth.py                # register, login, logout y me
+        contacts.py            # CRUD de contactos
+        items.py               # CRUD de ítems
+        taxes.py               # CRUD de impuestos
+        warehouses.py          # CRUD de bodegas
+        inventory.py           # movimientos y saldos de inventario
+        invoices.py            # crear, emitir, anular, consultar y borrar borradores
+        payments.py            # pagos sobre facturas emitidas
+        employees.py           # CRUD de empleados
+        payroll.py             # periodos y cálculo de nómina
   tests/
-    conftest.py                # PostgreSQL de test y sesión transaccional
+    conftest.py                # PostgreSQL de test, sesión transaccional y cliente autenticado
     test_health.py             # smoke test de /health
     test_schema.py             # tablas, estados y tipos NUMERIC contra PostgreSQL
+    test_auth.py               # registro, login, logout y protección de rutas
     test_contacts.py           # CRUD y optimistic locking de contactos
     test_items.py              # CRUD y optimistic locking de ítems
     test_taxes.py              # CRUD y optimistic locking de impuestos
@@ -528,15 +578,20 @@ backend/
   Dockerfile
   entrypoint.sh                # espera PostgreSQL, migra y cede el control al CMD
   pyproject.toml
+  uv.lock
 ```
 
 ## Notas
 
-- No hay `uv.lock` en esta etapa. Al ejecutar `uv sync` se genera; conviene
-  commitearlo para builds reproducibles.
+- `uv.lock` está versionado. El `Dockerfile` todavía resuelve dependencias desde
+  `pyproject.toml`; conviene copiar el lock y usar `uv sync --frozen` en una
+  próxima fase. `bcrypt` se fija en 4.0.1 porque `passlib` 1.7.4 falla con
+  bcrypt 5; la migración a Argon2id según ADR-005 queda pendiente.
 - El `Dockerfile` usa `uv` sin versión fijada todavía; antes de producción se
   debe fijar versión o digest.
 - Las migraciones se ejecutan automáticamente al arrancar el contenedor mediante
   `entrypoint.sh`; no es necesario ejecutar `alembic upgrade head` a mano.
 - El esquema es de una sola instancia/tenant en esta fase. La multi-tenencia y
   la emisión electrónica DIAN (CUFE/CUDE/firma) quedan fuera de este paso.
+- Las mutaciones autenticadas aún no tienen CSRF explícito ni rate limiting. No
+  usar este MVP en producción sin completar esos controles.

@@ -8,6 +8,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.inventory.schemas import (
     StockBalanceRead,
     StockMovementCreate,
@@ -18,7 +19,11 @@ from app.domain.inventory_repository import InventoryRepository
 from app.infrastructure.database import get_db
 from app.infrastructure.transactions import operation_transaction
 
-router = APIRouter(prefix="/inventory", tags=["inventory"])
+router = APIRouter(
+    prefix="/inventory",
+    tags=["inventory"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 

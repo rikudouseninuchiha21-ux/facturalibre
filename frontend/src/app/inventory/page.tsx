@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getStockBalances, type StockBalance } from "@/lib/api";
+import { getSessionCookieHeader } from "@/lib/server-auth";
 import { formatQuantity } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -26,11 +27,13 @@ export const metadata: Metadata = {
 };
 
 export default async function InventoryPage() {
+  const cookieHeader = await getSessionCookieHeader();
+
   let balances: StockBalance[] = [];
   let error: string | null = null;
 
   try {
-    balances = await getStockBalances();
+    balances = await getStockBalances(cookieHeader);
   } catch (cause) {
     error =
       cause instanceof Error

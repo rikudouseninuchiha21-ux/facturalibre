@@ -17,6 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getEmployees, type Employee } from "@/lib/api";
+import { getSessionCookieHeader } from "@/lib/server-auth";
 import { formatCurrency } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -40,11 +41,13 @@ function EmployeeStatus({ isActive }: { isActive: boolean }) {
 }
 
 export default async function EmployeesPage() {
+  const cookieHeader = await getSessionCookieHeader();
+
   let employees: Employee[] = [];
   let error: string | null = null;
 
   try {
-    employees = await getEmployees();
+    employees = await getEmployees(cookieHeader);
   } catch (cause) {
     error =
       cause instanceof Error

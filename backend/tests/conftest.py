@@ -4,11 +4,17 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
+from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import Session
+
+from app.application.auth.security import SESSION_COOKIE_NAME, hash_session_token
+from app.domain.models.auth import AuthSession, User
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
@@ -58,9 +64,8 @@ def db_session(test_engine: Engine) -> Iterator[Session]:
         connection.close()
 
 
-@pytest.fixture
-def client(db_session: Session) -> Iterator[TestClient]:
-    """TestClient con get_db apuntando a la sesión transaccional del test."""
+def _test_client(db_session: Session) -> tuple[TestClient, FastAPI]:
+    """Construye un TestClient aislado con get_db apuntando al test."""
     from app.infrastructure.database import get_db
     from app.main import app
 
@@ -68,8 +73,47 @@ def client(db_session: Session) -> Iterator[TestClient]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    return TestClient(app, base_url="https://testserver"), app
+
+
+@pytest.fixture
+def anonymous_client(db_session: Session) -> Iterator[TestClient]:
+    """Cliente sin cookie de sesión para probar login y registro."""
+    test_client, app = _test_client(db_session)
     try:
-        with TestClient(app) as test_client:
+        with test_client:
             yield test_client
     finally:
         app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def client(anonymous_client: TestClient, db_session: Session) -> Iterator[TestClient]:
+    """Cliente autenticado para los tests de módulos protegidos.
+
+    La sesión se inserta directamente para no ejecutar bcrypt en cada test.
+    """
+    user = User(
+        email=f"test-{uuid4()}@example.com",
+        hashed_password="not-used-by-protected-endpoint-tests",
+        full_name="Usuario de Prueba",
+    )
+    db_session.add(user)
+    db_session.flush()
+
+    token = str(uuid4())
+    db_session.add(
+        AuthSession(
+            user_id=user.id,
+            token=hash_session_token(token),
+            expires_at=datetime.now(UTC) + timedelta(hours=1),
+        )
+    )
+    db_session.flush()
+
+    anonymous_client.cookies.set(
+        SESSION_COOKIE_NAME,
+        token,
+        path="/",
+    )
+    yield anonymous_client

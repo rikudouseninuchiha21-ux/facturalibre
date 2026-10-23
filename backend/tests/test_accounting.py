@@ -266,7 +266,9 @@ def test_void_invoice_generates_reversal_entry(
 
     original_after = _entry_for(client, "INVOICE", invoice["id"])
     assert original_after["status"] == "POSTED"
-    assert original["lines"] == original_after["lines"]
+    # El orden de la colección puede variar al recargar la relación; lo
+    # relevante es que los movimientos originales no hayan cambiado.
+    assert _lines_by_code(original) == _lines_by_code(original_after)
     assert db_session.scalar(select(func.count()).select_from(AccountingEntry)) == 2
 
 

@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.accounting.service import AccountingService
 from app.application.inventory.service import InventoryService
 from app.application.invoice_schemas import (
@@ -29,7 +30,11 @@ from app.domain.item_repository import ItemRepository
 from app.infrastructure.database import get_db
 from app.infrastructure.transactions import operation_transaction
 
-router = APIRouter(prefix="/invoices", tags=["invoices"])
+router = APIRouter(
+    prefix="/invoices",
+    tags=["invoices"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 IdempotencyKeyHeader = Annotated[UUID, Header(alias="Idempotency-Key")]

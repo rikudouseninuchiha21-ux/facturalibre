@@ -7,12 +7,17 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.payroll.schemas import EmployeeCreate, EmployeeRead, EmployeeUpdate
 from app.domain.employee_repository import EmployeeRepository
 from app.domain.exceptions import ResourceNotFoundError
 from app.infrastructure.database import get_db
 
-router = APIRouter(prefix="/employees", tags=["employees"])
+router = APIRouter(
+    prefix="/employees",
+    tags=["employees"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 EMPLOYEE_DOCUMENT_CONFLICT = "El documento del empleado ya existe"

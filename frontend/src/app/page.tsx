@@ -95,7 +95,7 @@ export default function HomePage() {
         <CardHeader>
           <CardTitle>Estado de la fase</CardTitle>
           <CardDescription>
-            Fase 5C-2: empleados y liquidación básica de nómina en la interfaz.
+            Fase 6: autenticación con sesiones opacas y cookies HTTP-only.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -108,7 +108,7 @@ export default function HomePage() {
             </li>
             <li>Cálculo de nómina con actualización del estado del periodo.</li>
             <li>Proxy same-origin para evitar CORS en el navegador.</li>
-            <li>Sin autenticación ni estado global.</li>
+            <li>Login, logout y rutas protegidas por cookie de sesión.</li>
           </ul>
         </CardContent>
       </Card>

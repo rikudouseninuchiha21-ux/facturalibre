@@ -9,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.api.dependencies.auth import get_current_user
 from app.application.payroll.schemas import PayrollPeriodCreate, PayrollPeriodRead
 from app.application.payroll.service import PayrollService
 from app.domain.exceptions import ResourceNotFoundError
@@ -16,7 +17,11 @@ from app.domain.payroll_repository import PayrollRepository
 from app.infrastructure.database import get_db
 from app.infrastructure.transactions import operation_transaction
 
-router = APIRouter(prefix="/payroll", tags=["payroll"])
+router = APIRouter(
+    prefix="/payroll",
+    tags=["payroll"],
+    dependencies=[Depends(get_current_user)],
+)
 
 DbSession = Annotated[Session, Depends(get_db)]
 PERIOD_CONFLICT = "Ya existe un periodo de nómina para ese mes y año"
