@@ -17,7 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getInvoices, type Invoice, type LifecycleStatus } from "@/lib/api";
+import {
+  getInvoices,
+  type Invoice,
+  type LifecycleStatus,
+  type PaymentStatus,
+} from "@/lib/api";
 import { getSessionCookieHeader } from "@/lib/server-auth";
 import { formatCurrency } from "@/lib/format";
 
@@ -39,12 +44,36 @@ const lifecycleStyles: Record<LifecycleStatus, string> = {
   void: "bg-red-50 text-red-700 ring-red-200",
 };
 
+const paymentLabels: Record<PaymentStatus, string> = {
+  unpaid: "Pendiente",
+  partially_paid: "Parcial",
+  paid: "Pagada",
+  overpaid: "Sobrepagada",
+};
+
+const paymentStyles: Record<PaymentStatus, string> = {
+  unpaid: "bg-amber-50 text-amber-700 ring-amber-200",
+  partially_paid: "bg-blue-50 text-blue-700 ring-blue-200",
+  paid: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+  overpaid: "bg-purple-50 text-purple-700 ring-purple-200",
+};
+
 function LifecycleBadge({ status }: { status: LifecycleStatus }) {
   return (
     <span
       className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${lifecycleStyles[status]}`}
     >
       {lifecycleLabels[status]}
+    </span>
+  );
+}
+
+function PaymentBadge({ status }: { status: PaymentStatus }) {
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${paymentStyles[status]}`}
+    >
+      {paymentLabels[status]}
     </span>
   );
 }
@@ -72,8 +101,8 @@ export default async function InvoicesPage() {
             Facturas
           </h1>
           <p className="mt-2 max-w-2xl text-slate-600">
-            Facturas registradas, con su estado de ciclo de vida y saldo
-            pendiente.
+            Facturas registradas, con su estado de ciclo de vida, estado de
+            pago y saldo pendiente.
           </p>
         </div>
         <Link
@@ -118,6 +147,7 @@ export default async function InvoicesPage() {
                 <TableRow>
                   <TableHead>Número</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Pago</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -132,6 +162,9 @@ export default async function InvoicesPage() {
                     <TableCell>
                       <LifecycleBadge status={invoice.lifecycle_status} />
                     </TableCell>
+                    <TableCell>
+                      <PaymentBadge status={invoice.payment_status} />
+                    </TableCell>
                     <TableCell className="text-right font-medium tabular-nums text-slate-950">
                       {formatCurrency(invoice.total, invoice.currency)}
                     </TableCell>
@@ -142,6 +175,8 @@ export default async function InvoicesPage() {
                       <InvoiceActions
                         invoiceId={invoice.id}
                         status={invoice.lifecycle_status}
+                        balance={invoice.balance}
+                        currency={invoice.currency}
                       />
                     </TableCell>
                   </TableRow>

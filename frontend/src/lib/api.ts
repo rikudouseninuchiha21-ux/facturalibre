@@ -135,6 +135,23 @@ export interface Invoice {
   lines: InvoiceLine[];
 }
 
+export interface Payment {
+  id: string;
+  invoice_id: string;
+  amount: string;
+  payment_date: string;
+  method: string;
+  reference: string | null;
+  created_at: string;
+}
+
+export interface PaymentCreateInput {
+  amount: string;
+  payment_date: string;
+  method: string;
+  reference?: string;
+}
+
 export interface Warehouse {
   id: string;
   name: string;
@@ -407,6 +424,20 @@ export function createInvoice(
 
 export function issueInvoice(invoiceId: string): Promise<Invoice> {
   return apiPost<Invoice>(`/invoices/${encodeURIComponent(invoiceId)}/issue`);
+}
+
+export function createPayment(
+  invoiceId: string,
+  payload: PaymentCreateInput,
+  idempotencyKey: string,
+): Promise<Payment> {
+  return apiPost<Payment>(
+    `/invoices/${encodeURIComponent(invoiceId)}/payments`,
+    payload,
+    {
+      headers: { "Idempotency-Key": idempotencyKey },
+    },
+  );
 }
 
 export function voidInvoice(

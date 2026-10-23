@@ -6,7 +6,7 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 8: interfaz de gestión de ítems e impuestos.
+Fase 9: registro de pagos sobre facturas emitidas desde la interfaz.
 
 - Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`), facturas
   (`invoices`) y pagos (`payments`): crear, emitir, consultar, anular y borrar
@@ -26,7 +26,9 @@ Fase 8: interfaz de gestión de ítems e impuestos.
   Incluye dashboard, contactos, ítems, impuestos, facturas, bodegas, inventario,
   empleados y nómina, con login, logout y rutas protegidas por middleware. La
   creación de facturas en borrador usa líneas dinámicas, cálculo de totales en
-  el navegador e idempotencia en el `POST /api/v1/invoices`.
+  el navegador e idempotencia en el `POST /api/v1/invoices`. El listado permite
+  emitir, anular y registrar pagos totales o parciales con `Idempotency-Key`;
+  tras el pago se refrescan el saldo y el estado de pago de la factura.
 - Sin notas crédito ni devolución de pagos todavía.
 
 ## Requisitos

@@ -31,7 +31,7 @@ const sections = [
     href: "/invoices",
     title: "Facturas",
     description:
-      "Revisa el estado, el total y el saldo pendiente de cada factura.",
+      "Revisa el estado, el total, el saldo pendiente y el estado de pago de cada factura.",
   },
   {
     href: "/warehouses",
@@ -107,7 +107,7 @@ export default function HomePage() {
         <CardHeader>
           <CardTitle>Estado de la fase</CardTitle>
           <CardDescription>
-            Fase 8: interfaz de gestión de ítems e impuestos.
+            Fase 9: registro de pagos sobre facturas emitidas.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -117,12 +117,13 @@ export default function HomePage() {
               inventario y empleados.
             </li>
             <li>
-              Formularios para crear empleados y periodos de nómina.
+              Registro de pagos totales o parciales con idempotencia y
+              actualización del saldo.
             </li>
-            <li>Cálculo de nómina con actualización del estado del periodo.</li>
             <li>
               Facturas con líneas dinámicas, impuestos y totales en tiempo real.
             </li>
+            <li>Cálculo de nómina con actualización del estado del periodo.</li>
             <li>
               Catálogos de ítems e impuestos con precio, tasa y asociación.
             </li>

@@ -2,8 +2,8 @@
 
 Interfaz administrativa autenticada para consultar contactos, ítems, impuestos,
 facturas, bodegas e inventario, y registrar contactos, ítems, impuestos,
-bodegas, empleados, periodos de nómina, movimientos de stock y facturas en
-borrador desde la API de FacturaLibre.
+bodegas, empleados, periodos de nómina, movimientos de stock, facturas en
+borrador y pagos sobre facturas emitidas desde la API de FacturaLibre.
 
 ## Stack
 
@@ -42,6 +42,7 @@ frontend/
 │   │   ├── inventory/MovementForm.tsx
 │   │   ├── invoices/InvoiceActions.tsx
 │   │   ├── invoices/InvoiceCreateForm.tsx
+│   │   ├── invoices/PaymentForm.tsx
 │   │   ├── items/ItemForm.tsx
 │   │   ├── taxes/TaxForm.tsx
 │   │   ├── warehouses/WarehouseForm.tsx
@@ -102,6 +103,26 @@ un reintento no duplique la factura.
 
 Al guardar, el formulario redirige a `/invoices` y ejecuta `router.refresh()`.
 La factura queda en estado `draft` hasta que se emita desde el listado.
+
+## Registro de pagos
+
+En `/invoices`, una factura `issued` con saldo mayor que cero muestra la acción
+“Registrar Pago”. El botón abre `PaymentForm`, un modal construido con Tailwind
+que presenta el saldo pendiente, propone ese saldo como monto inicial y permite
+cambiarlo para registrar un abono parcial. También solicita método de pago
+(Efectivo, Transferencia o Tarjeta) y una referencia opcional.
+
+Antes del `POST /api/v1/invoices/{id}/payments` se genera una
+`Idempotency-Key` UUID v4. La clave se conserva mientras el formulario no cambie
+y se invalida al editar el monto, el método o la referencia. Si el backend
+rechaza la operación, por ejemplo con un `422` por sobrepago, el mensaje se
+muestra dentro del modal y este permanece abierto para corregir los datos.
+
+Al confirmar correctamente, el modal se cierra, se ejecuta `router.refresh()` y
+el listado refleja el nuevo saldo y el estado de pago (`Pendiente`, `Parcial`,
+`Pagada` o `Sobrepagada`). El modal también se puede cerrar con `Escape`, con la
+X, con Cancelar o haciendo clic en el fondo, salvo mientras la petición está en
+curso.
 
 ## Arranque con Docker
 
@@ -249,6 +270,7 @@ Incluye autenticación con login/logout, bootstrap del primer administrador,
 protección de páginas y endpoints, consultas de contactos, ítems, impuestos,
 facturas, bodegas, saldos de inventario, empleados y nómina; creación de
 contactos, ítems, impuestos, bodegas, movimientos de stock, empleados, periodos
-de nómina y facturas en borrador; y emisión y anulación de facturas. No incluye
-CSRF explícito, rate limiting, alta administrativa de más usuarios, roles ni
-edición de bodegas.
+de nómina y facturas en borrador; y emisión, anulación y registro de pagos
+totales o parciales sobre facturas emitidas. No incluye CSRF explícito, rate
+limiting, alta administrativa de más usuarios, roles, edición de bodegas ni
+notas crédito o devolución de pagos.
