@@ -46,7 +46,7 @@ export default async function RootLayout({
   return (
     <html lang="es" className="h-full">
       <body className="flex min-h-full flex-col bg-slate-50 text-slate-950 antialiased">
-        <header className="border-b border-slate-200 bg-white">
+        <header className="border-b border-slate-200 bg-white print:hidden">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-6 px-4 py-4 sm:px-6 lg:px-8">
             <Link
               href="/"

@@ -163,7 +163,12 @@ export default async function InvoicesPage() {
                 {invoices.map((invoice) => (
                   <TableRow key={invoice.id}>
                     <TableCell className="font-mono text-xs font-medium text-slate-950">
-                      {invoice.number ?? "—"}
+                      <Link
+                        href={`/invoices/${invoice.id}`}
+                        className="text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                      >
+                        {invoice.number ?? "—"}
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <LifecycleBadge status={invoice.lifecycle_status} />

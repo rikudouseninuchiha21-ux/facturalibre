@@ -438,6 +438,33 @@ export function getInvoices(cookieHeader?: string): Promise<Invoice[]> {
   return apiGet<Invoice[]>("/invoices", cookieHeader);
 }
 
+export function getInvoice(
+  id: string,
+  cookieHeader?: string,
+): Promise<Invoice> {
+  return apiGet<Invoice>(
+    `/invoices/${encodeURIComponent(id)}`,
+    cookieHeader,
+  );
+}
+
+export function getInvoicePayments(
+  id: string,
+  cookieHeader?: string,
+): Promise<Payment[]> {
+  return apiGet<Payment[]>(
+    `/invoices/${encodeURIComponent(id)}/payments`,
+    cookieHeader,
+  );
+}
+
+export function getContact(
+  id: string,
+  cookieHeader?: string,
+): Promise<Contact> {
+  return apiGet<Contact>(`/contacts/${encodeURIComponent(id)}`, cookieHeader);
+}
+
 export function createInvoice(
   payload: InvoiceCreateInput,
   idempotencyKey: string,
