@@ -33,9 +33,9 @@ contact_type_enum = postgresql.ENUM(
     create_type=False,
 )
 purchase_status_enum = postgresql.ENUM(
-    "DRAFT",
-    "ISSUED",
-    "VOID",
+    "draft",
+    "issued",
+    "void",
     name="purchase_invoice_status",
     create_type=False,
 )
@@ -46,6 +46,9 @@ def upgrade() -> None:
 
     # Nuevo ENUM de tipo de contacto.
     contact_type_enum.create(bind, checkfirst=True)
+
+    # Nuevo ENUM de estado de factura de compra.
+    purchase_status_enum.create(bind, checkfirst=True)
 
     # Añadir columna type a contacts.
     op.add_column(

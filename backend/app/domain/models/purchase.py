@@ -110,6 +110,11 @@ class PurchaseInvoice(Base):
         cascade="all, delete-orphan",
         order_by="PurchaseLine.id",
     )
+    payments: Mapped[list[PurchasePayment]] = relationship(
+        back_populates="purchase_invoice",
+        cascade="all, delete-orphan",
+        order_by="PurchasePayment.id",
+    )
 
 
 class PurchaseLine(Base):
@@ -162,3 +167,38 @@ class PurchaseLine(Base):
 
     purchase_invoice: Mapped[PurchaseInvoice] = relationship(back_populates="lines")
     item: Mapped[Item | None] = relationship(back_populates="purchase_lines")
+
+
+class PurchasePayment(Base):
+    """Pago realizado a una factura de compra (proveedor)."""
+
+    __tablename__ = "purchase_payments"
+
+    __table_args__ = (CheckConstraint("amount > 0", name="ck_purchase_payments_amount_positive"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    purchase_invoice_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        ForeignKey("purchase_invoices.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    payment_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    # -- REQUIERE VALIDACIÓN: contador/experto DIAN (catálogo de medios de pago).
+    method: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        comment=("REQUIERE VALIDACIÓN: contador/experto DIAN. Catálogo de medios de pago."),
+    )
+    reference: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    purchase_invoice: Mapped[PurchaseInvoice] = relationship(back_populates="payments")

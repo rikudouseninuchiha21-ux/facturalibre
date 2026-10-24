@@ -677,3 +677,46 @@ export function issuePurchase(purchaseId: string): Promise<Purchase> {
     `/purchases/${encodeURIComponent(purchaseId)}/issue`,
   );
 }
+
+export type PurchasePaymentStatus = "draft" | "issued" | "void";
+
+export interface PurchasePayment {
+  id: string;
+  purchase_invoice_id: string;
+  amount: string;
+  payment_date: string;
+  method: string;
+  reference: string | null;
+  created_at: string;
+}
+
+export interface PurchasePaymentCreateInput {
+  amount: string;
+  payment_date: string;
+  method: string;
+  reference?: string;
+}
+
+export function getPurchasePayments(
+  purchaseId: string,
+  cookieHeader?: string,
+): Promise<PurchasePayment[]> {
+  return apiGet<PurchasePayment[]>(
+    `/purchases/${encodeURIComponent(purchaseId)}/payments`,
+    cookieHeader,
+  );
+}
+
+export function createPurchasePayment(
+  purchaseId: string,
+  payload: PurchasePaymentCreateInput,
+  idempotencyKey: string,
+): Promise<PurchasePayment> {
+  return apiPost<PurchasePayment>(
+    `/purchases/${encodeURIComponent(purchaseId)}/payments`,
+    payload,
+    {
+      headers: { "Idempotency-Key": idempotencyKey },
+    },
+  );
+}

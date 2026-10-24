@@ -49,6 +49,30 @@ function StatusBadge({ status }: { status: PurchaseStatus }) {
   );
 }
 
+function paymentStatusBadge(balance: string, total: string) {
+  const bal = Number(balance);
+  const tot = Number(total);
+  if (bal === 0) {
+    return (
+      <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-emerald-50 text-emerald-700 ring-emerald-200">
+        Pagada
+      </span>
+    );
+  }
+  if (bal < tot) {
+    return (
+      <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-blue-50 text-blue-700 ring-blue-200">
+        Parcial
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset bg-amber-50 text-amber-700 ring-amber-200">
+      Pendiente
+    </span>
+  );
+}
+
 export default async function PurchasesPage() {
   const cookieHeader = await getSessionCookieHeader();
 
@@ -121,7 +145,8 @@ export default async function PurchasesPage() {
                   <TableHead>Proveedor</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Total</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
+                  <TableHead className="text-right">Saldo</TableHead>
+                  <TableHead>Pago</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -129,7 +154,12 @@ export default async function PurchasesPage() {
                 {purchases.map((purchase) => (
                   <TableRow key={purchase.id}>
                     <TableCell className="font-mono text-xs font-medium text-slate-950">
-                      {purchase.number ?? "—"}
+                      <Link
+                        href={`/purchases/${purchase.id}`}
+                        className="text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                      >
+                        {purchase.number ?? "—"}
+                      </Link>
                     </TableCell>
                     <TableCell className="text-slate-900">
                       {purchase.supplier_id}
@@ -142,6 +172,9 @@ export default async function PurchasesPage() {
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
                       {formatCurrency(purchase.balance, "COP")}
+                    </TableCell>
+                    <TableCell>
+                      {paymentStatusBadge(purchase.balance, purchase.total)}
                     </TableCell>
                     <TableCell className="text-right">
                       {purchase.status === "draft" ? (

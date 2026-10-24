@@ -2,20 +2,27 @@
 
 from __future__ import annotations
 
+import builtins
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session, selectinload
 
+from app.domain.calculations import round_money
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.number_sequence import NumberSequence
-from app.domain.models.purchase import PurchaseInvoice, PurchaseLine, PurchaseStatus
+from app.domain.models.purchase import (
+    PurchaseInvoice,
+    PurchaseLine,
+    PurchasePayment,
+    PurchaseStatus,
+)
 
 PURCHASE_SEQUENCE_NAME = "purchase"
 PURCHASE_SEQUENCE_PREFIX = "FC"
@@ -171,6 +178,66 @@ class PurchaseRepository:
         purchase.updated_at = now
         self.db.flush()
         return purchase
+
+    def create_payment(
+        self,
+        *,
+        purchase_invoice_id: UUID,
+        amount: Decimal,
+        payment_date: date,
+        method: str,
+        reference: str | None,
+    ) -> PurchasePayment:
+        """Crea un pago a una factura de compra y lo deja visible en la transacción."""
+        payment = PurchasePayment(
+            purchase_invoice_id=purchase_invoice_id,
+            amount=amount,
+            payment_date=payment_date,
+            method=method,
+            reference=reference,
+        )
+        self.db.add(payment)
+        self.db.flush()
+        self.db.refresh(payment)
+        return payment
+
+    def list_payments(
+        self,
+        purchase_invoice_id: UUID,
+        *,
+        limit: int,
+        offset: int,
+    ) -> builtins.list[PurchasePayment]:
+        """Lista los pagos de una factura de compra por fecha descendente."""
+        statement = (
+            select(PurchasePayment)
+            .where(PurchasePayment.purchase_invoice_id == purchase_invoice_id)
+            .order_by(PurchasePayment.payment_date.desc(), PurchasePayment.id.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        return list(self.db.scalars(statement).all())
+
+    def total_paid(self, purchase_invoice_id: UUID) -> Decimal:
+        """Suma real de los pagos registrados para una factura de compra."""
+        value = self.db.scalar(
+            select(func.coalesce(func.sum(PurchasePayment.amount), Decimal("0.00"))).where(
+                PurchasePayment.purchase_invoice_id == purchase_invoice_id
+            )
+        )
+        if value is None:
+            return Decimal("0.00")
+        return round_money(value)
+
+    def current_balance(self, purchase: PurchaseInvoice) -> Decimal:
+        """Recalcula el saldo desde la suma real de pagos."""
+        return round_money(purchase.total - self.total_paid(purchase.id))
+
+    def recalculate_purchase(self, purchase: PurchaseInvoice) -> None:
+        """Actualiza saldo y versión de la factura de compra."""
+        purchase.balance = self.current_balance(purchase)
+        purchase.version += 1
+        purchase.updated_at = datetime.now(UTC)
 
     def get_idempotency_key(self, key: str) -> IdempotencyKey | None:
         """Busca una clave de idempotencia por su valor."""

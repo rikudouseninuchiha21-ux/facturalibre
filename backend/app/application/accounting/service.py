@@ -31,7 +31,7 @@ from app.domain.models.accounting import (
 from app.domain.models.invoice import Invoice
 from app.domain.models.payment import Payment
 from app.domain.models.payroll import PayrollPeriod
-from app.domain.models.purchase import PurchaseInvoice
+from app.domain.models.purchase import PurchaseInvoice, PurchasePayment
 
 ZERO = Decimal("0.00")
 
@@ -159,6 +159,39 @@ class AccountingService:
             source_type=AccountingSourceType.PURCHASE,
             source_id=purchase.id,
             lines=lines,
+        )
+
+    def record_purchase_payment(
+        self,
+        purchase: PurchaseInvoice,
+        payment: PurchasePayment,
+    ) -> AccountingEntry:
+        """Genera el asiento de un pago a una factura de compra.
+
+        Débito a Cuentas por Pagar y crédito a Caja/Bancos.
+        """
+        payment_account = (
+            self.mapping.cash
+            if payment.method.strip().lower() in CASH_PAYMENT_METHODS
+            else self.mapping.bank
+        )
+        return self._post_entry(
+            entry_date=payment.payment_date,
+            description=(
+                f"Pago factura de compra {purchase.number or purchase.id} ({payment.method})"
+            ),
+            source_type=AccountingSourceType.PURCHASE_PAYMENT,
+            source_id=payment.id,
+            lines=[
+                JournalLine(
+                    account_code=self.mapping.accounts_payable_account,
+                    debit=payment.amount,
+                ),
+                JournalLine(
+                    account_code=payment_account,
+                    credit=payment.amount,
+                ),
+            ],
         )
 
     def record_invoice_void(self, invoice: Invoice) -> AccountingEntry | None:

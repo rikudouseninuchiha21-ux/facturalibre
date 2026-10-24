@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
@@ -16,8 +16,11 @@ from app.application.accounting.service import AccountingService
 from app.application.inventory.service import InventoryService
 from app.application.purchase_schemas import (
     PurchaseCreate,
+    PurchasePaymentCreate,
+    PurchasePaymentRead,
     PurchaseRead,
     canonical_body_hash,
+    canonical_purchase_payment_hash,
 )
 from app.domain.calculations import (
     calculate_invoice_totals,
@@ -243,6 +246,111 @@ def list_purchases(
     """Lista facturas de compra con paginación por offset."""
     purchases = repository.list(limit=limit, offset=offset)
     return [PurchaseRead.model_validate(purchase) for purchase in purchases]
+
+
+@router.post(
+    "/{purchase_id}/payments",
+    response_model=PurchasePaymentRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_purchase_payment(
+    purchase_id: UUID,
+    payload: PurchasePaymentCreate,
+    idempotency_key: IdempotencyKeyHeader,
+    db: DbSession,
+    repository: PurchaseRepositoryDep,
+) -> JSONResponse:
+    """Registra un pago a una factura de compra con idempotencia por body."""
+    key = str(idempotency_key)
+    request_hash = canonical_purchase_payment_hash(payload)
+    response_body: dict[str, Any] | None = None
+
+    try:
+        with operation_transaction(db):
+            purchase = repository.get_by_id(purchase_id)
+            if purchase is None:
+                raise ResourceNotFoundError("Factura de compra no encontrada")
+            if purchase.status is not PurchaseStatus.ISSUED:
+                from app.domain.exceptions import InvoiceStateError
+
+                raise InvoiceStateError("Solo se pueden pagar facturas de compra emitidas")
+
+            amount = round_money(payload.amount)
+            if amount > repository.current_balance(purchase):
+                raise HTTPException(
+                    status_code=422,
+                    detail="Sobrepago no permitido en MVP",
+                )
+
+            # Revisar idempotencia tras adquirir el lock.
+            existing = repository.get_idempotency_key(key)
+            if existing is not None:
+                if existing.request_hash != request_hash:
+                    raise HTTPException(
+                        status_code=status.HTTP_409_CONFLICT,
+                        detail=IDEMPOTENCY_MISMATCH,
+                    )
+                if existing.response_body is not None:
+                    response_body = existing.response_body
+                # Si response_body es None, se continúa creando el pago.
+
+            if response_body is None:
+                payment = repository.create_payment(
+                    purchase_invoice_id=purchase.id,
+                    amount=amount,
+                    payment_date=payload.payment_date,
+                    method=payload.method,
+                    reference=payload.reference,
+                )
+                repository.recalculate_purchase(purchase)
+                AccountingService(db).record_purchase_payment(purchase, payment)
+                response_body = PurchasePaymentRead.model_validate(payment).model_dump(mode="json")
+                repository.add_idempotency_key(
+                    key=key,
+                    request_hash=request_hash,
+                    response_body=response_body,
+                )
+    except IntegrityError:
+        repository.rollback()
+        winner = repository.get_idempotency_key(key)
+        if winner is None:
+            raise
+        if winner.request_hash != request_hash:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=IDEMPOTENCY_MISMATCH,
+            ) from None
+        if winner.response_body is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Idempotency-Key en proceso",
+            ) from None
+        response_body = winner.response_body
+
+    if response_body is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Idempotency-Key en proceso",
+        )
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content=response_body,
+    )
+
+
+@router.get("/{purchase_id}/payments", response_model=list[PurchasePaymentRead])
+def list_purchase_payments(
+    purchase_id: UUID,
+    repository: PurchaseRepositoryDep,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    offset: Annotated[int, Query(ge=0)] = 0,
+) -> list[PurchasePaymentRead]:
+    """Lista los pagos de una factura de compra por fecha descendente."""
+    purchase = repository.get_by_id(purchase_id)
+    if purchase is None:
+        raise ResourceNotFoundError("Factura de compra no encontrada")
+    payments = repository.list_payments(purchase_id, limit=limit, offset=offset)
+    return [PurchasePaymentRead.model_validate(payment) for payment in payments]
 
 
 @router.delete("/{purchase_id}", status_code=status.HTTP_204_NO_CONTENT)

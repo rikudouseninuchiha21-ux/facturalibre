@@ -26,7 +26,12 @@ from app.domain.models.payroll import (
     PayrollPeriod,
     PayrollPeriodStatus,
 )
-from app.domain.models.purchase import PurchaseInvoice, PurchaseLine, PurchaseStatus
+from app.domain.models.purchase import (
+    PurchaseInvoice,
+    PurchaseLine,
+    PurchasePayment,
+    PurchaseStatus,
+)
 from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
 from app.domain.models.tax import Tax
 from app.domain.models.warehouse import Warehouse
@@ -56,6 +61,7 @@ __all__ = [
     "PayrollPeriodStatus",
     "PurchaseInvoice",
     "PurchaseLine",
+    "PurchasePayment",
     "PurchaseStatus",
     "StockBalance",
     "StockMovement",

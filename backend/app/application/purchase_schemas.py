@@ -115,3 +115,40 @@ def canonical_body_hash(payload: PurchaseCreate) -> str:
         sort_keys=True,
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+class PurchasePaymentCreate(BaseModel):
+    """Datos para registrar un pago a una factura de compra."""
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    amount: Money
+    payment_date: date
+    method: str = Field(min_length=1, max_length=50)
+    reference: str | None = Field(default=None, max_length=100)
+
+
+class PurchasePaymentRead(BaseModel):
+    """Representación pública de un pago a compra."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    purchase_invoice_id: UUID
+    amount: Decimal
+    payment_date: date
+    method: str
+    reference: str | None
+    created_at: datetime
+
+
+def canonical_purchase_payment_hash(payload: PurchasePaymentCreate) -> str:
+    """Calcula SHA-256 del body normalizado, con claves ordenadas."""
+    canonical = _canonicalize(payload.model_dump(mode="python"))
+    encoded = json.dumps(
+        canonical,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
