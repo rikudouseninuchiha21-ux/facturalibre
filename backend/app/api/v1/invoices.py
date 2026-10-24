@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import get_current_user, require_role
 from app.application.accounting.service import AccountingService
 from app.application.credit_note_schemas import (
     CreditNoteCreate,
@@ -37,6 +37,7 @@ from app.domain.credit_note_repository import CreditNoteRepository, NewCreditNot
 from app.domain.exceptions import InventoryError, ResourceNotFoundError
 from app.domain.invoice_repository import InvoiceRepository, NewInvoiceLine
 from app.domain.item_repository import ItemRepository
+from app.domain.models.auth import UserRole
 from app.domain.models.invoice_line import InvoiceLine
 from app.domain.models.stock import StockMovementType
 from app.domain.warehouse_repository import WarehouseRepository
@@ -46,7 +47,10 @@ from app.infrastructure.transactions import operation_transaction
 router = APIRouter(
     prefix="/invoices",
     tags=["invoices"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[
+        Depends(get_current_user),
+        Depends(require_role([UserRole.ACCOUNTANT, UserRole.ADMIN])),
+    ],
 )
 
 DbSession = Annotated[Session, Depends(get_db)]

@@ -57,6 +57,7 @@ class AuthService:
                     email=email,
                     hashed_password=hash_password(payload.password),
                     full_name=payload.full_name,
+                    role=payload.role,
                 )
         except IntegrityError as exc:
             # Carrera entre la verificación y el INSERT: gana el UNIQUE de la BD.

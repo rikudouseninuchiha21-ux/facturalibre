@@ -12,7 +12,7 @@ from app.domain.models.accounting import (
     AccountNature,
     AccountType,
 )
-from app.domain.models.auth import AuthSession, User
+from app.domain.models.auth import AuthSession, User, UserRole
 from app.domain.models.contact import Contact, ContactType
 from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNoteStatus
 from app.domain.models.idempotency_key import IdempotencyKey
@@ -72,5 +72,6 @@ __all__ = [
     "StockMovementType",
     "Tax",
     "User",
+    "UserRole",
     "Warehouse",
 ]

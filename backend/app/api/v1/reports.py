@@ -14,7 +14,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import get_current_user, require_role
 from app.application.report_schemas import (
     AccountReportRow,
     BalanceSheetResponse,
@@ -27,6 +27,7 @@ from app.domain.models.accounting import (
     AccountingEntryLine,
     AccountingEntryStatus,
 )
+from app.domain.models.auth import UserRole
 from app.domain.models.invoice import LifecycleStatus
 from app.domain.reports_repository import (
     InvoiceExportRow,
@@ -38,7 +39,10 @@ from app.infrastructure.database import get_db
 router = APIRouter(
     prefix="/reports",
     tags=["reports"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[
+        Depends(get_current_user),
+        Depends(require_role([UserRole.ACCOUNTANT, UserRole.ADMIN])),
+    ],
 )
 
 DbSession = Annotated[Session, Depends(get_db)]

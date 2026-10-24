@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import get_current_user, require_role
 from app.application.accounting.service import AccountingService
 from app.application.inventory.service import InventoryService
 from app.application.purchase_schemas import (
@@ -29,6 +29,7 @@ from app.domain.calculations import (
 from app.domain.contact_repository import ContactRepository
 from app.domain.exceptions import InventoryError, ResourceNotFoundError
 from app.domain.item_repository import ItemRepository
+from app.domain.models.auth import UserRole
 from app.domain.models.purchase import PurchaseStatus
 from app.domain.models.stock import StockMovementType
 from app.domain.purchase_repository import (
@@ -42,7 +43,10 @@ from app.infrastructure.transactions import operation_transaction
 router = APIRouter(
     prefix="/purchases",
     tags=["purchases"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[
+        Depends(get_current_user),
+        Depends(require_role([UserRole.ACCOUNTANT, UserRole.ADMIN])),
+    ],
 )
 
 DbSession = Annotated[Session, Depends(get_db)]

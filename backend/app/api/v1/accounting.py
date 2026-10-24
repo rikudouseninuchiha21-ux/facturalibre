@@ -8,19 +8,23 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import get_current_user, require_role
 from app.application.accounting.schemas import (
     AccountingAccountRead,
     AccountingEntryRead,
 )
 from app.domain.accounting_repository import AccountingRepository
 from app.domain.exceptions import ResourceNotFoundError
+from app.domain.models.auth import UserRole
 from app.infrastructure.database import get_db
 
 router = APIRouter(
     prefix="/accounting",
     tags=["accounting"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[
+        Depends(get_current_user),
+        Depends(require_role([UserRole.ADMIN])),
+    ],
 )
 
 DbSession = Annotated[Session, Depends(get_db)]

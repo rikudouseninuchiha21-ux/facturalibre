@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import enum
 import uuid
 from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
     DateTime,
+    Enum,
     ForeignKey,
     String,
     Uuid,
@@ -17,6 +19,17 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database import Base
+
+
+class UserRole(enum.StrEnum):
+    ADMIN = "ADMIN"
+    ACCOUNTANT = "ACCOUNTANT"
+    CASHIER = "CASHIER"
+
+
+def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
+    """Persiste los valores, no los nombres, de los enums."""
+    return [member.value for member in enum_cls]
 
 
 class User(Base):
@@ -37,6 +50,17 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    role: Mapped[UserRole] = mapped_column(
+        Enum(
+            UserRole,
+            name="user_role",
+            native_enum=True,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+        default=UserRole.ADMIN,
+        server_default=text("'ADMIN'"),
+    )
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,

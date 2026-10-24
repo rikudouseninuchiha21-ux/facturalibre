@@ -17,14 +17,17 @@ export const metadata: Metadata = {
 };
 
 const navigation = [
-  { href: "/contacts", label: "Contactos" },
-  { href: "/items", label: "Ítems" },
-  { href: "/taxes", label: "Impuestos" },
-  { href: "/invoices", label: "Facturas" },
-  { href: "/warehouses", label: "Bodegas" },
-  { href: "/inventory", label: "Inventario" },
-  { href: "/employees", label: "Empleados" },
-  { href: "/payroll", label: "Nómina" },
+  { href: "/contacts", label: "Contactos", roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
+  { href: "/items", label: "Ítems", roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
+  { href: "/taxes", label: "Impuestos", roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
+  { href: "/invoices", label: "Facturas", roles: ["ADMIN", "ACCOUNTANT"] },
+  { href: "/warehouses", label: "Bodegas", roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
+  { href: "/inventory", label: "Inventario", roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
+  { href: "/employees", label: "Empleados", roles: ["ADMIN"] },
+  { href: "/payroll", label: "Nómina", roles: ["ADMIN"] },
+  { href: "/purchases", label: "Compras", roles: ["ADMIN", "ACCOUNTANT"] },
+  { href: "/pos", label: "Punto de Venta", roles: ["ADMIN", "CASHIER"] },
+  { href: "/reports/financials", label: "Reportes", roles: ["ADMIN", "ACCOUNTANT"] },
 ];
 
 export default async function RootLayout({
@@ -67,44 +70,41 @@ export default async function RootLayout({
                   aria-label="Navegación principal"
                   className="flex flex-wrap items-center justify-end gap-1 text-sm font-medium"
                 >
-                  {navigation.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="rounded-lg px-3 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                  <Link
-                    href="/purchases"
-                    className="rounded-lg px-3 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                  >
-                    Compras
-                  </Link>
-                  <Link
-                    href="/pos"
-                    className="rounded-lg px-3 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                  >
-                    Punto de Venta
-                  </Link>
-                  <Link
-                    href="/reports/financials"
-                    className="rounded-lg px-3 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"
-                  >
-                    Reportes
-                  </Link>
+                  {navigation
+                    .filter((item) => item.roles.includes(currentUser.role))
+                    .map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="rounded-lg px-3 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
                 </nav>
               ) : null}
 
               {currentUser ? (
                 <div className="flex items-center gap-3 border-slate-200 pl-0 sm:border-l sm:pl-3">
-                  <span
-                    title={currentUser.email}
-                    className="max-w-40 truncate text-sm font-medium text-slate-700"
-                  >
-                    {currentUser.full_name}
-                  </span>
+                  <div className="flex flex-col">
+                    <span
+                      title={currentUser.email}
+                      className="max-w-40 truncate text-sm font-medium text-slate-950"
+                    >
+                      {currentUser.full_name}
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                        currentUser.role === "ADMIN"
+                          ? "bg-blue-100 text-blue-700"
+                          : currentUser.role === "ACCOUNTANT"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-slate-100 text-slate-700"
+                      }`}
+                    >
+                      {currentUser.role}
+                    </span>
+                  </div>
                   <LogoutButton />
                 </div>
               ) : null}

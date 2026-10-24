@@ -10,7 +10,7 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
-from app.domain.models.auth import AuthSession, User
+from app.domain.models.auth import AuthSession, User, UserRole
 
 # Clave fija para serializar el bootstrap del primer usuario.
 _REGISTRATION_LOCK_KEY = 0x464143545552414C  # "FACTURAL"
@@ -44,12 +44,14 @@ class AuthRepository:
         email: str,
         hashed_password: str,
         full_name: str,
+        role: UserRole = UserRole.ADMIN,
     ) -> User:
         """Agrega un usuario a la transacción actual."""
         user = User(
             email=email,
             hashed_password=hashed_password,
             full_name=full_name,
+            role=role,
         )
         self.db.add(user)
         self.db.flush()

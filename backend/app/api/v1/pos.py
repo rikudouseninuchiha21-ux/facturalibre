@@ -8,7 +8,8 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.auth import get_current_user, require_role
+from app.domain.models.auth import UserRole
 from app.domain.models.item import Item
 from app.domain.models.stock import StockBalance
 from app.domain.models.tax import Tax
@@ -18,7 +19,10 @@ from app.infrastructure.database import get_db
 router = APIRouter(
     prefix="/pos",
     tags=["pos"],
-    dependencies=[Depends(get_current_user)],
+    dependencies=[
+        Depends(get_current_user),
+        Depends(require_role([UserRole.CASHIER, UserRole.ADMIN])),
+    ],
 )
 
 DbSession = Annotated[Session, Depends(get_db)]
