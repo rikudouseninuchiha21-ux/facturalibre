@@ -14,7 +14,7 @@ from app.domain.models.accounting import (
 )
 from app.domain.models.auth import AuthSession, User, UserRole
 from app.domain.models.company_setting import CompanySetting
-from app.domain.models.contact import Contact, ContactType
+from app.domain.models.contact import Contact, ContactStatus, ContactType
 from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNoteStatus
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
@@ -34,6 +34,8 @@ from app.domain.models.purchase import (
     PurchasePayment,
     PurchaseStatus,
 )
+from app.domain.models.quote import Quote, QuoteStatus
+from app.domain.models.quote_line import QuoteLine
 from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
 from app.domain.models.tax import Tax
 from app.domain.models.warehouse import Warehouse
@@ -49,6 +51,7 @@ __all__ = [
     "AuthSession",
     "CompanySetting",
     "Contact",
+    "ContactStatus",
     "ContactType",
     "CreditNote",
     "CreditNoteLine",
@@ -69,6 +72,9 @@ __all__ = [
     "PurchaseLine",
     "PurchasePayment",
     "PurchaseStatus",
+    "Quote",
+    "QuoteLine",
+    "QuoteStatus",
     "StockBalance",
     "StockMovement",
     "StockMovementType",

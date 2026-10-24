@@ -7,6 +7,7 @@ import { useState } from "react";
 import { type User } from "@/lib/api";
 import {
   BarChart3,
+  FilePlus,
   FileText,
   GraduationCap,
   LayoutDashboard,
@@ -39,6 +40,7 @@ const NAVIGATION = [
     items: [
       { href: "/pos", label: "Punto de Venta", icon: ShoppingCart, roles: ["ADMIN", "CASHIER"] },
       { href: "/invoices", label: "Ventas", icon: FileText, roles: ["ADMIN", "ACCOUNTANT"] },
+      { href: "/quotes", label: "Cotizaciones", icon: FilePlus, roles: ["ADMIN", "ACCOUNTANT"] },
       { href: "/purchases", label: "Compras", icon: Package, roles: ["ADMIN", "ACCOUNTANT"] },
     ],
   },

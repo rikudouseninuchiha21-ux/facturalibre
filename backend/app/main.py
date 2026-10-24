@@ -16,6 +16,7 @@ from app.api.v1 import (
     payroll,
     pos,
     purchases,
+    quotes,
     reports,
     settings,
     taxes,
@@ -25,6 +26,7 @@ from app.domain.exceptions import (
     InventoryError,
     InvoiceStateError,
     PayrollError,
+    QuoteStateError,
     ResourceNotFoundError,
     VersionConflictError,
 )
@@ -45,6 +47,7 @@ app.include_router(employees.router, prefix="/api/v1")
 app.include_router(payroll.router, prefix="/api/v1")
 app.include_router(pos.router, prefix="/api/v1")
 app.include_router(purchases.router, prefix="/api/v1")
+app.include_router(quotes.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 
@@ -79,6 +82,18 @@ async def invoice_state_handler(
     exc: InvoiceStateError,
 ) -> JSONResponse:
     """Traduce una transición de estado inválida a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(QuoteStateError)
+async def quote_state_handler(
+    _request: Request,
+    exc: QuoteStateError,
+) -> JSONResponse:
+    """Traduce una transición de estado inválida de cotización a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},

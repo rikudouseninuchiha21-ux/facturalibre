@@ -13,6 +13,10 @@ class InvoiceStateError(Exception):
     """La operación no está permitida para el estado actual de la factura."""
 
 
+class QuoteStateError(Exception):
+    """La operación no está permitida para el estado actual de la cotización."""
+
+
 class InventoryError(Exception):
     """Operación de inventario inválida o imposible de completar."""
 

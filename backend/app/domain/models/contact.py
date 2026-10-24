@@ -15,12 +15,19 @@ from app.infrastructure.database import Base
 if TYPE_CHECKING:
     from app.domain.models.invoice import Invoice
     from app.domain.models.purchase import PurchaseInvoice
+    from app.domain.models.quote import Quote
 
 
 class ContactType(enum.StrEnum):
     CUSTOMER = "customer"
     SUPPLIER = "supplier"
     BOTH = "both"
+
+
+class ContactStatus(enum.StrEnum):
+    LEAD = "LEAD"
+    PROSPECT = "PROSPECT"
+    CUSTOMER = "CUSTOMER"
 
 
 def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
@@ -51,6 +58,18 @@ class Contact(Base):
         server_default=text("'customer'"),
         index=True,
     )
+    status: Mapped[ContactStatus] = mapped_column(
+        Enum(
+            ContactStatus,
+            name="contact_status",
+            native_enum=True,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+        default=ContactStatus.CUSTOMER,
+        server_default=text("'CUSTOMER'"),
+        index=True,
+    )
     # -- REQUIERE VALIDACIÓN: contador/experto DIAN (formato de identificación fiscal).
     tax_id: Mapped[str | None] = mapped_column(
         String(30),
@@ -77,3 +96,4 @@ class Contact(Base):
 
     invoices: Mapped[list[Invoice]] = relationship(back_populates="contact")
     purchase_invoices: Mapped[list[PurchaseInvoice]] = relationship(back_populates="supplier")
+    quotes: Mapped[list[Quote]] = relationship(back_populates="contact")

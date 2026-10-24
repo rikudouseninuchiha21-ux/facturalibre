@@ -15,12 +15,19 @@ const CONTACT_TYPES: { value: string; label: string }[] = [
   { value: "both", label: "Ambos" },
 ];
 
+const CONTACT_STATUSES: { value: string; label: string }[] = [
+  { value: "LEAD", label: "Prospecto (Lead)" },
+  { value: "PROSPECT", label: "Cliente Potencial" },
+  { value: "CUSTOMER", label: "Cliente" },
+];
+
 export function ContactForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [taxId, setTaxId] = useState("");
   const [type, setType] = useState<"customer" | "supplier" | "both">("customer");
+  const [status, setStatus] = useState<"LEAD" | "PROSPECT" | "CUSTOMER">("CUSTOMER");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +54,7 @@ export function ContactForm() {
         ...(email.trim() ? { email: email.trim() } : {}),
         ...(taxId.trim() ? { tax_id: taxId.trim() } : {}),
         type,
+        status,
       };
 
       await createContact(payload);
@@ -55,6 +63,7 @@ export function ContactForm() {
       setEmail("");
       setTaxId("");
       setType("customer");
+      setStatus("CUSTOMER");
       setSuccess("Contacto creado correctamente.");
       router.refresh();
     } catch (cause) {
@@ -117,6 +126,34 @@ export function ContactForm() {
             className={inputClassName}
           >
             {CONTACT_TYPES.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="contact-status"
+            className="block text-sm font-medium text-slate-700"
+          >
+            Estado{" "}
+            <span className="text-xs font-normal text-slate-400">
+              (estado comercial)
+            </span>
+          </label>
+          <select
+            id="contact-status"
+            name="status"
+            value={status}
+            onChange={(event) =>
+              setStatus(event.target.value as "LEAD" | "PROSPECT" | "CUSTOMER")
+            }
+            disabled={isSubmitting}
+            className={inputClassName}
+          >
+            {CONTACT_STATUSES.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

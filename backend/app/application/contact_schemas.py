@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, model_validator
 
-from app.domain.models.contact import ContactType
+from app.domain.models.contact import ContactStatus, ContactType
 
 
 class ContactCreate(BaseModel):
@@ -18,6 +18,7 @@ class ContactCreate(BaseModel):
     email: EmailStr | None = None
     tax_id: str | None = Field(default=None, max_length=30)
     type: ContactType = ContactType.CUSTOMER
+    status: ContactStatus = ContactStatus.CUSTOMER
 
 
 class ContactUpdate(BaseModel):
@@ -29,6 +30,7 @@ class ContactUpdate(BaseModel):
     email: EmailStr | None = None
     tax_id: str | None = Field(default=None, max_length=30)
     type: ContactType | None = None
+    status: ContactStatus | None = None
     version: int = Field(ge=1)
 
     @model_validator(mode="after")
@@ -51,6 +53,7 @@ class ContactRead(BaseModel):
     email: EmailStr | None
     tax_id: str | None
     type: ContactType
+    status: ContactStatus
     version: int
     created_at: datetime
     updated_at: datetime

@@ -39,6 +39,7 @@ export interface Contact {
   email: string | null;
   tax_id: string | null;
   type: string;
+  status: string;
   version: number;
   created_at: string;
   updated_at: string;
@@ -49,6 +50,7 @@ export interface ContactCreateInput {
   email?: string;
   tax_id?: string;
   type?: string;
+  status?: string;
 }
 
 export interface VoidInvoiceInput {
@@ -422,6 +424,27 @@ interface ApiPostOptions {
   headers?: Record<string, string>;
 }
 
+async function apiDelete<T>(path: string): Promise<T> {
+  const response = await fetch(`${getBaseUrl()}${API_PREFIX}${path}`, {
+    method: "DELETE",
+    headers: { Accept: "application/json" },
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    const detail = await getErrorDetail(response, fallback);
+    throw new ApiError(`Error al eliminar ${path}: ${detail}`, response.status);
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return (await response.json()) as T;
+}
+
 async function apiPost<T>(
   path: string,
   body?: unknown,
@@ -558,6 +581,84 @@ export function voidInvoice(
   return apiPost<Invoice>(
     `/invoices/${encodeURIComponent(invoiceId)}/void`,
     payload,
+  );
+}
+
+export type QuoteStatus = "DRAFT" | "SENT" | "ACCEPTED" | "REJECTED" | "CONVERTED";
+
+export interface QuoteLineInput {
+  item_id: string;
+  description?: string;
+  quantity: string;
+  unit_price: string;
+  tax_rate: string;
+}
+
+export interface QuoteCreateInput {
+  contact_id: string;
+  issue_date: string;
+  expiry_date: string;
+  currency: "COP";
+  lines: QuoteLineInput[];
+}
+
+export interface QuoteLine {
+  id: string;
+  item_id: string | null;
+  description: string;
+  quantity: string;
+  unit_price: string;
+  tax_rate: string;
+  line_subtotal: string;
+  line_tax: string;
+  line_total: string;
+}
+
+export interface Quote {
+  id: string;
+  number: string | null;
+  contact_id: string;
+  issue_date: string;
+  expiry_date: string;
+  currency: string;
+  status: QuoteStatus;
+  converted_invoice_id: string | null;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  lines: QuoteLine[];
+}
+
+export function getQuotes(cookieHeader?: string): Promise<Quote[]> {
+  return apiGet<Quote[]>("/quotes", cookieHeader);
+}
+
+export function createQuote(
+  payload: QuoteCreateInput,
+  idempotencyKey: string,
+): Promise<Quote> {
+  return apiPost<Quote>("/quotes", payload, {
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
+}
+
+export function getQuote(
+  id: string,
+  cookieHeader?: string,
+): Promise<Quote> {
+  return apiGet<Quote>(`/quotes/${encodeURIComponent(id)}`, cookieHeader);
+}
+
+export function deleteQuote(id: string): Promise<void> {
+  return apiDelete<void>(`/quotes/${encodeURIComponent(id)}`);
+}
+
+export function convertQuoteToInvoice(id: string): Promise<Quote> {
+  return apiPost<Quote>(
+    `/quotes/${encodeURIComponent(id)}/convert-to-invoice`,
   );
 }
 
