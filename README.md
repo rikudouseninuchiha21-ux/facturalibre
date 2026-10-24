@@ -6,11 +6,13 @@ Proyecto educativo y open source para aprender cómo se diseña un sistema de fa
 
 ## Estado actual
 
-Fase 9: registro de pagos sobre facturas emitidas desde la interfaz.
+Fase 10: panel analítico con métricas y gráficos en el dashboard.
 
 - Backend FastAPI con CRUD de catálogos (`contacts`, `items`, `taxes`), facturas
   (`invoices`) y pagos (`payments`): crear, emitir, consultar, anular y borrar
   borradores con soft delete; registrar, listar y eliminar pagos con idempotencia.
+  Incluye `GET /api/v1/dashboard/summary` con ingresos, facturación, cartera,
+  facturas por estado y ventas de los últimos seis meses.
 - Inventario con bodegas, libro de movimientos y saldos por ítem/bodega. Emitir
   una factura descuenta stock y revierte toda la operación si no alcanza.
 - Autenticación con usuarios, sesiones revocables en base de datos y cookie
@@ -28,7 +30,8 @@ Fase 9: registro de pagos sobre facturas emitidas desde la interfaz.
   creación de facturas en borrador usa líneas dinámicas, cálculo de totales en
   el navegador e idempotencia en el `POST /api/v1/invoices`. El listado permite
   emitir, anular y registrar pagos totales o parciales con `Idempotency-Key`;
-  tras el pago se refrescan el saldo y el estado de pago de la factura.
+  tras el pago se refrescan el saldo y el estado de pago de la factura. El
+  dashboard muestra KPIs y gráficos de ventas y estados con Recharts.
 - Sin notas crédito ni devolución de pagos todavía.
 
 ## Requisitos

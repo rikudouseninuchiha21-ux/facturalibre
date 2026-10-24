@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
+import { SalesChart } from "@/components/dashboard/SalesChart";
+import { StatusChart } from "@/components/dashboard/StatusChart";
 import {
   Card,
   CardContent,
@@ -7,6 +10,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getDashboardSummary, type DashboardSummary } from "@/lib/api";
+import { formatCurrency } from "@/lib/format";
+import { getSessionCookieHeader } from "@/lib/server-auth";
+
+export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Panel de control",
+};
 
 const sections = [
   {
@@ -31,7 +43,7 @@ const sections = [
     href: "/invoices",
     title: "Facturas",
     description:
-      "Revisa el estado, el total, el saldo pendiente y el estado de pago de cada factura.",
+      "Revisa el estado, el saldo pendiente y el estado de pago de cada factura.",
   },
   {
     href: "/warehouses",
@@ -59,28 +71,147 @@ const sections = [
   },
 ];
 
-export default function HomePage() {
+interface KpiCardProps {
+  title: string;
+  value: string;
+  description: string;
+  accentClassName: string;
+}
+
+function KpiCard({
+  title,
+  value,
+  description,
+  accentClassName,
+}: KpiCardProps) {
+  return (
+    <Card className="relative overflow-hidden">
+      <span
+        aria-hidden="true"
+        className={`absolute inset-x-0 top-0 h-1 ${accentClassName}`}
+      />
+      <CardHeader className="pb-2">
+        <CardDescription>{title}</CardDescription>
+        <p className="text-3xl font-bold tracking-tight tabular-nums text-slate-950">
+          {value}
+        </p>
+      </CardHeader>
+      <CardContent>
+        <p className="text-sm text-slate-500">{description}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default async function HomePage() {
+  const cookieHeader = await getSessionCookieHeader();
+
+  let summary: DashboardSummary | null = null;
+  let error: string | null = null;
+
+  try {
+    summary = await getDashboardSummary(cookieHeader);
+  } catch (cause) {
+    error =
+      cause instanceof Error
+        ? cause.message
+        : "No se pudo consultar el resumen del negocio.";
+  }
+
   return (
     <div className="space-y-8">
-      <section className="max-w-3xl">
+      <header className="max-w-3xl">
         <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
-          Facturación electrónica
+          Panel administrativo
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-          FacturaLibre - MVP
+          Resumen del negocio
         </h1>
         <p className="mt-3 text-base leading-7 text-slate-600">
-          Interfaz administrativa para consultar y operar los contactos, los
-          ítems, los impuestos, las facturas, las bodegas, el inventario, los
-          empleados y la nómina gestionados por la API.
+          Ingresos recibidos, facturación emitida y cartera pendiente en una
+          vista consolidada.
         </p>
-      </section>
+      </header>
 
-      <section aria-labelledby="accesos-rapidos">
-        <h2 id="accesos-rapidos" className="sr-only">
-          Accesos rápidos
-        </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+      {error ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {error}
+        </div>
+      ) : null}
+
+      {summary ? (
+        <>
+          <section aria-labelledby="indicadores-title" className="space-y-4">
+            <h2 id="indicadores-title" className="sr-only">
+              Indicadores financieros
+            </h2>
+            <div className="grid gap-4 md:grid-cols-3">
+              <KpiCard
+                title="Ingresos Totales"
+                value={formatCurrency(summary.total_revenue)}
+                description="Pagos recibidos sobre facturas."
+                accentClassName="bg-emerald-500"
+              />
+              <KpiCard
+                title="Facturado Total"
+                value={formatCurrency(summary.total_invoiced)}
+                description="Facturas emitidas vigentes."
+                accentClassName="bg-blue-500"
+              />
+              <KpiCard
+                title="Saldo Pendiente"
+                value={formatCurrency(summary.pending_balance)}
+                description="Cartera por cobrar de facturas emitidas."
+                accentClassName="bg-amber-500"
+              />
+            </div>
+          </section>
+
+          <div className="grid gap-6 xl:grid-cols-5">
+            <Card className="xl:col-span-3">
+              <CardHeader>
+                <CardTitle>Ventas mensuales</CardTitle>
+                <CardDescription>
+                  Facturación emitida en los últimos seis meses.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <SalesChart data={summary.monthly_sales} />
+              </CardContent>
+            </Card>
+
+            <Card className="xl:col-span-2">
+              <CardHeader>
+                <CardTitle>Facturas por estado</CardTitle>
+                <CardDescription>
+                  Distribución del ciclo de vida de las facturas registradas.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StatusChart data={summary.invoices_by_status} />
+              </CardContent>
+            </Card>
+          </div>
+        </>
+      ) : null}
+
+      <section aria-labelledby="accesos-rapidos" className="space-y-4">
+        <div>
+          <h2
+            id="accesos-rapidos"
+            className="text-xl font-semibold tracking-tight text-slate-950"
+          >
+            Accesos rápidos
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Entra directamente al módulo que necesitas operar.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {sections.map((section) => (
             <Link
               key={section.href}
@@ -102,36 +233,6 @@ export default function HomePage() {
           ))}
         </div>
       </section>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Estado de la fase</CardTitle>
-          <CardDescription>
-            Fase 9: registro de pagos sobre facturas emitidas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ul className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-            <li>
-              Consulta de contactos, ítems, impuestos, facturas, bodegas,
-              inventario y empleados.
-            </li>
-            <li>
-              Registro de pagos totales o parciales con idempotencia y
-              actualización del saldo.
-            </li>
-            <li>
-              Facturas con líneas dinámicas, impuestos y totales en tiempo real.
-            </li>
-            <li>Cálculo de nómina con actualización del estado del periodo.</li>
-            <li>
-              Catálogos de ítems e impuestos con precio, tasa y asociación.
-            </li>
-            <li>Proxy same-origin para evitar CORS en el navegador.</li>
-            <li>Login, logout y rutas protegidas por cookie de sesión.</li>
-          </ul>
-        </CardContent>
-      </Card>
     </div>
   );
 }

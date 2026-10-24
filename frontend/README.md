@@ -1,15 +1,17 @@
 # Frontend — FacturaLibre MVP
 
-Interfaz administrativa autenticada para consultar contactos, ítems, impuestos,
-facturas, bodegas e inventario, y registrar contactos, ítems, impuestos,
-bodegas, empleados, periodos de nómina, movimientos de stock, facturas en
-borrador y pagos sobre facturas emitidas desde la API de FacturaLibre.
+Interfaz administrativa autenticada con panel analítico para consultar
+contactos, ítems, impuestos, facturas, bodegas e inventario, y registrar
+contactos, ítems, impuestos, bodegas, empleados, periodos de nómina, movimientos
+de stock, facturas en borrador y pagos sobre facturas emitidas desde la API de
+FacturaLibre.
 
 ## Stack
 
 - Next.js 16 con App Router.
 - TypeScript.
 - Tailwind CSS 4.
+- Recharts 3 para los gráficos del dashboard.
 - ESLint.
 - `pnpm` 10.
 - Node.js 20.9 o superior.
@@ -21,7 +23,7 @@ frontend/
 ├── src/
 │   ├── app/
 │   │   ├── layout.tsx               # Header con usuario y logout
-│   │   ├── page.tsx                 # Dashboard
+│   │   ├── page.tsx                 # Dashboard con KPIs y gráficos
 │   │   ├── login/page.tsx           # Inicio de sesión
 │   │   ├── register/page.tsx        # Bootstrap del primer administrador
 │   │   ├── contacts/page.tsx        # Contactos + formulario
@@ -39,6 +41,8 @@ frontend/
 │   │   │   ├── RegisterForm.tsx
 │   │   │   └── LogoutButton.tsx
 │   │   ├── contacts/ContactForm.tsx
+│   │   ├── dashboard/SalesChart.tsx
+│   │   ├── dashboard/StatusChart.tsx
 │   │   ├── inventory/MovementForm.tsx
 │   │   ├── invoices/InvoiceActions.tsx
 │   │   ├── invoices/InvoiceCreateForm.tsx
@@ -87,6 +91,19 @@ después de guardar.
 > Next.js 16 marca la convención `middleware.ts` como deprecada en favor de
 > `proxy.ts`. Se mantiene `middleware.ts` en esta fase; la migración queda
 > pendiente.
+
+## Dashboard analítico
+
+`/` es un Server Component que consume `GET /api/v1/dashboard/summary`
+reenviando la cookie de sesión. La respuesta se muestra en tres tarjetas KPI:
+Ingresos Totales, Facturado Total y Saldo Pendiente.
+
+Debajo aparecen dos gráficos de Recharts: `SalesChart` dibuja las ventas
+facturadas de los últimos seis meses con un `BarChart`, y `StatusChart` muestra
+la distribución de facturas entre borradores, emitidas y anuladas con un
+`PieChart`. Ambos son Client Components y reciben los datos ya agregados como
+props; el Server Component conserva el acceso autenticado a la API y el layout
+con Tailwind.
 
 ## Creación de facturas
 
@@ -267,10 +284,10 @@ pnpm build
 ## Alcance actual
 
 Incluye autenticación con login/logout, bootstrap del primer administrador,
-protección de páginas y endpoints, consultas de contactos, ítems, impuestos,
-facturas, bodegas, saldos de inventario, empleados y nómina; creación de
-contactos, ítems, impuestos, bodegas, movimientos de stock, empleados, periodos
-de nómina y facturas en borrador; y emisión, anulación y registro de pagos
-totales o parciales sobre facturas emitidas. No incluye CSRF explícito, rate
-limiting, alta administrativa de más usuarios, roles, edición de bodegas ni
-notas crédito o devolución de pagos.
+protección de páginas y endpoints, un dashboard con KPIs y gráficos, consultas de
+contactos, ítems, impuestos, facturas, bodegas, saldos de inventario, empleados y
+nómina; creación de contactos, ítems, impuestos, bodegas, movimientos de stock,
+empleados, periodos de nómina y facturas en borrador; y emisión, anulación y
+registro de pagos totales o parciales sobre facturas emitidas. No incluye CSRF
+explícito, rate limiting, alta administrativa de más usuarios, roles, edición de
+bodegas ni notas crédito o devolución de pagos.

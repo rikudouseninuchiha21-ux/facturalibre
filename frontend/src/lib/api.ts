@@ -152,6 +152,25 @@ export interface PaymentCreateInput {
   reference?: string;
 }
 
+export interface InvoiceStatusSummary {
+  draft: number;
+  issued: number;
+  void: number;
+}
+
+export interface MonthlySalesPoint {
+  month: string;
+  total: string;
+}
+
+export interface DashboardSummary {
+  total_revenue: string;
+  total_invoiced: string;
+  pending_balance: string;
+  invoices_by_status: InvoiceStatusSummary;
+  monthly_sales: MonthlySalesPoint[];
+}
+
 export interface Warehouse {
   id: string;
   name: string;
@@ -407,6 +426,12 @@ export function getTaxes(cookieHeader?: string): Promise<Tax[]> {
 
 export function createTax(payload: TaxCreateInput): Promise<Tax> {
   return apiPost<Tax>("/taxes", payload);
+}
+
+export function getDashboardSummary(
+  cookieHeader?: string,
+): Promise<DashboardSummary> {
+  return apiGet<DashboardSummary>("/dashboard/summary", cookieHeader);
 }
 
 export function getInvoices(cookieHeader?: string): Promise<Invoice[]> {

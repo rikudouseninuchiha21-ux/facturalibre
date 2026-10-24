@@ -4,10 +4,11 @@ Backend del MVP: FastAPI, SQLAlchemy 2, Alembic y PostgreSQL 16. En esta etapa
 existe `GET /health`, autenticación con usuarios y sesiones opacas
 (`users`, `sessions`), el esquema de datos inicial, los CRUD de catálogos maestros
 (`contacts`, `items`, `taxes`), la creación/emisión/anulación de facturas, los
-pagos sobre facturas emitidas, el núcleo de inventario (`warehouses`,
-`stock_movements`, `stock_balances`) y el núcleo de nómina (`employees`,
-`payroll_periods`, `payroll_details`). **Todavía no hay notas crédito, devolución
-de pagos, transferencias documentales, prestaciones sociales ni parafiscales.**
+pagos sobre facturas emitidas, métricas agregadas para el dashboard, el núcleo
+de inventario (`warehouses`, `stock_movements`, `stock_balances`) y el núcleo de
+nómina (`employees`, `payroll_periods`, `payroll_details`). **Todavía no hay notas
+crédito, devolución de pagos, transferencias documentales, prestaciones sociales
+ni parafiscales.**
 
 ## Requisitos
 
@@ -378,6 +379,29 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 Ejemplo numérico: una factura con total `119.00` que recibe un pago de `50.00`
 queda con balance `69.00` y `payment_status` en `partially_paid`.
 
+## Endpoint del dashboard
+
+`GET /dashboard/summary` devuelve las métricas del panel de control:
+
+- `total_revenue`: suma de todos los pagos recibidos.
+- `total_invoiced`: suma de facturas emitidas vigentes (`issued`), sin anuladas ni
+  borradores.
+- `pending_balance`: suma de saldos pendientes de las facturas `issued`.
+- `invoices_by_status`: conteo de facturas no eliminadas por estado
+  (`draft`, `issued`, `void`).
+- `monthly_sales`: seis meses consecutivos, incluidos los meses sin ventas, con
+  `month` en formato `YYYY-MM` y `total` como string decimal.
+
+Las ventas mensuales se agrupan con `extract('year', issue_date)` y
+`extract('month', issue_date)`, se filtran por facturas `issued` no eliminadas y
+se ordenan por año y mes. El endpoint rellena con `0.00` los meses intermedios
+que no tengan facturas para que el frontend siempre reciba seis puntos.
+
+```bash
+curl -s "$BASE/dashboard/summary" \
+  -H "Cookie: facturalibre_session=$TOKEN"
+```
+
 ## Endpoints de nómina
 
 El núcleo de nómina liquida un periodo mensual para todos los empleados activos.
@@ -560,6 +584,7 @@ backend/
         inventory.py           # movimientos y saldos de inventario
         invoices.py            # crear, emitir, anular, consultar y borrar borradores
         payments.py            # pagos sobre facturas emitidas
+        dashboard.py           # métricas agregadas del panel
         employees.py           # CRUD de empleados
         payroll.py             # periodos y cálculo de nómina
   tests/
@@ -572,6 +597,7 @@ backend/
     test_taxes.py              # CRUD y optimistic locking de impuestos
     test_invoices.py           # cálculos, idempotencia, numeración y estados
     test_payments.py           # pagos, saldos, idempotencia y borrado
+    test_dashboard.py          # KPIs, conteos y ventas mensuales
     test_accounting.py         # asientos automáticos y atomicidad
     test_inventory.py          # movimientos, saldos y descuento al emitir
     test_payroll.py            # empleados, cálculo decimal y asiento de nómina

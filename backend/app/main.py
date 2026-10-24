@@ -7,6 +7,7 @@ from app.api.v1 import (
     accounting,
     auth,
     contacts,
+    dashboard,
     employees,
     inventory,
     invoices,
@@ -27,6 +28,7 @@ from app.domain.exceptions import (
 app = FastAPI(title="FacturaLibre API", version="0.1.0")
 
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(contacts.router, prefix="/api/v1")
 app.include_router(items.router, prefix="/api/v1")
 app.include_router(taxes.router, prefix="/api/v1")
