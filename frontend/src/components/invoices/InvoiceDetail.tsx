@@ -169,30 +169,32 @@ export function InvoiceDetail({
       {/* Totales */}
       <div className="mt-6 flex justify-end">
         <table className="text-right space-y-1">
-          <tr className="text-sm text-zinc-600">
-            <td className="pr-4">Subtotal</td>
-            <td className="tabular-nums">
-              {formatCurrency(invoice.subtotal, invoice.currency)}
-            </td>
-          </tr>
-          <tr className="text-sm text-zinc-600">
-            <td className="pr-4">Impuestos</td>
-            <td className="tabular-nums">
-              {formatCurrency(invoice.tax_total, invoice.currency)}
-            </td>
-          </tr>
-          <tr className="font-bold text-zinc-950">
-            <td className="pr-4">Total</td>
-            <td className="tabular-nums">
-              {formatCurrency(invoice.total, invoice.currency)}
-            </td>
-          </tr>
-          <tr className="font-bold text-red-600">
-            <td className="pr-4">Balance pendiente</td>
-            <td className="tabular-nums">
-              {formatCurrency(invoice.balance, invoice.currency)}
-            </td>
-          </tr>
+          <tbody className="divide-y divide-zinc-200">
+            <tr className="text-sm text-zinc-600">
+              <td className="pr-4">Subtotal</td>
+              <td className="tabular-nums">
+                {formatCurrency(invoice.subtotal, invoice.currency)}
+              </td>
+            </tr>
+            <tr className="text-sm text-zinc-600">
+              <td className="pr-4">Impuestos</td>
+              <td className="tabular-nums">
+                {formatCurrency(invoice.tax_total, invoice.currency)}
+              </td>
+            </tr>
+            <tr className="font-bold text-zinc-950">
+              <td className="pr-4">Total</td>
+              <td className="tabular-nums">
+                {formatCurrency(invoice.total, invoice.currency)}
+              </td>
+            </tr>
+            <tr className="font-bold text-red-600">
+              <td className="pr-4">Balance pendiente</td>
+              <td className="tabular-nums">
+                {formatCurrency(invoice.balance, invoice.currency)}
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 
