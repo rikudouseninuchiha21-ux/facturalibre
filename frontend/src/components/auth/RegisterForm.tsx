@@ -56,7 +56,7 @@ export function RegisterForm() {
       // El registro no crea sesión; se inicia inmediatamente para dejar al
       // administrador dentro del dashboard.
       await login({ email: trimmedEmail, password });
-      router.replace("/");
+      router.replace("/dashboard");
       router.refresh();
     } catch (cause) {
       if (cause instanceof ApiError) {

@@ -11,7 +11,7 @@ const inputClassName =
 
 interface SettingsFormProps {
   companySettings: CompanySetting;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export function SettingsForm({
@@ -48,7 +48,7 @@ export function SettingsForm({
 
       setSuccess("Configuración actualizada correctamente.");
       setTimeout(() => {
-        onClose();
+        onClose?.();
         router.refresh();
       }, 1500);
     } catch (cause) {

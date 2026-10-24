@@ -8,6 +8,7 @@ import {
   BarChart3,
   FileText,
   GraduationCap,
+  LayoutDashboard,
   Package,
   Percent,
   Settings,
@@ -21,6 +22,17 @@ interface SidebarProps {
 }
 
 const NAVIGATION = [
+  {
+    label: "Inicio",
+    items: [
+      {
+        href: "/dashboard",
+        label: "Panel",
+        icon: LayoutDashboard,
+        roles: ["ADMIN", "ACCOUNTANT", "CASHIER"],
+      },
+    ],
+  },
   {
     label: "Operaciones",
     items: [

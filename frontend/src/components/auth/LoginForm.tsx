@@ -32,7 +32,7 @@ export function LoginForm() {
 
     try {
       await login({ email: email.trim(), password });
-      router.replace("/");
+      router.replace("/dashboard");
       router.refresh();
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) {
