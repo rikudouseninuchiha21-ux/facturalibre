@@ -47,7 +47,7 @@ export default async function ContactsPage() {
           Contactos
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Clientes y proveedores activos registrados en FacturaLibre.
+          Clientes y proveedores activos registrados en Nexus ERP.
         </p>
       </header>
 

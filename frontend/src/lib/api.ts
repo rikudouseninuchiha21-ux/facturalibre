@@ -1,5 +1,5 @@
 /**
- * Cliente HTTP tipado para la API v1 de FacturaLibre.
+ * Cliente HTTP tipado para la API v1 de Nexus ERP.
  *
  * En el navegador se usa una ruta relativa (`/api/v1/...`) para pasar por el
  * rewrite same-origin de Next.js y evitar CORS.

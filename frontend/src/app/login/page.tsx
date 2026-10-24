@@ -20,7 +20,7 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle>Iniciar sesión</CardTitle>
           <CardDescription>
-            Accede con el usuario administrador de FacturaLibre. La sesión
+            Accede con el usuario administrador de Nexus ERP. La sesión
             permanece activa durante 24 horas.
           </CardDescription>
         </CardHeader>
