@@ -3,15 +3,19 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import date
+from decimal import Decimal
+from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.domain.models.accounting import (
     AccountingAccount,
     AccountingEntry,
     AccountingEntryLine,
+    AccountingEntryStatus,
     AccountingSourceType,
 )
 
@@ -89,3 +93,74 @@ class AccountingRepository:
         self.db.add(entry)
         self.db.flush()
         return entry
+
+    def get_account_balances(
+        self,
+        *,
+        as_of_date: date | None = None,
+    ) -> list[dict]:
+        """Calcula el saldo de cada cuenta contable hasta una fecha de corte.
+
+        El saldo se calcula como:
+        - Cuentas de naturaleza Débito (ACTIVO, GASTO, COSTO): total_debit - total_credit
+        - Cuentas de naturaleza Crédito (PASIVO, PATRIMONIO, INGRESO): total_credit - total_debit
+
+        Se consideran solo asientos con estado POSTED y, si se indica,
+        solo aquellas entradas con fecha <= as_of_date.
+        """
+        # Subquery: sumas por cuenta de los asientos posted hasta la fecha de corte
+        line_subquery = (
+            select(
+                AccountingEntryLine.account_code,
+                func.coalesce(func.sum(AccountingEntryLine.debit), 0).label("total_debit"),
+                func.coalesce(func.sum(AccountingEntryLine.credit), 0).label("total_credit"),
+            )
+            .join(
+                AccountingEntry,
+                AccountingEntry.id == AccountingEntryLine.entry_id,
+            )
+            .where(AccountingEntry.status == AccountingEntryStatus.POSTED)
+        )
+        if as_of_date is not None:
+            line_subquery = line_subquery.where(AccountingEntry.entry_date <= as_of_date)
+        line_subquery = cast(
+            Any,
+            line_subquery.group_by(AccountingEntryLine.account_code).subquery(),
+        )
+
+        statement = (
+            select(
+                AccountingAccount.code,
+                AccountingAccount.name,
+                AccountingAccount.account_type,
+                AccountingAccount.nature,
+                func.coalesce(line_subquery.c.total_debit, 0).label("total_debit"),
+                func.coalesce(line_subquery.c.total_credit, 0).label("total_credit"),
+            )
+            .outerjoin(
+                line_subquery,
+                line_subquery.c.account_code == AccountingAccount.code,
+            )
+            .order_by(AccountingAccount.code)
+        )
+
+        rows = self.db.execute(statement).all()
+        results: list[dict] = []
+        for row in rows:
+            total_debit = Decimal(str(row.total_debit))
+            total_credit = Decimal(str(row.total_credit))
+            nature = row.nature
+            if nature == "DEBITO":
+                balance = total_debit - total_credit
+            else:
+                balance = total_credit - total_debit
+            results.append(
+                {
+                    "code": row.code,
+                    "name": row.name,
+                    "account_type": row.account_type,
+                    "nature": row.nature,
+                    "balance": balance,
+                }
+            )
+        return results

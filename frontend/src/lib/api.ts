@@ -812,3 +812,55 @@ export function issueCreditNote(
     )}/issue`,
   );
 }
+
+export interface AccountReportRow {
+  code: string;
+  name: string;
+  balance: string;
+}
+
+export interface IncomeStatementResponse {
+  income_accounts: AccountReportRow[];
+  expense_accounts: AccountReportRow[];
+  total_income: string;
+  total_expenses: string;
+  net_income: string;
+}
+
+export interface BalanceSheetResponse {
+  asset_accounts: AccountReportRow[];
+  liability_accounts: AccountReportRow[];
+  equity_accounts: AccountReportRow[];
+  total_assets: string;
+  total_liabilities: string;
+  total_equity: string;
+  balanced: boolean;
+}
+
+export function getIncomeStatement(
+  startDate?: string,
+  endDate?: string,
+  cookieHeader?: string,
+): Promise<IncomeStatementResponse> {
+  const params = new URLSearchParams();
+  if (startDate) params.set("start_date", startDate);
+  if (endDate) params.set("end_date", endDate);
+  const query = params.toString();
+  return apiGet<IncomeStatementResponse>(
+    `/reports/income-statement${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
+
+export function getBalanceSheet(
+  asOfDate?: string,
+  cookieHeader?: string,
+): Promise<BalanceSheetResponse> {
+  const params = new URLSearchParams();
+  if (asOfDate) params.set("as_of_date", asOfDate);
+  const query = params.toString();
+  return apiGet<BalanceSheetResponse>(
+    `/reports/balance-sheet${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
