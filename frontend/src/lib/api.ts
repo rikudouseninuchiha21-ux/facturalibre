@@ -720,3 +720,80 @@ export function createPurchasePayment(
     },
   );
 }
+
+export type CreditNoteStatus = "draft" | "issued";
+
+export interface CreditNoteLine {
+  id: string;
+  invoice_line_id: string | null;
+  description: string;
+  quantity: string;
+  unit_price: string;
+  tax_rate: string;
+  line_subtotal: string;
+  line_tax: string;
+  line_total: string;
+}
+
+export interface CreditNote {
+  id: string;
+  number: string | null;
+  invoice_id: string;
+  issue_date: string;
+  status: CreditNoteStatus;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  lines: CreditNoteLine[];
+}
+
+export interface CreditNoteLineInput {
+  invoice_line_id?: string;
+  description: string;
+  quantity: string;
+  unit_price: string;
+  tax_rate: string;
+}
+
+export interface CreditNoteCreateInput {
+  issue_date: string;
+  lines: CreditNoteLineInput[];
+}
+
+export function getCreditNotes(
+  invoiceId: string,
+  cookieHeader?: string,
+): Promise<CreditNote[]> {
+  return apiGet<CreditNote[]>(
+    `/invoices/${encodeURIComponent(invoiceId)}/credit-notes`,
+    cookieHeader,
+  );
+}
+
+export function createCreditNote(
+  invoiceId: string,
+  payload: CreditNoteCreateInput,
+  idempotencyKey: string,
+): Promise<CreditNote> {
+  return apiPost<CreditNote>(
+    `/invoices/${encodeURIComponent(invoiceId)}/credit-notes`,
+    payload,
+    {
+      headers: { "Idempotency-Key": idempotencyKey },
+    },
+  );
+}
+
+export function issueCreditNote(
+  invoiceId: string,
+  creditNoteId: string,
+): Promise<CreditNote> {
+  return apiPost<CreditNote>(
+    `/invoices/${encodeURIComponent(invoiceId)}/credit-notes/${encodeURIComponent(
+      creditNoteId,
+    )}/issue`,
+  );
+}

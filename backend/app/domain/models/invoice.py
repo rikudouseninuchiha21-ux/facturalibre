@@ -29,6 +29,7 @@ from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
     from app.domain.models.contact import Contact
+    from app.domain.models.credit_note import CreditNote
     from app.domain.models.invoice_line import InvoiceLine
     from app.domain.models.payment import Payment
 
@@ -159,3 +160,8 @@ class Invoice(Base):
         order_by="InvoiceLine.id",
     )
     payments: Mapped[list[Payment]] = relationship(back_populates="invoice")
+    credit_notes: Mapped[list[CreditNote]] = relationship(
+        back_populates="invoice",
+        cascade="all, delete-orphan",
+        order_by="CreditNote.id",
+    )

@@ -6,9 +6,11 @@ import { InvoiceDetail } from "@/components/invoices/InvoiceDetail";
 import {
   ApiError,
   getContact,
+  getCreditNotes,
   getInvoice,
   getInvoicePayments,
   type Contact,
+  type CreditNote,
   type Invoice,
   type Payment,
 } from "@/lib/api";
@@ -37,15 +39,17 @@ export default async function InvoicePage({
 
   let invoice: Invoice | null = null;
   let payments: Payment[] = [];
+  let creditNotes: CreditNote[] = [];
   let contact: Contact | null = null;
   let error: string | null = null;
 
   try {
-    // Factura y pagos se consultan en paralelo; el contacto se resuelve tras
-    // conocer el contact_id de la factura.
-    [invoice, payments] = await Promise.all([
+    // Factura, pagos y notas crédito se consultan en paralelo; el contacto se
+    // resuelve tras conocer el contact_id de la factura.
+    [invoice, payments, creditNotes] = await Promise.all([
       getInvoice(id, cookieHeader),
       getInvoicePayments(id, cookieHeader),
+      getCreditNotes(id, cookieHeader),
     ]);
     contact = await getContact(invoice.contact_id, cookieHeader);
   } catch (cause) {
@@ -81,7 +85,12 @@ export default async function InvoicePage({
 
   return (
     <div className="space-y-6">
-      <InvoiceDetail invoice={invoice} payments={payments} contact={contact} />
+      <InvoiceDetail
+        invoice={invoice}
+        payments={payments}
+        creditNotes={creditNotes}
+        contact={contact}
+      />
     </div>
   );
 }

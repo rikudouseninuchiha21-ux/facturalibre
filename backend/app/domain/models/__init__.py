@@ -14,6 +14,7 @@ from app.domain.models.accounting import (
 )
 from app.domain.models.auth import AuthSession, User
 from app.domain.models.contact import Contact, ContactType
+from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNoteStatus
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
 from app.domain.models.invoice_line import InvoiceLine
@@ -47,6 +48,9 @@ __all__ = [
     "AuthSession",
     "Contact",
     "ContactType",
+    "CreditNote",
+    "CreditNoteLine",
+    "CreditNoteStatus",
     "Employee",
     "IdempotencyKey",
     "Invoice",

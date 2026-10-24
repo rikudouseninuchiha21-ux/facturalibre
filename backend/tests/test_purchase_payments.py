@@ -162,8 +162,7 @@ def test_register_payment_generates_accounting_entry(
     purchase_payment_entries = [
         e
         for e in entries.json()
-        if e["source_type"] == "PURCHASE_PAYMENT"
-        and e["source_id"] == payment_id
+        if e["source_type"] == "PURCHASE_PAYMENT" and e["source_id"] == payment_id
     ]
     assert len(purchase_payment_entries) == 1
     entry = purchase_payment_entries[0]

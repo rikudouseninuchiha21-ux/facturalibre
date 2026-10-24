@@ -19,8 +19,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { CreditNoteForm } from "@/components/invoices/CreditNoteForm";
 import { PaymentForm } from "@/components/invoices/PaymentForm";
-import { Contact, Invoice, Payment } from "@/lib/api";
+import {
+  Contact,
+  CreditNote,
+  Invoice,
+  Payment,
+} from "@/lib/api";
 import {
   formatCurrency,
   formatQuantity,
@@ -36,17 +42,22 @@ const lifecycleLabels: Record<Invoice["lifecycle_status"], string> = {
 interface InvoiceDetailProps {
   invoice: Invoice;
   payments: Payment[];
+  creditNotes: CreditNote[];
   contact: Contact;
 }
 
 export function InvoiceDetail({
   invoice,
   payments,
+  creditNotes,
   contact,
 }: InvoiceDetailProps) {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isCreditNoteOpen, setIsCreditNoteOpen] = useState(false);
 
   const canRegisterPayment =
+    invoice.lifecycle_status === "issued" && Number(invoice.balance) > 0;
+  const canCreateCreditNote =
     invoice.lifecycle_status === "issued" && Number(invoice.balance) > 0;
 
   return (
@@ -225,6 +236,51 @@ export function InvoiceDetail({
         </Card>
       )}
 
+      {/* Notas Crédito */}
+      {creditNotes.length > 0 && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Notas crédito</CardTitle>
+            <CardDescription>
+              Notas crédito asociadas a esta factura.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <caption className="sr-only">Notas crédito de la factura</caption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {creditNotes.map((cn) => (
+                    <TableRow key={cn.id}>
+                      <TableCell className="font-mono text-xs text-slate-900">
+                        {cn.number ?? "—"}
+                      </TableCell>
+                      <TableCell className="text-slate-900">
+                        {cn.issue_date}
+                      </TableCell>
+                      <TableCell className="text-slate-900">
+                        {cn.status === "issued" ? "Emitida" : "Borrador"}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-slate-900">
+                        {formatCurrency(cn.total, invoice.currency)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Acciones (no se imprimen) */}
       <div className="mt-10 flex flex-wrap justify-end gap-2 print:hidden">
         <Link
@@ -246,6 +302,16 @@ export function InvoiceDetail({
             Registrar Pago
           </Button>
         )}
+        {canCreateCreditNote && (
+          <Button
+            onClick={() => {
+              setIsCreditNoteOpen(true);
+            }}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            Crear Nota Crédito
+          </Button>
+        )}
       </div>
 
       {isPaymentOpen ? (
@@ -254,6 +320,13 @@ export function InvoiceDetail({
           balance={invoice.balance}
           currency={invoice.currency}
           onClose={() => setIsPaymentOpen(false)}
+        />
+      ) : null}
+
+      {isCreditNoteOpen ? (
+        <CreditNoteForm
+          invoice={invoice}
+          onClose={() => setIsCreditNoteOpen(false)}
         />
       ) : null}
     </div>

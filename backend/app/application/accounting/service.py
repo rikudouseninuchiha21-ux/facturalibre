@@ -28,6 +28,7 @@ from app.domain.models.accounting import (
     AccountingEntryStatus,
     AccountingSourceType,
 )
+from app.domain.models.credit_note import CreditNote
 from app.domain.models.invoice import Invoice
 from app.domain.models.payment import Payment
 from app.domain.models.payroll import PayrollPeriod
@@ -192,6 +193,41 @@ class AccountingService:
                     credit=payment.amount,
                 ),
             ],
+        )
+
+    def record_credit_note_issued(self, credit_note: CreditNote) -> AccountingEntry:
+        """Genera el asiento de una nota crédito.
+
+        Débito a Ingresos por el subtotal, débito a IVA generado por el impuesto
+        y crédito a Cuentas por Cobrar por el total. Es el contra-asiento de la
+        emisión de la factura original.
+        """
+        lines = [
+            JournalLine(
+                account_code=self.mapping.sales_revenue,
+                debit=credit_note.subtotal,
+            ),
+        ]
+        if credit_note.tax_total > ZERO:
+            lines.append(
+                JournalLine(
+                    account_code=self.mapping.vat_payable,
+                    debit=credit_note.tax_total,
+                )
+            )
+        lines.append(
+            JournalLine(
+                account_code=self.mapping.accounts_receivable,
+                credit=credit_note.total,
+            )
+        )
+
+        return self._post_entry(
+            entry_date=credit_note.issue_date or date.today(),
+            description=f"Nota crédito {credit_note.number or credit_note.id}",
+            source_type=AccountingSourceType.CREDIT_NOTE,
+            source_id=credit_note.id,
+            lines=lines,
         )
 
     def record_invoice_void(self, invoice: Invoice) -> AccountingEntry | None:
