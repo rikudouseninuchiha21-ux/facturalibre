@@ -1,6 +1,6 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { LogOut, Search } from "lucide-react";
 
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -28,16 +28,16 @@ export function Topbar({ currentUser }: TopbarProps) {
         <ThemeToggle />
 
         {currentUser && (
-          <div className="flex items-center gap-3 pl-4 border-l border-zinc-200 dark:border-zinc-800">
-            <div className="flex flex-col">
+          <div className="flex items-center gap-3 pl-4 border-l border-zinc-200 dark:border-zinc-800 shrink-0">
+            <div className="flex flex-col min-w-0">
               <span
                 title={currentUser.full_name}
-                className="max-w-[140px] truncate text-sm font-medium text-zinc-900 dark:text-zinc-100"
+                className="max-w-[150px] truncate text-sm font-medium text-zinc-900 dark:text-zinc-100"
               >
                 {currentUser.full_name}
               </span>
               <span
-                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 dark:bg-zinc-800/30 dark:text-zinc-400`}
+                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-100 text-zinc-600 dark:bg-zinc-800/30 dark:text-zinc-400"
               >
                 {currentUser.role}
               </span>
@@ -47,16 +47,7 @@ export function Topbar({ currentUser }: TopbarProps) {
               className="p-2 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors"
               aria-label="Cerrar sesión"
             >
-              <svg
-                className="size-5"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2.5}
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 17l4-4m0 0l-4 4m4-4h-3" />
-              </svg>
+              <LogOut className="size-5" />
             </button>
           </div>
         )}

@@ -65,7 +65,7 @@ export function Sidebar({ currentUser }: SidebarProps) {
       {/* Sidebar header with logo */}
       <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-800 bg-zinc-950 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-xs font-bold text-white shadow-lg shadow-indigo-500/30">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/30">
             N
           </div>
           <span className={isCollapsed ? "hidden" : "text-lg font-bold tracking-tight text-white"}>
@@ -129,25 +129,23 @@ export function Sidebar({ currentUser }: SidebarProps) {
         })}
       </nav>
 
-      {/* Footer with user profile - shrink-0 para no colapsar */}
-      <div className="shrink-0 p-3 border-t border-zinc-800 bg-zinc-950 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="flex size-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 text-xs font-medium">
-            {currentUser?.full_name[0] || "U"}
+      {/* Footer with user profile */}
+      <div className="shrink-0 p-4 border-t border-zinc-800 bg-zinc-950">
+        <div className="flex items-center justify-between w-full gap-2">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-indigo-600/10 text-indigo-400 text-sm font-bold border border-indigo-500/20">
+              {currentUser?.full_name?.charAt(0) || "U"}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-sm font-medium text-white truncate">
+                {currentUser?.full_name}
+              </span>
+              <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider">
+                {currentUser?.role}
+              </span>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <span className="text-xs font-medium text-white truncate">
-              {currentUser?.full_name}
-            </span>
-            <span
-              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-800/30 text-zinc-400`}
-            >
-              {currentUser?.role}
-            </span>
-          </div>
-          <div className="ml-auto">
-            <LogoutButton />
-          </div>
+          <LogoutButton />
         </div>
       </div>
     </aside>
