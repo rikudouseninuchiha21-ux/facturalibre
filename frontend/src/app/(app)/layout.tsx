@@ -33,24 +33,27 @@ export default async function AppLayout({
   }
 
   return (
-    <div
-      className="flex h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/50 via-zinc-50 to-zinc-50 text-zinc-900 antialiased overflow-hidden"
-    >
-        {/* Sidebar */}
-        <Sidebar currentUser={currentUser} />
+    <div className="flex h-screen w-full overflow-hidden bg-zinc-50">
+      {/* Sidebar */}
+      <Sidebar currentUser={currentUser} />
 
-        {/* Main content wrapper */}
-        <div className="flex-1 flex-col min-h-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/50 via-zinc-50 to-zinc-50">
+      {/* Contenedor Derecho */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Topbar (Fijo arriba, no se mueve con el scroll) */}
+        <div className="shrink-0 z-50">
           <Topbar currentUser={currentUser} />
-
-          <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto">
-            {children}
-          </main>
-
-          <footer className="border-t border-zinc-200 bg-white px-8 py-5 text-sm text-zinc-500 shrink-0">
-            Nexus ERP · Fase 22
-          </footer>
         </div>
+
+        {/* Main (Hace scroll independiente por debajo del topbar) */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12">
+          {children}
+        </main>
+
+        {/* Footer (Fijo abajo) */}
+        <footer className="shrink-0 border-t border-zinc-200 bg-white px-8 py-4 text-sm text-zinc-500">
+          Nexus ERP · Fase 22
+        </footer>
       </div>
+    </div>
   );
 }

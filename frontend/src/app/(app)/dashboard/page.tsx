@@ -173,75 +173,66 @@ export default async function HomePage() {
         </>
       ) : null}
 
-      <section aria-labelledby="accesos-rapidos" className="space-y-8">
-        <div>
-          <h2
-            id="accesos-rapidos"
-            className="text-xl font-semibold tracking-tight text-slate-950"
-          >
-            Accesos rápidos
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Entra directamente al módulo que necesitas operar.
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-4">
+      <section className="mt-8">
+        <h2 className="text-xl font-bold tracking-tight text-zinc-950 mb-4">
+          Accesos Rápidos
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
             href="/pos"
-            className="block group"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all"
           >
-            <Card className="h-full p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors mb-4">
-                <ShoppingCart className="size-5" />
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors">
+                <ShoppingCart className="size-6" />
               </div>
-              <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-indigo-600 transition-colors">
-                Punto de Venta
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">Cobra al instante y genera factura</p>
-            </Card>
+              <div>
+                <h3 className="font-semibold text-zinc-900">Punto de Venta</h3>
+                <p className="text-sm text-zinc-500">Vender rápido</p>
+              </div>
+            </div>
           </Link>
           <Link
             href="/invoices/new"
-            className="block group"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all"
           >
-            <Card className="h-full p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors mb-4">
-                <FilePlus className="size-5" />
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
+                <FilePlus className="size-6" />
               </div>
-              <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-indigo-600 transition-colors">
-                Nueva Factura
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">Emite una factura electrónica DIAN</p>
-            </Card>
+              <div>
+                <h3 className="font-semibold text-zinc-900">Nueva Factura</h3>
+                <p className="text-sm text-zinc-500">Facturar cliente</p>
+              </div>
+            </div>
           </Link>
           <Link
-            href="/contacts/new"
-            className="block group"
+            href="/contacts"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
           >
-            <Card className="h-full p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors mb-4">
-                <UserPlus className="size-5" />
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition-colors">
+                <UserPlus className="size-6" />
               </div>
-              <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-indigo-600 transition-colors">
-                Nuevo Contacto
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">Registra cliente o proveedor</p>
-            </Card>
+              <div>
+                <h3 className="font-semibold text-zinc-900">Nuevo Contacto</h3>
+                <p className="text-sm text-zinc-500">Agregar cliente</p>
+              </div>
+            </div>
           </Link>
           <Link
             href="/reports/financials"
-            className="block group"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-rose-300 hover:shadow-md transition-all"
           >
-            <Card className="h-full p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors mb-4">
-                <BarChart3 className="size-5" />
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-xl bg-rose-50 text-rose-600 group-hover:bg-rose-100 transition-colors">
+                <BarChart3 className="size-6" />
               </div>
-              <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-indigo-600 transition-colors">
-                Ver Reportes
-              </h3>
-              <p className="mt-1 text-sm text-zinc-500">Estados financieros y contabilidad</p>
-            </Card>
+              <div>
+                <h3 className="font-semibold text-zinc-900">Ver Reportes</h3>
+                <p className="text-sm text-zinc-500">Estados financieros</p>
+              </div>
+            </div>
           </Link>
         </div>
       </section>
