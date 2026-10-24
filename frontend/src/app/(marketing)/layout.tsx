@@ -15,10 +15,8 @@ export default function MarketingLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <html lang="es" className="h-full">
-      <body className="flex min-h-screen flex-col bg-zinc-50 text-zinc-900 antialiased">
-        {children}
-      </body>
-    </html>
+    <div className="flex min-h-screen flex-col bg-white text-zinc-900 antialiased">
+      {children}
+    </div>
   );
 }

@@ -71,7 +71,7 @@ export function Sidebar({ currentUser }: SidebarProps) {
 
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-zinc-200 text-zinc-950 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 md:w-64 md:shadow-lg flex flex-col"
+      className="w-64 bg-white border-r border-zinc-200 text-zinc-950 z-50 shrink-0 flex flex-col h-full"
     >
       {/* Sidebar header with logo */}
       <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-200 bg-white shrink-0">
