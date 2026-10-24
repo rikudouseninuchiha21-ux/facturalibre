@@ -2,8 +2,6 @@
 
 @theme {
   --color-indigo-600: #4f46e5;
-  --color-indigo-500: #6366f1;
-  --color-indigo-50: #eef2ff;
   --color-zinc-950: #09090b;
   --color-zinc-900: #18181b;
   --color-zinc-800: #27272a;
@@ -34,43 +32,6 @@
   --input: #e2e8f0;
   --ring: #4f46e5;
   --radius: 0.75rem;
-  --sidebar: #09090b;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #4f46e5;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #18181b;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: #27272a;
-}
-
-.dark {
-  color-scheme: dark;
-  --background: #09090b;
-  --foreground: #f8fafc;
-  --card: #09090b;
-  --card-foreground: #f8fafc;
-  --popover: #09090b;
-  --popover-foreground: #f8fafc;
-  --primary: #4f46e5;
-  --primary-foreground: #ffffff;
-  --secondary: #18181b;
-  --secondary-foreground: #f8fafc;
-  --muted: #18181b;
-  --muted-foreground: #a1a1aa;
-  --accent: #18181b;
-  --accent-foreground: #f8fafc;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: #27272a;
-  --input: #18181b;
-  --ring: #4f46e5;
-  --sidebar: #09090b;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #4f46e5;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #18181b;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: #27272a;
 }
 
 body {
@@ -79,34 +40,7 @@ body {
   font-family:
     ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Roboto, "Helvetica Neue", Arial, sans-serif;
-  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 html {
-  transition: background-color 0.2s ease;
-}
-
-/* Utilidades de dark mode para inputs, selects, textareas y tarjetas */
-.input-dark {
-  @apply dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-100 dark:focus:ring-indigo-500 dark:focus:border-indigo-500;
-}
-
-.card-dark {
-  @apply bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 shadow-sm;
-}
-
-.text-dark {
-  @apply text-zinc-900 dark:text-zinc-100;
-}
-
-.text-muted-dark {
-  @apply text-zinc-500 dark:text-zinc-400;
-}
-
-@layer base {
-  input:not([type="checkbox"]):not([type="radio"]),
-  select,
-  textarea {
-    @apply bg-white text-zinc-900 border border-zinc-300 dark:bg-zinc-900 dark:text-zinc-100 dark:border-zinc-700 focus:outline-none focus:ring-2 focus:ring-indigo-500;
-  }
 }

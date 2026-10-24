@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState } from "react";
 
-import { LogoutButton } from "@/components/auth/LogoutButton";
 import { type User } from "@/lib/api";
 import {
   BarChart3,
@@ -60,15 +59,15 @@ export function Sidebar({ currentUser }: SidebarProps) {
 
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 w-64 bg-zinc-950 text-zinc-100 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 md:w-64 md:shadow-lg flex flex-col"
+      className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-zinc-200 text-zinc-950 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 md:w-64 md:shadow-lg flex flex-col"
     >
       {/* Sidebar header with logo */}
-      <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-800 bg-zinc-950 shrink-0">
+      <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-200 bg-white shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/30">
+          <div className="flex size-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/30">
             N
           </div>
-          <span className={isCollapsed ? "hidden" : "text-lg font-bold tracking-tight text-white"}>
+          <span className={isCollapsed ? "hidden" : "text-lg font-bold tracking-tight text-zinc-950"}>
             Nexus ERP
           </span>
         </div>
@@ -76,7 +75,7 @@ export function Sidebar({ currentUser }: SidebarProps) {
           type="button"
           onClick={() => setIsCollapsed((prev) => !prev)}
           aria-label="Colapsar menú"
-          className="md:hidden p-2 rounded-md text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+          className="md:hidden p-2 rounded-md text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
         >
           <svg
             className={`size-5 ${isCollapsed ? "-rotate-90" : ""}`}
@@ -130,14 +129,14 @@ export function Sidebar({ currentUser }: SidebarProps) {
       </nav>
 
       {/* Footer with user profile */}
-      <div className="shrink-0 p-4 border-t border-zinc-800 bg-zinc-950">
+      <div className="shrink-0 p-4 border-t border-zinc-800 bg-white">
         <div className="flex items-center justify-between w-full gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-indigo-600/10 text-indigo-400 text-sm font-bold border border-indigo-500/20">
               {currentUser?.full_name?.charAt(0) || "U"}
             </div>
             <div className="flex flex-col min-w-0">
-              <span className="text-sm font-medium text-white truncate">
+              <span className="text-sm font-medium text-zinc-900 truncate">
                 {currentUser?.full_name}
               </span>
               <span className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider">
@@ -145,7 +144,6 @@ export function Sidebar({ currentUser }: SidebarProps) {
               </span>
             </div>
           </div>
-          <LogoutButton />
         </div>
       </div>
     </aside>

@@ -34,20 +34,20 @@ export default async function RootLayout({
 
   return (
     <html lang="es" className="h-full">
-      <body className="flex min-h-screen bg-zinc-50 text-zinc-950 antialiased dark:text-zinc-100">
+      <body className="flex min-h-screen bg-zinc-50 text-zinc-900 antialiased">
         {/* Sidebar */}
         <Sidebar currentUser={currentUser} />
 
         {/* Main content wrapper */}
-        <div className="flex-1 flex-col min-h-0 bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex-1 flex-col min-h-0 bg-zinc-50">
           <Topbar currentUser={currentUser} />
 
           <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto">
             {children}
           </main>
 
-          <footer className="border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-8 py-5 text-sm text-zinc-500 dark:text-zinc-400">
-            Nexus ERP · Fase 22.5
+          <footer className="border-t border-zinc-200 bg-white px-8 py-5 text-sm text-zinc-500">
+            Nexus ERP · Fase 22
           </footer>
         </div>
       </body>
