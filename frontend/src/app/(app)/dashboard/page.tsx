@@ -4,7 +4,7 @@ import Link from "next/link";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { StatusChart } from "@/components/dashboard/StatusChart";
 import { ExportCsvButton } from "@/components/reports/ExportCsvButton";
-import { Wallet, TrendingUp, Clock } from "lucide-react";
+import { Wallet, TrendingUp, Clock, ShoppingCart, FilePlus, UserPlus, BarChart3 } from "lucide-react";
 
 import {
   Card,
@@ -23,62 +23,13 @@ export const metadata: Metadata = {
   title: "Panel de control",
 };
 
-const sections = [
-  {
-    href: "/contacts",
-    title: "Contactos",
-    description:
-      "Consulta los clientes y proveedores registrados y crea nuevos contactos.",
-  },
-  {
-    href: "/items",
-    title: "Ítems",
-    description:
-      "Crea productos y servicios con su precio y el impuesto que aplica por defecto.",
-  },
-  {
-    href: "/taxes",
-    title: "Impuestos",
-    description:
-      "Administra las tasas disponibles para calcular los impuestos de las facturas.",
-  },
-  {
-    href: "/invoices",
-    title: "Facturas",
-    description:
-      "Revisa el estado, el saldo pendiente y el estado de pago de cada factura.",
-  },
-  {
-    href: "/warehouses",
-    title: "Bodegas",
-    description:
-      "Crea y consulta las ubicaciones donde se mantiene el stock de los productos.",
-  },
-  {
-    href: "/inventory",
-    title: "Inventario",
-    description:
-      "Consulta los saldos por producto y bodega, y registra entradas o salidas.",
-  },
-  {
-    href: "/employees",
-    title: "Empleados",
-    description:
-      "Registra los empleados activos y consulta su documento y salario base.",
-  },
-  {
-    href: "/payroll",
-    title: "Nómina",
-    description:
-      "Abre periodos mensuales, calcula deducciones y consulta el estado del cierre.",
-  },
-];
-
 interface KpiCardProps {
   title: string;
   value: string;
   description: string;
-  accentClassName: string;
+  cardClassName: string;
+  iconClassName: string;
+  textClassName: string;
   Icon: React.ElementType;
 }
 
@@ -86,24 +37,24 @@ function KpiCard({
   title,
   value,
   description,
-  accentClassName,
+  cardClassName,
+  iconClassName,
+  textClassName,
   Icon: IconComponent,
 }: KpiCardProps) {
   return (
-    <Card
-      className="relative overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
-    >
+    <Card className={`relative overflow-hidden ${cardClassName}`}>
       <span
         aria-hidden="true"
-        className={`absolute inset-x-0 top-0 h-1 ${accentClassName}`}
+        className="absolute inset-x-0 top-0 h-1 bg-white/40"
       />
       <CardHeader className="pb-2 flex items-center justify-between">
         <CardDescription>{title}</CardDescription>
-        <div className={`flex size-8 items-center justify-center rounded-xl ${accentClassName.replace("bg-", "bg-")} text-white`}>
+        <div className={`flex size-10 items-center justify-center rounded-xl ${iconClassName}`}>
           <IconComponent className="size-5" />
         </div>
       </CardHeader>
-      <p className="text-3xl font-bold tracking-tight tabular-nums text-slate-950">
+      <p className={`text-3xl font-bold tracking-tight tabular-nums ${textClassName}`}>
         {value}
       </p>
       <CardContent>
@@ -168,21 +119,27 @@ export default async function HomePage() {
                 title="Ingresos Totales"
                 value={formatCurrency(summary.total_revenue)}
                 description="Pagos recibidos sobre facturas."
-                accentClassName="bg-emerald-500 text-emerald-600"
+                cardClassName="bg-gradient-to-br from-emerald-50 to-white border-emerald-100 shadow-sm hover:shadow-md hover:border-emerald-200 transition-all"
+                iconClassName="bg-gradient-to-br from-emerald-400 to-emerald-600 text-white shadow-lg shadow-emerald-500/30"
+                textClassName="text-emerald-950"
                 Icon={Wallet}
               />
               <KpiCard
                 title="Facturado Total"
                 value={formatCurrency(summary.total_invoiced)}
                 description="Facturas emitidas vigentes."
-                accentClassName="bg-indigo-500 text-indigo-600"
+                cardClassName="bg-gradient-to-br from-indigo-50 to-white border-indigo-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all"
+                iconClassName="bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-lg shadow-indigo-500/30"
+                textClassName="text-indigo-950"
                 Icon={TrendingUp}
               />
               <KpiCard
                 title="Saldo Pendiente"
                 value={formatCurrency(summary.pending_balance)}
                 description="Cartera por cobrar de facturas emitidas."
-                accentClassName="bg-amber-500 text-amber-600"
+                cardClassName="bg-gradient-to-br from-amber-50 to-white border-amber-100 shadow-sm hover:shadow-md hover:border-amber-200 transition-all"
+                iconClassName="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30"
+                textClassName="text-amber-950"
                 Icon={Clock}
               />
             </div>
@@ -216,7 +173,7 @@ export default async function HomePage() {
         </>
       ) : null}
 
-      <section aria-labelledby="accesos-rapidos" className="space-y-4">
+      <section aria-labelledby="accesos-rapidos" className="space-y-8">
         <div>
           <h2
             id="accesos-rapidos"
@@ -229,26 +186,63 @@ export default async function HomePage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          {sections.map((section) => (
-            <Link
-              key={section.href}
-              href={section.href}
-              className="group block h-full"
-            >
-              <Card className="h-full transition duration-200 group-hover:-translate-y-0.5 group-hover:border-blue-300 group-hover:shadow-md">
-                <CardHeader>
-                  <CardTitle>{section.title}</CardTitle>
-                  <CardDescription>{section.description}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <span className="text-sm font-semibold text-blue-600 group-hover:text-blue-700">
-                    Abrir módulo <span aria-hidden="true">→</span>
-                  </span>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+        <div className="grid gap-4 md:grid-cols-4">
+          <Link
+            href="/pos"
+            className="block group"
+          >
+            <Card className="h-full p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors mb-4">
+                <ShoppingCart className="size-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-indigo-600 transition-colors">
+                Punto de Venta
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500">Cobra al instante y genera factura</p>
+            </Card>
+          </Link>
+          <Link
+            href="/invoices/new"
+            className="block group"
+          >
+            <Card className="h-full p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors mb-4">
+                <FilePlus className="size-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-indigo-600 transition-colors">
+                Nueva Factura
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500">Emite una factura electrónica DIAN</p>
+            </Card>
+          </Link>
+          <Link
+            href="/contacts/new"
+            className="block group"
+          >
+            <Card className="h-full p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors mb-4">
+                <UserPlus className="size-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-indigo-600 transition-colors">
+                Nuevo Contacto
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500">Registra cliente o proveedor</p>
+            </Card>
+          </Link>
+          <Link
+            href="/reports/financials"
+            className="block group"
+          >
+            <Card className="h-full p-5 rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all hover:border-indigo-300 hover:shadow-md cursor-pointer">
+              <div className="flex size-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors mb-4">
+                <BarChart3 className="size-5" />
+              </div>
+              <h3 className="text-lg font-semibold text-zinc-900 group-hover:text-indigo-600 transition-colors">
+                Ver Reportes
+              </h3>
+              <p className="mt-1 text-sm text-zinc-500">Estados financieros y contabilidad</p>
+            </Card>
+          </Link>
         </div>
       </section>
     </div>

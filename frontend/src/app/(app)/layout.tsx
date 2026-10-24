@@ -33,12 +33,14 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex h-screen bg-zinc-50 text-zinc-900 antialiased overflow-hidden">
+    <div
+      className="flex h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/50 via-zinc-50 to-zinc-50 text-zinc-900 antialiased overflow-hidden"
+    >
         {/* Sidebar */}
         <Sidebar currentUser={currentUser} />
 
         {/* Main content wrapper */}
-        <div className="flex-1 flex-col min-h-0 bg-zinc-50">
+        <div className="flex-1 flex-col min-h-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50/50 via-zinc-50 to-zinc-50">
           <Topbar currentUser={currentUser} />
 
           <main className="flex-1 p-4 md:p-8 lg:p-12 overflow-y-auto">
