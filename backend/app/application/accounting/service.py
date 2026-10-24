@@ -31,6 +31,7 @@ from app.domain.models.accounting import (
 from app.domain.models.invoice import Invoice
 from app.domain.models.payment import Payment
 from app.domain.models.payroll import PayrollPeriod
+from app.domain.models.purchase import PurchaseInvoice
 
 ZERO = Decimal("0.00")
 
@@ -124,6 +125,40 @@ class AccountingService:
                     credit=payment.amount,
                 ),
             ],
+        )
+
+    def record_purchase_issued(self, purchase: PurchaseInvoice) -> AccountingEntry:
+        """Genera el asiento de emisión de una factura de compra.
+
+        Débito a Inventario por el subtotal, débito a IVA Descontable por el
+        impuesto y crédito a Cuentas por Pagar por el total.
+        """
+        lines = [
+            JournalLine(
+                account_code=self.mapping.inventory_account,
+                debit=purchase.subtotal,
+            ),
+        ]
+        if purchase.tax_total > ZERO:
+            lines.append(
+                JournalLine(
+                    account_code=self.mapping.vat_deductible_account,
+                    debit=purchase.tax_total,
+                )
+            )
+        lines.append(
+            JournalLine(
+                account_code=self.mapping.accounts_payable_account,
+                credit=purchase.total,
+            )
+        )
+
+        return self._post_entry(
+            entry_date=purchase.issue_date or date.today(),
+            description=f"Emisión factura de compra {purchase.number or purchase.id}",
+            source_type=AccountingSourceType.PURCHASE,
+            source_id=purchase.id,
+            lines=lines,
         )
 
     def record_invoice_void(self, invoice: Invoice) -> AccountingEntry | None:

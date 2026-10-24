@@ -37,6 +37,7 @@ export interface Contact {
   name: string;
   email: string | null;
   tax_id: string | null;
+  type: string;
   version: number;
   created_at: string;
   updated_at: string;
@@ -46,10 +47,57 @@ export interface ContactCreateInput {
   name: string;
   email?: string;
   tax_id?: string;
+  type?: string;
 }
 
 export interface VoidInvoiceInput {
   reason: string;
+}
+
+export type PurchaseStatus = "draft" | "issued" | "void";
+
+export interface PurchaseLineInput {
+  item_id?: string;
+  description: string;
+  quantity: string;
+  unit_cost: string;
+  tax_rate: string;
+}
+
+export interface PurchaseCreateInput {
+  supplier_id: string;
+  issue_date: string;
+  due_date: string;
+  lines: PurchaseLineInput[];
+}
+
+export interface PurchaseLine {
+  id: string;
+  item_id: string | null;
+  description: string;
+  quantity: string;
+  unit_cost: string;
+  tax_rate: string;
+  line_subtotal: string;
+  line_tax: string;
+  line_total: string;
+}
+
+export interface Purchase {
+  id: string;
+  number: string | null;
+  supplier_id: string;
+  issue_date: string;
+  due_date: string;
+  status: PurchaseStatus;
+  subtotal: string;
+  tax_total: string;
+  total: string;
+  balance: string;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  lines: PurchaseLine[];
 }
 
 export interface InvoiceLineInput {
@@ -602,4 +650,30 @@ export function logout(): Promise<void> {
 
 export function getCurrentUser(cookieHeader?: string): Promise<User> {
   return apiGet<User>("/auth/me", cookieHeader);
+}
+
+export function getPurchases(cookieHeader?: string): Promise<Purchase[]> {
+  return apiGet<Purchase[]>("/purchases", cookieHeader);
+}
+
+export function getPurchase(
+  id: string,
+  cookieHeader?: string,
+): Promise<Purchase> {
+  return apiGet<Purchase>(`/purchases/${encodeURIComponent(id)}`, cookieHeader);
+}
+
+export function createPurchase(
+  payload: PurchaseCreateInput,
+  idempotencyKey: string,
+): Promise<Purchase> {
+  return apiPost<Purchase>("/purchases", payload, {
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
+}
+
+export function issuePurchase(purchaseId: string): Promise<Purchase> {
+  return apiPost<Purchase>(
+    `/purchases/${encodeURIComponent(purchaseId)}/issue`,
+  );
 }

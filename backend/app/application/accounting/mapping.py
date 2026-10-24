@@ -19,6 +19,10 @@ class AccountingMapping:
     vat_payable: str
     cash: str
     bank: str
+    # Compras
+    inventory_account: str
+    vat_deductible_account: str
+    accounts_payable_account: str
     payroll_expense: str = "510506"
     payroll_payable: str = "250505"
     payroll_contributions: str = "237005"
@@ -32,6 +36,9 @@ DEFAULT_ACCOUNTING_MAPPING = AccountingMapping(
     vat_payable="240801",
     cash="110505",
     bank="111005",
+    inventory_account="143505",
+    vat_deductible_account="240802",
+    accounts_payable_account="220505",
 )
 
 # El método de pago es texto libre en el MVP. Solo estos valores se consideran

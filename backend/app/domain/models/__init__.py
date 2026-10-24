@@ -13,7 +13,7 @@ from app.domain.models.accounting import (
     AccountType,
 )
 from app.domain.models.auth import AuthSession, User
-from app.domain.models.contact import Contact
+from app.domain.models.contact import Contact, ContactType
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
 from app.domain.models.invoice_line import InvoiceLine
@@ -26,6 +26,7 @@ from app.domain.models.payroll import (
     PayrollPeriod,
     PayrollPeriodStatus,
 )
+from app.domain.models.purchase import PurchaseInvoice, PurchaseLine, PurchaseStatus
 from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
 from app.domain.models.tax import Tax
 from app.domain.models.warehouse import Warehouse
@@ -40,6 +41,7 @@ __all__ = [
     "AccountType",
     "AuthSession",
     "Contact",
+    "ContactType",
     "Employee",
     "IdempotencyKey",
     "Invoice",
@@ -52,6 +54,9 @@ __all__ = [
     "PayrollDetail",
     "PayrollPeriod",
     "PayrollPeriodStatus",
+    "PurchaseInvoice",
+    "PurchaseLine",
+    "PurchaseStatus",
     "StockBalance",
     "StockMovement",
     "StockMovementType",

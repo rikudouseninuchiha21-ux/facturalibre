@@ -14,6 +14,7 @@ from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
     from app.domain.models.invoice_line import InvoiceLine
+    from app.domain.models.purchase import PurchaseLine
     from app.domain.models.tax import Tax
 
 
@@ -52,3 +53,4 @@ class Item(Base):
 
     tax: Mapped[Tax | None] = relationship(back_populates="items")
     invoice_lines: Mapped[list[InvoiceLine]] = relationship(back_populates="item")
+    purchase_lines: Mapped[list[PurchaseLine]] = relationship(back_populates="item")

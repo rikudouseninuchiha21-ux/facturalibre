@@ -4,16 +4,23 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
-import { ApiError, createContact } from "@/lib/api";
+import { ApiError, createContact, type ContactCreateInput } from "@/lib/api";
 
 const inputClassName =
   "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+
+const CONTACT_TYPES: { value: string; label: string }[] = [
+  { value: "customer", label: "Cliente" },
+  { value: "supplier", label: "Proveedor" },
+  { value: "both", label: "Ambos" },
+];
 
 export function ContactForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [taxId, setTaxId] = useState("");
+  const [type, setType] = useState<"customer" | "supplier" | "both">("customer");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,15 +42,19 @@ export function ContactForm() {
     setIsSubmitting(true);
 
     try {
-      await createContact({
+      const payload: ContactCreateInput = {
         name: trimmedName,
         ...(email.trim() ? { email: email.trim() } : {}),
         ...(taxId.trim() ? { tax_id: taxId.trim() } : {}),
-      });
+        type,
+      };
+
+      await createContact(payload);
 
       setName("");
       setEmail("");
       setTaxId("");
+      setType("customer");
       setSuccess("Contacto creado correctamente.");
       router.refresh();
     } catch (cause) {
@@ -83,6 +94,34 @@ export function ContactForm() {
             className={inputClassName}
             placeholder="Ej. Comercializadora Andina S.A.S."
           />
+        </div>
+
+        <div>
+          <label
+            htmlFor="contact-type"
+            className="block text-sm font-medium text-slate-700"
+          >
+            Tipo{" "}
+            <span className="text-xs font-normal text-slate-400">
+              (opcional)
+            </span>
+          </label>
+          <select
+            id="contact-type"
+            name="type"
+            value={type}
+            onChange={(event) =>
+              setType(event.target.value as "customer" | "supplier" | "both")
+            }
+            disabled={isSubmitting}
+            className={inputClassName}
+          >
+            {CONTACT_TYPES.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

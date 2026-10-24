@@ -48,6 +48,7 @@ class AccountingSourceType(enum.StrEnum):
 
     INVOICE = "INVOICE"
     PAYMENT = "PAYMENT"
+    PURCHASE = "PURCHASE"
     VOID = "VOID"
     PAYMENT_REVERSAL = "PAYMENT_REVERSAL"
     PAYROLL = "PAYROLL"
