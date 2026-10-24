@@ -245,7 +245,11 @@ def test_purchase_payments_requires_authentication(
     assert (
         anonymous_client.post(
             "/api/v1/purchases/00000000-0000-0000-0000-000000000000/payments",
-            json={"amount": "10.00", "payment_date": date.today().isoformat(), "method": "Efectivo"},
+            json={
+                "amount": "10.00",
+                "payment_date": date.today().isoformat(),
+                "method": "Efectivo",
+            },
         ).status_code
         == 401
     )
