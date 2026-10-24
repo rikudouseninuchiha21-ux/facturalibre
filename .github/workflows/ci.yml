@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: facturalibre
+          POSTGRES_PASSWORD: cambia_esta_clave
+          POSTGRES_DB: facturalibre
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U facturalibre -d facturalibre"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: latest
+
+      - name: Caché de uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('backend/uv.lock') }}
+
+      - name: Sincronizar dependencias (dev)
+        run: uv sync --dev
+        working-directory: backend
+
+      - name: Ejecutar ruff
+        run: uv run ruff check .
+        working-directory: backend
+
+      - name: Ejecutar mypy
+        run: uv run mypy .
+        working-directory: backend
+
+      - name: Aplicar migraciones (alembic)
+        run: uv run alembic upgrade head
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://facturalibre:cambia_esta_clave@localhost:5432/facturalibre
+          ENVIRONMENT: test
+          LOG_LEVEL: INFO
+
+      - name: Ejecutar pytest
+        run: uv run pytest
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://facturalibre:cambia_esta_clave@localhost:5432/facturalibre
+          TEST_DATABASE_URL: postgresql+psycopg://facturalibre:cambia_esta_clave@localhost:5432/facturalibre
+          ENVIRONMENT: test
+          LOG_LEVEL: INFO
+
+  frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Instalar pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.34.7 --activate
+
+      - name: Caché de pnpm
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
+
+      - name: Instalar dependencias (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+        working-directory: frontend
+
+      - name: Ejecutar lint
+        run: pnpm lint
+        working-directory: frontend
+
+      - name: Ejecutar build
+        run: pnpm build
+        working-directory: frontend
+        env:
+          NODE_ENV: production
