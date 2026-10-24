@@ -19,6 +19,7 @@ class ItemCreate(BaseModel):
     description: str | None = None
     unit_price: Money
     tax_id: UUID | None = None
+    price_includes_tax: bool = False
 
 
 class ItemUpdate(BaseModel):
@@ -30,6 +31,7 @@ class ItemUpdate(BaseModel):
     description: str | None = None
     unit_price: Money | None = None
     tax_id: UUID | None = None
+    price_includes_tax: bool | None = None
     version: int = Field(ge=1)
 
     @model_validator(mode="after")
@@ -54,6 +56,7 @@ class ItemRead(BaseModel):
     description: str | None
     unit_price: Decimal
     tax_id: UUID | None
+    price_includes_tax: bool
     version: int
     created_at: datetime
     updated_at: datetime

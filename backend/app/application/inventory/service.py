@@ -88,10 +88,13 @@ class InventoryService:
             raise RuntimeError("No se pudo crear el saldo de inventario")
 
         if movement_type in DECREASE_TYPES and balance.quantity < quantity:
+            item = self.items.get_by_id(item_id)
+            warehouse = self.warehouses.get_by_id(warehouse_id)
+            item_name = item.name if item else str(item_id)
+            warehouse_name = warehouse.name if warehouse else str(warehouse_id)
             raise InsufficientStockError(
-                "Stock insuficiente para el ítem "
-                f"{item_id} en la bodega {warehouse_id}: "
-                f"disponible {balance.quantity}, solicitado {quantity}"
+                f"Stock insuficiente para '{item_name}' en '{warehouse_name}': "
+                f"disponible {balance.quantity}, solicitado {quantity}."
             )
 
         if movement_type in INCREASE_TYPES:

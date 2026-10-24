@@ -15,7 +15,9 @@ import {
 import {
   ApiError,
   convertQuoteToInvoice,
+  updateQuoteStatus,
   type Quote,
+  type QuoteStatus,
 } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
@@ -42,9 +44,15 @@ interface QuoteDetailProps {
 export function QuoteDetail({ quote }: QuoteDetailProps) {
   const router = useRouter();
   const [isConverting, setIsConverting] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canConvert = quote.status === "ACCEPTED" && !quote.converted_invoice_id;
+  const canSend = quote.status === "DRAFT";
+  const canAccept = quote.status === "SENT";
+  const canReject = quote.status === "SENT";
 
   async function handleConvert() {
     setError(null);
@@ -52,6 +60,8 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
     try {
       await convertQuoteToInvoice(quote.id);
       router.refresh();
+      // Forzar recarga completa para asegurar que el estado se refleje
+      window.location.reload();
     } catch (cause) {
       setError(
         cause instanceof ApiError
@@ -60,6 +70,29 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
       );
     } finally {
       setIsConverting(false);
+    }
+  }
+
+  async function handleSetStatus(newStatus: QuoteStatus) {
+    setError(null);
+    if (newStatus === "SENT") setIsSending(true);
+    if (newStatus === "ACCEPTED") setIsAccepting(true);
+    if (newStatus === "REJECTED") setIsRejecting(true);
+    try {
+      await updateQuoteStatus(quote.id, newStatus);
+      router.refresh();
+      // Forzar recarga completa para asegurar que el estado se refleje
+      window.location.reload();
+    } catch (cause) {
+      setError(
+        cause instanceof ApiError
+          ? `No se pudo actualizar el estado: ${cause.message}`
+          : "No se pudo actualizar el estado. Revisa tu conexión e inténtalo de nuevo.",
+      );
+    } finally {
+      setIsSending(false);
+      setIsAccepting(false);
+      setIsRejecting(false);
     }
   }
 
@@ -82,11 +115,38 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
           >
             ← Volver a cotizaciones
           </Link>
+          {canSend && (
+            <Button
+              onClick={() => handleSetStatus("SENT")}
+              disabled={isSending}
+              className="bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-500/30"
+            >
+              {isSending ? "Enviando..." : "Marcar como Enviada"}
+            </Button>
+          )}
+          {canAccept && (
+            <Button
+              onClick={() => handleSetStatus("ACCEPTED")}
+              disabled={isAccepting}
+              className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-500/30"
+            >
+              {isAccepting ? "Aceptando..." : "Marcar como Aceptada"}
+            </Button>
+          )}
+          {canReject && (
+            <Button
+              onClick={() => handleSetStatus("REJECTED")}
+              disabled={isRejecting}
+              className="bg-red-600 hover:bg-red-700 shadow-sm shadow-red-500/30"
+            >
+              {isRejecting ? "Rechazando..." : "Marcar como Rechazada"}
+            </Button>
+          )}
           {canConvert && (
             <Button
               onClick={handleConvert}
               disabled={isConverting}
-              className="bg-emerald-600 hover:bg-emerald-700 shadow-sm shadow-emerald-500/30"
+              className="bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-500/30"
             >
               {isConverting ? "Convirtiendo..." : "Convertir a Factura"}
             </Button>
@@ -123,7 +183,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             <div className="flex items-start justify-between gap-2">
               <span className="text-sm text-slate-500">Contacto</span>
               <span className="text-sm font-medium text-slate-950">
-                {quote.contact_id}
+                {quote.contact_name}
               </span>
             </div>
             <div className="flex items-start justify-between gap-2">

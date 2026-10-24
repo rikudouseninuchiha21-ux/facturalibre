@@ -126,6 +126,7 @@ export interface Item {
   description: string | null;
   unit_price: string;
   tax_id: string | null;
+  price_includes_tax: boolean;
   version: number;
   created_at: string;
   updated_at: string;
@@ -136,6 +137,7 @@ export interface ItemCreateInput {
   description?: string;
   unit_price: string;
   tax_id?: string;
+  price_includes_tax?: boolean;
 }
 
 export interface Tax {
@@ -445,6 +447,33 @@ async function apiDelete<T>(path: string): Promise<T> {
   return (await response.json()) as T;
 }
 
+async function apiPatch<T>(
+  path: string,
+  body?: unknown,
+  cookieHeader?: string,
+): Promise<T> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (cookieHeader) {
+    headers.Cookie = cookieHeader;
+  }
+  headers["Content-Type"] = "application/json";
+
+  const response = await fetch(`${getBaseUrl()}${API_PREFIX}${path}`, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    const detail = await getErrorDetail(response, fallback);
+    throw new ApiError(`Error al actualizar ${path}: ${detail}`, response.status);
+  }
+
+  return (await response.json()) as T;
+}
 async function apiPost<T>(
   path: string,
   body?: unknown,
@@ -456,8 +485,6 @@ async function apiPost<T>(
     ...options?.headers,
   };
   if (cookieHeader) {
-    // En Server Components no existe un cookie jar: se reenvía la cookie
-    // recibida por Next.js para que el backend autentique la petición.
     headers.Cookie = cookieHeader;
   }
   if (body !== undefined) {
@@ -475,7 +502,6 @@ async function apiPost<T>(
   if (!response.ok) {
     const fallback = `${response.status} ${response.statusText}`.trim();
     const detail = await getErrorDetail(response, fallback);
-
     throw new ApiError(detail, response.status);
   }
 
@@ -485,7 +511,6 @@ async function apiPost<T>(
 
   return (await response.json()) as T;
 }
-
 export function getContacts(cookieHeader?: string): Promise<Contact[]> {
   return apiGet<Contact[]>("/contacts", cookieHeader);
 }
@@ -618,6 +643,7 @@ export interface Quote {
   id: string;
   number: string | null;
   contact_id: string;
+  contact_name: string;
   issue_date: string;
   expiry_date: string;
   currency: string;
@@ -659,6 +685,16 @@ export function deleteQuote(id: string): Promise<void> {
 export function convertQuoteToInvoice(id: string): Promise<Quote> {
   return apiPost<Quote>(
     `/quotes/${encodeURIComponent(id)}/convert-to-invoice`,
+  );
+}
+
+export function updateQuoteStatus(
+  id: string,
+  status: QuoteStatus,
+): Promise<Quote> {
+  return apiPatch<Quote>(
+    `/quotes/${encodeURIComponent(id)}/status`,
+    { status },
   );
 }
 

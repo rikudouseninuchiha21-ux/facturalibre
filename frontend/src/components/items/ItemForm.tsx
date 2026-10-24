@@ -23,6 +23,7 @@ export function ItemForm({ taxes }: ItemFormProps) {
   const [description, setDescription] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
   const [taxId, setTaxId] = useState("");
+  const [priceIncludesTax, setPriceIncludesTax] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,12 +66,14 @@ export function ItemForm({ taxes }: ItemFormProps) {
         ...(trimmedDescription ? { description: trimmedDescription } : {}),
         unit_price: trimmedUnitPrice,
         ...(taxId ? { tax_id: taxId } : {}),
+        price_includes_tax: priceIncludesTax,
       });
 
       setName("");
       setDescription("");
       setUnitPrice("");
       setTaxId("");
+      setPriceIncludesTax(false);
       setSuccess("Ítem creado correctamente.");
       router.refresh();
     } catch (cause) {
@@ -197,6 +200,29 @@ export function ItemForm({ taxes }: ItemFormProps) {
               .
             </p>
           ) : null}
+        </div>
+
+        <div className="sm:col-span-2">
+          <div className="flex items-center gap-2">
+            <input
+              id="item-price-includes-tax"
+              name="price_includes_tax"
+              type="checkbox"
+              checked={priceIncludesTax}
+              onChange={(event) => setPriceIncludesTax(event.target.checked)}
+              disabled={isSubmitting}
+              className="rounded border-slate-300 bg-slate-50 text-indigo-600 focus:ring-indigo-600 focus:ring-1"
+            />
+            <label
+              htmlFor="item-price-includes-tax"
+              className="text-sm font-medium text-slate-700"
+            >
+              El precio incluye IVA
+              <span className="text-xs font-normal text-slate-400">
+                (si está activo, el precio unitario ya tiene el impuesto incluido)
+              </span>
+            </label>
+          </div>
         </div>
       </div>
 

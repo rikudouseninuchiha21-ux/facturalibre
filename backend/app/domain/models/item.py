@@ -7,7 +7,18 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, Text, Uuid, func, text
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    Uuid,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.database import Base
@@ -35,6 +46,11 @@ class Item(Base):
     )
     tax_id: Mapped[uuid.UUID | None] = mapped_column(
         Uuid, ForeignKey("taxes.id", ondelete="RESTRICT"), index=True
+    )
+    price_includes_tax: Mapped[bool] = mapped_column(
+        Boolean(),
+        nullable=False,
+        server_default=text("false"),
     )
 
     # DECISIONES.md: bloqueo optimista y soft delete en datos maestros.

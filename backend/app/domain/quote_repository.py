@@ -13,6 +13,7 @@ from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session, selectinload
 
 from app.domain.exceptions import QuoteStateError, ResourceNotFoundError
+from app.domain.models.contact import Contact
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.quote import Quote, QuoteStatus
 from app.domain.models.quote_line import QuoteLine
@@ -83,25 +84,28 @@ class QuoteRepository:
         self.db.refresh(quote)
         return quote
 
-    def get_by_id(self, quote_id: UUID) -> Quote | None:
+    def get_by_id(self, quote_id: UUID) -> tuple[Quote, str] | None:
+        """Obtiene una cotización con sus líneas y el nombre del contacto."""
         statement = (
-            select(Quote)
+            select(Quote, Contact.name)
+            .join(Contact, Contact.id == Quote.contact_id)
             .where(Quote.id == quote_id, Quote.deleted_at.is_(None))
             .options(selectinload(Quote.lines))
         )
-        return self.db.scalar(statement)
+        return self.db.execute(statement).first()
 
-    def list(self, limit: int, offset: int) -> list[Quote]:
-        """Lista cotizaciones no eliminadas."""
+    def list(self, limit: int, offset: int) -> list[tuple[Quote, str]]:
+        """Lista cotizaciones no eliminadas con el nombre del contacto."""
         statement = (
-            select(Quote)
+            select(Quote, Contact.name)
+            .join(Contact, Contact.id == Quote.contact_id)
             .where(Quote.deleted_at.is_(None))
             .options(selectinload(Quote.lines))
             .order_by(Quote.created_at.desc(), Quote.id)
             .limit(limit)
             .offset(offset)
         )
-        return list(self.db.scalars(statement).all())
+        return list(self.db.execute(statement).all())
 
     def update_status(
         self,
@@ -125,6 +129,7 @@ class QuoteRepository:
         quote.version += 1
         quote.updated_at = datetime.now(UTC)
         self.db.flush()
+        self.db.commit()
         return quote
 
     def soft_delete(self, quote_id: UUID) -> None:

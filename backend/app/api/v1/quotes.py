@@ -13,6 +13,7 @@ from app.api.dependencies.auth import get_current_user, require_role
 from app.application.quote_schemas import (
     QuoteCreate,
     QuoteRead,
+    QuoteStatusUpdate,
     canonical_body_hash,
 )
 from app.application.quote_service import QuoteService
@@ -22,9 +23,10 @@ from app.domain.calculations import (
     calculate_line,
 )
 from app.domain.contact_repository import ContactRepository
-from app.domain.exceptions import ResourceNotFoundError
+from app.domain.exceptions import QuoteStateError, ResourceNotFoundError
 from app.domain.item_repository import ItemRepository
 from app.domain.models.auth import UserRole
+from app.domain.models.quote import QuoteStatus
 from app.domain.quote_repository import NewQuoteLine, QuoteRepository
 from app.infrastructure.database import get_db
 from app.infrastructure.transactions import operation_transaction
@@ -121,6 +123,7 @@ def create_quote(
             unit_price=line.unit_price,
             discount_percent=Decimal("0"),
             tax_rate=tax_rate,
+            price_includes_tax=item.price_includes_tax,
         )
         calculated_lines.append(amounts)
         new_lines.append(
@@ -202,7 +205,9 @@ def convert_quote_to_invoice(
     converted = repository.get_by_id(quote_id)
     if converted is None:
         raise ResourceNotFoundError("Cotización no encontrada")
-    return QuoteRead.model_validate(converted)
+    quote, contact_name = converted
+    quote.contact_name = contact_name  # type: ignore[attr-defined]
+    return QuoteRead.model_validate(quote)
 
 
 @router.get("/{quote_id}", response_model=QuoteRead)
@@ -210,11 +215,53 @@ def get_quote(
     quote_id: UUID,
     repository: QuoteRepositoryDep,
 ) -> QuoteRead:
-    """Obtiene una cotización con sus líneas."""
+    """Obtiene una cotización con sus líneas y el nombre del contacto."""
+    result = repository.get_by_id(quote_id)
+    if result is None:
+        raise ResourceNotFoundError("Cotización no encontrada")
+    quote, contact_name = result
+    quote.contact_name = contact_name  # type: ignore[attr-defined]
+    return QuoteRead.model_validate(quote)
+
+
+@router.patch("/{quote_id}/status", response_model=QuoteRead)
+def update_quote_status(
+    quote_id: UUID,
+    payload: QuoteStatusUpdate,
+    repository: QuoteRepositoryDep,
+) -> QuoteRead:
+    """Cambia el estado de una cotización.
+
+    Transiciones permitidas:
+    - DRAFT -> SENT
+    - SENT -> ACCEPTED
+    - SENT -> REJECTED
+    """
     quote = repository.get_by_id(quote_id)
     if quote is None:
         raise ResourceNotFoundError("Cotización no encontrada")
-    return QuoteRead.model_validate(quote)
+    quote_obj, contact_name = quote
+
+    current = quote_obj.status
+    new = payload.status
+
+    allowed = {
+        QuoteStatus.DRAFT: {QuoteStatus.SENT},
+        QuoteStatus.SENT: {QuoteStatus.ACCEPTED, QuoteStatus.REJECTED},
+    }
+    if new not in allowed.get(current, set()):
+        raise QuoteStateError(
+            f"No se puede pasar de {current.value} a {new.value}"
+        )
+
+    quote_obj.contact_name = contact_name  # type: ignore[attr-defined]
+    updated = repository.update_status(
+        quote_id,
+        expected_status=current,
+        new_status=new,
+    )
+    updated.contact_name = contact_name  # type: ignore[attr-defined]
+    return QuoteRead.model_validate(updated)
 
 
 @router.get("", response_model=list[QuoteRead])
@@ -223,9 +270,13 @@ def list_quotes(
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
     offset: Annotated[int, Query(ge=0)] = 0,
 ) -> list[QuoteRead]:
-    """Lista cotizaciones con paginación por offset."""
+    """Lista cotizaciones con paginación por offset y nombre de contacto."""
     quotes = repository.list(limit=limit, offset=offset)
-    return [QuoteRead.model_validate(quote) for quote in quotes]
+    result: list[QuoteRead] = []
+    for quote, contact_name in quotes:
+        quote.contact_name = contact_name  # type: ignore[attr-defined]
+        result.append(QuoteRead.model_validate(quote))
+    return result
 
 
 @router.delete("/{quote_id}", status_code=status.HTTP_204_NO_CONTENT)

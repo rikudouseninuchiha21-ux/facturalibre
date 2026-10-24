@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from typing import Any, cast
+from typing import Any, Literal, cast
 from uuid import UUID
 
 from sqlalchemy import update
@@ -126,9 +126,10 @@ class QuoteService:
         4. Cambia el contacto a CUSTOMER.
         5. Marca la cotización como CONVERTED y vincula la factura.
         """
-        quote = self.quotes.get_by_id(quote_id)
-        if quote is None:
+        quote_result = self.quotes.get_by_id(quote_id)
+        if quote_result is None:
             raise ResourceNotFoundError("Cotización no encontrada")
+        quote, _contact_name = quote_result
         if quote.status is not QuoteStatus.ACCEPTED:
             raise QuoteStateError(
                 "Solo se pueden convertir cotizaciones en estado ACEPTADA"
@@ -136,9 +137,19 @@ class QuoteService:
         if quote.converted_invoice_id is not None:
             raise QuoteStateError("La cotización ya fue convertida a factura")
 
+        # Validar que los campos obligatorios no sean None
+        if quote.issue_date is None:
+            raise ResourceNotFoundError("issue_date no definida en la cotización")
+        if quote.expiry_date is None:
+            raise ResourceNotFoundError("expiry_date no definida en la cotización")
+
         # 1. Construir líneas de factura desde la cotización.
         invoice_lines: list[InvoiceLineCreate] = []
         for line in quote.lines:
+            if line.item_id is None:
+                raise ResourceNotFoundError(
+                    f"item_id no definido para la línea {line.description}"
+                )
             invoice_lines.append(
                 InvoiceLineCreate(
                     item_id=line.item_id,
@@ -154,7 +165,7 @@ class QuoteService:
             contact_id=quote.contact_id,
             issue_date=quote.issue_date,
             due_date=quote.expiry_date,
-            currency=quote.currency,
+            currency=cast(Literal["COP"], quote.currency),
             lines=invoice_lines,
         )
 
@@ -162,14 +173,14 @@ class QuoteService:
         calculated_lines: list[LineAmounts] = []
         new_invoice_lines: list[NewInvoiceLine] = []
 
-        for line in invoice_payload.lines:
-            item = self.items.get_by_id(line.item_id)
+        for line_payload in invoice_payload.lines:
+            item = self.items.get_by_id(line_payload.item_id)
             if item is None:
                 raise ResourceNotFoundError(
-                    f"item_id {line.item_id} no existe o está eliminado"
+                    f"item_id {line_payload.item_id} no existe o está eliminado"
                 )
 
-            tax_rate = line.tax_rate
+            tax_rate = line_payload.tax_rate
             if tax_rate is not None:
                 tax_rate_decimal = tax_rate
             elif item.tax is not None and item.tax.deleted_at is None:
@@ -177,21 +188,22 @@ class QuoteService:
             else:
                 tax_rate_decimal = Decimal("0")
 
-            description = line.description or item.description or item.name
+            description = line_payload.description or item.description or item.name
             amounts = calculate_line(
-                quantity=line.quantity,
-                unit_price=line.unit_price,
-                discount_percent=line.discount_percent,
+                quantity=line_payload.quantity,
+                unit_price=line_payload.unit_price,
+                discount_percent=line_payload.discount_percent,
                 tax_rate=tax_rate_decimal,
+                price_includes_tax=item.price_includes_tax,
             )
             calculated_lines.append(amounts)
             new_invoice_lines.append(
                 NewInvoiceLine(
                     item_id=item.id,
                     description=description,
-                    quantity=line.quantity,
-                    unit_price=line.unit_price,
-                    discount_percent=line.discount_percent,
+                    quantity=line_payload.quantity,
+                    unit_price=line_payload.unit_price,
+                    discount_percent=line_payload.discount_percent,
                     tax_rate=tax_rate_decimal,
                     subtotal=amounts.subtotal,
                     tax=amounts.tax,

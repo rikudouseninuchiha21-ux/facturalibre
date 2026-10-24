@@ -69,6 +69,14 @@ class QuoteLineRead(BaseModel):
     line_total: Decimal
 
 
+class QuoteStatusUpdate(BaseModel):
+    """Datos para cambiar el estado de una cotización."""
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
+
+    status: QuoteStatus
+
+
 class QuoteRead(BaseModel):
     """Representación pública de una cotización con sus líneas."""
 
@@ -77,6 +85,7 @@ class QuoteRead(BaseModel):
     id: UUID
     number: str | None
     contact_id: UUID
+    contact_name: str
     issue_date: date
     expiry_date: date
     currency: str

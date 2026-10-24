@@ -142,7 +142,7 @@ export default async function QuotesPage() {
                         {quote.number ?? "—"}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-slate-900">{quote.contact_id}</TableCell>
+                    <TableCell className="text-slate-900">{quote.contact_name}</TableCell>
                     <TableCell>
                       <StatusBadge status={quote.status} />
                     </TableCell>

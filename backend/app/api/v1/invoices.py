@@ -137,6 +137,7 @@ def create_invoice(
             unit_price=line.unit_price,
             discount_percent=line.discount_percent,
             tax_rate=tax_rate,
+            price_includes_tax=item.price_includes_tax,
         )
         calculated_lines.append(amounts)
         new_lines.append(
