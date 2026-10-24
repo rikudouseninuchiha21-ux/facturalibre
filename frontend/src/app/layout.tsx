@@ -82,6 +82,12 @@ export default async function RootLayout({
                   >
                     Compras
                   </Link>
+                  <Link
+                    href="/pos"
+                    className="rounded-lg px-3 py-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950"
+                  >
+                    Punto de Venta
+                  </Link>
                 </nav>
               ) : null}
 

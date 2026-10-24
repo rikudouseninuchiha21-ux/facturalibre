@@ -678,6 +678,21 @@ export function issuePurchase(purchaseId: string): Promise<Purchase> {
   );
 }
 
+export interface PosItemSearchResult {
+  id: string;
+  name: string;
+  unit_price: string;
+  tax_rate: string;
+  stock_current: string;
+}
+
+export function searchPosItems(
+  q: string,
+  cookieHeader?: string,
+): Promise<PosItemSearchResult[]> {
+  return apiGet<PosItemSearchResult[]>(`/pos/search?q=${encodeURIComponent(q)}`, cookieHeader);
+}
+
 export type PurchasePaymentStatus = "draft" | "issued" | "void";
 
 export interface PurchasePayment {
