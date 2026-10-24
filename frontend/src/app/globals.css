@@ -2,6 +2,8 @@
 
 @theme {
   --color-indigo-600: #4f46e5;
+  --color-indigo-500: #6366f1;
+  --color-indigo-50: #eef2ff;
   --color-zinc-950: #09090b;
   --color-zinc-900: #18181b;
   --color-zinc-800: #27272a;
@@ -82,4 +84,21 @@ body {
 
 html {
   transition: background-color 0.2s ease;
+}
+
+/* Utilidades de dark mode para inputs, selects, textareas y tarjetas */
+.input-dark {
+  @apply dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-100 dark:focus:ring-indigo-500 dark:focus:border-indigo-500;
+}
+
+.card-dark {
+  @apply bg-white dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 shadow-sm;
+}
+
+.text-dark {
+  @apply text-zinc-900 dark:text-zinc-100;
+}
+
+.text-muted-dark {
+  @apply text-zinc-500 dark:text-zinc-400;
 }

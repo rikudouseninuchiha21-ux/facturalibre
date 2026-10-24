@@ -60,12 +60,12 @@ export function Sidebar({ currentUser }: SidebarProps) {
 
   return (
     <aside
-      className="fixed left-0 top-0 bottom-0 w-64 bg-zinc-950 text-zinc-100 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 md:w-64 md:shadow-lg"
+      className="fixed left-0 top-0 bottom-0 w-64 bg-zinc-950 text-zinc-100 z-50 transform transition-transform duration-300 md:relative md:translate-x-0 md:w-64 md:shadow-lg flex flex-col"
     >
       {/* Sidebar header with logo */}
-      <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-800 bg-zinc-950">
+      <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-800 bg-zinc-950 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/30">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 text-xs font-bold text-white shadow-lg shadow-indigo-500/30">
             N
           </div>
           <span className={isCollapsed ? "hidden" : "text-lg font-bold tracking-tight text-white"}>
@@ -129,8 +129,8 @@ export function Sidebar({ currentUser }: SidebarProps) {
         })}
       </nav>
 
-      {/* Footer with user profile */}
-      <div className="p-3 border-t border-zinc-800 bg-zinc-950 backdrop-blur-md">
+      {/* Footer with user profile - shrink-0 para no colapsar */}
+      <div className="shrink-0 p-3 border-t border-zinc-800 bg-zinc-950 backdrop-blur-md">
         <div className="flex items-center gap-3">
           <div className="flex size-8 items-center justify-center rounded-full bg-zinc-800 text-zinc-400 text-xs font-medium">
             {currentUser?.full_name[0] || "U"}
