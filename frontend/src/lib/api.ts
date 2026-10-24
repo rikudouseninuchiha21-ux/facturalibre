@@ -479,6 +479,44 @@ export function getWarehouses(cookieHeader?: string): Promise<Warehouse[]> {
   return apiGet<Warehouse[]>("/warehouses", cookieHeader);
 }
 
+/**
+ * Descarga un reporte CSV protegido por cookie.
+ *
+ * Solo se usa desde el navegador (Client Components): reenvía la cookie de
+ * sesión automáticamente con `credentials: "include"`, obtiene el blob y
+ * fuerza la descarga mediante un enlace temporal.
+ */
+export async function downloadInvoicesCsv(): Promise<void> {
+  return downloadCsv("/api/v1/reports/invoices.csv", "facturas.csv");
+}
+
+export async function downloadPaymentsCsv(): Promise<void> {
+  return downloadCsv("/api/v1/reports/payments.csv", "pagos.csv");
+}
+
+async function downloadCsv(path: string, fileName: string): Promise<void> {
+  const response = await fetch(path, {
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    throw new Error(`Error al descargar ${path}: ${fallback}`);
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export function createWarehouse(
   payload: WarehouseCreateInput,
 ): Promise<Warehouse> {

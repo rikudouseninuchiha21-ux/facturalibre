@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { StatusChart } from "@/components/dashboard/StatusChart";
+import { ExportCsvButton } from "@/components/reports/ExportCsvButton";
 import {
   Card,
   CardContent,
@@ -131,6 +132,11 @@ export default async function HomePage() {
           Ingresos recibidos, facturación emitida y cartera pendiente en una
           vista consolidada.
         </p>
+        <ExportCsvButton
+          label="Exportar pagos a CSV"
+          path="/api/v1/reports/payments.csv"
+          fileName="pagos.csv"
+        />
       </header>
 
       {error ? (

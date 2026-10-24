@@ -14,6 +14,7 @@ from app.api.v1 import (
     items,
     payments,
     payroll,
+    reports,
     taxes,
     warehouses,
 )
@@ -39,6 +40,7 @@ app.include_router(warehouses.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
 app.include_router(employees.router, prefix="/api/v1")
 app.include_router(payroll.router, prefix="/api/v1")
+app.include_router(reports.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)

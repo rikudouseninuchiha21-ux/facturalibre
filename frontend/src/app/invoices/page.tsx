@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { InvoiceActions } from "@/components/invoices/InvoiceActions";
+import { ExportCsvButton } from "@/components/reports/ExportCsvButton";
 import {
   Card,
   CardContent,
@@ -112,6 +113,11 @@ export default async function InvoicesPage() {
           <span aria-hidden="true">+</span>
           Nueva Factura
         </Link>
+        <ExportCsvButton
+          label="Exportar a CSV"
+          path="/api/v1/reports/invoices.csv"
+          fileName="facturas.csv"
+        />
       </header>
 
       <Card>
