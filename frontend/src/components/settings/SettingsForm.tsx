@@ -3,23 +3,20 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import {
-  Button } from "@/components/ui/button";
-import {
-  ApiError,
-  updateCompanySettings,
-  type CompanySetting,
-} from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { ApiError, updateCompanySettings, type CompanySetting } from "@/lib/api";
 
 const inputClassName =
   "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
 
 interface SettingsFormProps {
   companySettings: CompanySetting;
+  onClose: () => void;
 }
 
 export function SettingsForm({
   companySettings,
+  onClose,
 }: SettingsFormProps) {
   const router = useRouter();
   const [name, setName] = useState(companySettings.name ?? "");
@@ -41,18 +38,17 @@ export function SettingsForm({
     setIsSubmitting(true);
 
     try {
-      await updateCompanySettings(
-        {
-          name: name.trim() || companySettings.name,
-          tax_id: taxId.trim() || undefined,
-          address: address.trim() || undefined,
-          phone: phone.trim() || undefined,
-          email: email.trim() || undefined,
-        },
-      );
+      await updateCompanySettings({
+        name: name.trim() || companySettings.name,
+        tax_id: taxId.trim() || undefined,
+        address: address.trim() || undefined,
+        phone: phone.trim() || undefined,
+        email: email.trim() || undefined,
+      });
 
       setSuccess("Configuración actualizada correctamente.");
       setTimeout(() => {
+        onClose();
         router.refresh();
       }, 1500);
     } catch (cause) {
@@ -94,10 +90,7 @@ export function SettingsForm({
         </div>
 
         <div className="space-y-2">
-          <label
-            htmlFor="company-tax-id"
-            className="block text-sm font-medium text-zinc-700"
-          >
+          <label htmlFor="company-tax-id" className="block text-sm font-medium text-zinc-700">
             NIT / Tax ID
           </label>
           <input
@@ -178,11 +171,7 @@ export function SettingsForm({
           >
             Cancelar
           </button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? "Guardando..." : "Guardar Cambios"}
           </Button>
         </div>

@@ -41,7 +41,7 @@ export default async function SettingsPage() {
           Configuración de la Empresa
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Administra los datos de tu empresa. Esta información se utiliza en
+          Administra los datos de tu empresa. Esta información se muestra en
           las facturas y reportes generados.
         </p>
       </header>

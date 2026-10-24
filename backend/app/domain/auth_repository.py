@@ -38,6 +38,10 @@ class AuthRepository:
         """Busca un usuario por email ya normalizado."""
         return self.db.scalar(select(User).where(User.email == email))
 
+    def get_by_id(self, user_id: UUID) -> User | None:
+        """Busca un usuario por su ID."""
+        return self.db.scalar(select(User).where(User.id == user_id))
+
     def add_user(
         self,
         *,
@@ -94,3 +98,35 @@ class AuthRepository:
             self.db.execute(delete(AuthSession).where(AuthSession.token == token_hash)),
         )
         return bool(result.rowcount)
+
+    def list_users(self) -> list[User]:
+        """Lista todos los usuarios registrados."""
+        statement = select(User).order_by(User.created_at.desc())
+        return list(self.db.scalars(statement))
+
+    def update_user(
+        self,
+        user_id: UUID,
+        *,
+        email: str | None = None,
+        full_name: str | None = None,
+        role: UserRole | None = None,
+        is_active: bool | None = None,
+    ) -> User | None:
+        """Actualiza campos de un usuario."""
+        user = self.db.scalar(select(User).where(User.id == user_id))
+        if user is None:
+            return None
+
+        if email is not None:
+            user.email = email
+        if full_name is not None:
+            user.full_name = full_name
+        if role is not None:
+            user.role = role
+        if is_active is not None:
+            user.is_active = is_active
+
+        self.db.flush()
+        self.db.refresh(user)
+        return user

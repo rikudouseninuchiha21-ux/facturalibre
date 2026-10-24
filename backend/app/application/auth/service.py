@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -16,13 +17,14 @@ from app.application.auth.security import (
     hash_session_token,
     verify_password,
 )
+from app.application.user_schemas import UserCreate
 from app.domain.auth_repository import AuthRepository
 from app.domain.exceptions import (
     EmailAlreadyRegisteredError,
     InvalidCredentialsError,
     RegistrationClosedError,
 )
-from app.domain.models.auth import User
+from app.domain.models.auth import User, UserRole
 from app.infrastructure.transactions import operation_transaction
 
 
@@ -102,3 +104,48 @@ class AuthService:
         if not token:
             return None
         return self.repository.get_user_by_session(hash_session_token(token))
+
+    def create_user(self, payload: UserCreate) -> User:
+        """Crea un nuevo usuario con contraseña."""
+        email = self._normalize_email(str(payload.email))
+
+        with operation_transaction(self.db):
+            if self.repository.get_by_email(email) is not None:
+                raise EmailAlreadyRegisteredError("El email ya está registrado")
+
+            return self.repository.add_user(
+                email=email,
+                hashed_password=hash_password(payload.password),
+                full_name=payload.full_name,
+                role=payload.role,
+            )
+
+    def update_user(
+        self,
+        user_id: UUID,
+        *,
+        email: str | None = None,
+        full_name: str | None = None,
+        role: UserRole | None = None,
+        is_active: bool | None = None,
+    ) -> User | None:
+        """Actualiza un usuario existente."""
+        user = self.repository.get_by_id(user_id)
+        if user is None:
+            return None
+
+        if email is not None:
+            if self.repository.get_by_email(email) is not None:
+                raise EmailAlreadyRegisteredError("El email ya está registrado")
+            user.email = email
+
+        if full_name is not None:
+            user.full_name = full_name
+        if role is not None:
+            user.role = role
+        if is_active is not None:
+            user.is_active = is_active
+
+        self.db.flush()
+        self.db.refresh(user)
+        return user

@@ -426,14 +426,24 @@ async function apiPost<T>(
   path: string,
   body?: unknown,
   options?: ApiPostOptions,
+  cookieHeader?: string,
 ): Promise<T> {
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+    ...options?.headers,
+  };
+  if (cookieHeader) {
+    // En Server Components no existe un cookie jar: se reenvía la cookie
+    // recibida por Next.js para que el backend autentique la petición.
+    headers.Cookie = cookieHeader;
+  }
+  if (body !== undefined) {
+    headers["Content-Type"] = "application/json";
+  }
+
   const response = await fetch(`${getBaseUrl()}${API_PREFIX}${path}`, {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
-      ...options?.headers,
-    },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: "include",
     cache: "no-store",
@@ -908,4 +918,56 @@ export function updateCompanySettings(
   return apiPost<CompanySetting>("/settings/company", payload, {
     headers: { "Idempotency-Key": crypto.randomUUID() },
   });
+}
+
+export interface UserItem {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+export interface UserCreateInput {
+  name: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
+export interface UserUpdateInput {
+  name?: string;
+  email?: string;
+  password?: string;
+  role?: string;
+  is_active?: boolean;
+}
+
+export function getUsers(
+  cookieHeader?: string,
+): Promise<UserItem[]> {
+  return apiGet<UserItem[]>("/users", cookieHeader);
+}
+
+export function createUser(
+  payload: UserCreateInput,
+  cookieHeader?: string,
+): Promise<UserItem> {
+  return apiPost<UserItem>("/users", payload, {
+    headers: { "Idempotency-Key": crypto.randomUUID() },
+  }, cookieHeader);
+}
+
+export function updateUser(
+  userId: string,
+  payload: UserUpdateInput,
+  cookieHeader?: string,
+): Promise<UserItem> {
+  return apiPost<UserItem>(
+    `/users/${encodeURIComponent(userId)}`,
+    payload,
+    { headers: { "Idempotency-Key": crypto.randomUUID() } },
+    cookieHeader,
+  );
 }
