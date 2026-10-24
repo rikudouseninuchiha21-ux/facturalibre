@@ -17,6 +17,7 @@ from app.api.v1 import (
     pos,
     purchases,
     reports,
+    settings,
     taxes,
     warehouses,
 )
@@ -45,6 +46,7 @@ app.include_router(payroll.router, prefix="/api/v1")
 app.include_router(pos.router, prefix="/api/v1")
 app.include_router(purchases.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
+app.include_router(settings.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)

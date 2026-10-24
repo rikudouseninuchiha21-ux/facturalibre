@@ -865,3 +865,47 @@ export function getBalanceSheet(
     cookieHeader,
   );
 }
+
+export interface CompanySetting {
+  id: string;
+  name: string;
+  tax_id: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  logo_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompanySettingCreateInput {
+  name: string;
+  tax_id?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logo_url?: string;
+}
+
+export interface CompanySettingUpdateInput {
+  name?: string;
+  tax_id?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logo_url?: string;
+}
+
+export function getCompanySettings(
+  cookieHeader?: string,
+): Promise<CompanySetting> {
+  return apiGet<CompanySetting>("/settings/company", cookieHeader);
+}
+
+export function updateCompanySettings(
+  payload: CompanySettingUpdateInput,
+): Promise<CompanySetting> {
+  return apiPost<CompanySetting>("/settings/company", payload, {
+    headers: { "Idempotency-Key": crypto.randomUUID() },
+  });
+}

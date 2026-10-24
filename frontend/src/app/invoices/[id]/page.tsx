@@ -5,11 +5,13 @@ import { notFound } from "next/navigation";
 import { InvoiceDetail } from "@/components/invoices/InvoiceDetail";
 import {
   ApiError,
+  getCompanySettings,
   getContact,
   getCreditNotes,
   getInvoice,
   getInvoicePayments,
   type Contact,
+  type CompanySetting,
   type CreditNote,
   type Invoice,
   type Payment,
@@ -41,15 +43,17 @@ export default async function InvoicePage({
   let payments: Payment[] = [];
   let creditNotes: CreditNote[] = [];
   let contact: Contact | null = null;
+  let companySettings: CompanySetting | null = null;
   let error: string | null = null;
 
   try {
-    // Factura, pagos y notas crédito se consultan en paralelo; el contacto se
-    // resuelve tras conocer el contact_id de la factura.
-    [invoice, payments, creditNotes] = await Promise.all([
+    // Factura, pagos, notas crédito y configuración de empresa se consultan en
+    // paralelo; el contacto se resuelve tras conocer el contact_id de la factura.
+    [invoice, payments, creditNotes, companySettings] = await Promise.all([
       getInvoice(id, cookieHeader),
       getInvoicePayments(id, cookieHeader),
       getCreditNotes(id, cookieHeader),
+      getCompanySettings(cookieHeader),
     ]);
     contact = await getContact(invoice.contact_id, cookieHeader);
   } catch (cause) {
@@ -74,7 +78,7 @@ export default async function InvoicePage({
         <div className="mt-6 flex justify-end print:hidden">
           <Link
             href="/invoices"
-            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            className="inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50"
           >
             Volver a Facturas
           </Link>
@@ -90,6 +94,7 @@ export default async function InvoicePage({
         payments={payments}
         creditNotes={creditNotes}
         contact={contact}
+        companySettings={companySettings}
       />
     </div>
   );

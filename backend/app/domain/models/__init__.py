@@ -13,6 +13,7 @@ from app.domain.models.accounting import (
     AccountType,
 )
 from app.domain.models.auth import AuthSession, User, UserRole
+from app.domain.models.company_setting import CompanySetting
 from app.domain.models.contact import Contact, ContactType
 from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNoteStatus
 from app.domain.models.idempotency_key import IdempotencyKey
@@ -46,6 +47,7 @@ __all__ = [
     "AccountNature",
     "AccountType",
     "AuthSession",
+    "CompanySetting",
     "Contact",
     "ContactType",
     "CreditNote",
