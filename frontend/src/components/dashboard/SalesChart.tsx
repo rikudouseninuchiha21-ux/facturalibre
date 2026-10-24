@@ -3,7 +3,6 @@
 import {
   Bar,
   BarChart,
-  CartesianGrid,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -61,11 +60,6 @@ export function SalesChart({ data }: SalesChartProps) {
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid
-            stroke="#e2e8f0"
-            strokeDasharray="3 3"
-            vertical={false}
-          />
           <XAxis
             dataKey="label"
             axisLine={false}
@@ -97,7 +91,7 @@ export function SalesChart({ data }: SalesChartProps) {
           <Bar
             dataKey="total"
             name="Facturado"
-            fill="#2563eb"
+            fill="#6366f1"
             radius={[6, 6, 0, 0]}
             maxBarSize={56}
           />

@@ -22,9 +22,9 @@ interface StatusDatum {
 }
 
 const STATUS_COLORS = {
-  draft: "#94a3b8",
+  draft: "#a1a1aa",
   issued: "#10b981",
-  void: "#ef4444",
+  void: "#f43f5e",
 } as const;
 
 function buildChartData(data: InvoiceStatusSummary): StatusDatum[] {
@@ -78,7 +78,7 @@ export function StatusChart({ data }: StatusChartProps) {
             stroke="none"
           >
             {chartData.map((entry) => (
-              <Cell key={entry.name} fill={entry.color} />
+              <Cell key={entry.name} fill={entry.color} stroke="#fff" strokeWidth={2} />
             ))}
           </Pie>
           <Tooltip

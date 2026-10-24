@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 import { type User } from "@/lib/api";
@@ -68,6 +69,7 @@ const NAVIGATION = [
 
 export function Sidebar({ currentUser }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const pathname = usePathname();
 
   return (
     <aside
@@ -120,10 +122,10 @@ export function Sidebar({ currentUser }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
-                      currentUser?.role === "ADMIN"
-                        ? "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                        : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      pathname === item.href
+                        ? "bg-indigo-50 text-indigo-600 font-medium"
+                        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                     }`}
                   >
                     <item.icon className="size-4 shrink-0" />

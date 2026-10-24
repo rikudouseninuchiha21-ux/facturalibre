@@ -6,7 +6,7 @@ export function Card({
 }: ComponentProps<"section">) {
   return (
     <section
-      className={`rounded-xl border border-zinc-200 bg-white shadow-sm ${className}`}
+      className={`rounded-2xl border border-zinc-200/60 bg-white shadow-sm ${className}`}
       {...props}
     />
   );

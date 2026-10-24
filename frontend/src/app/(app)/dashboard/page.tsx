@@ -4,6 +4,8 @@ import Link from "next/link";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { StatusChart } from "@/components/dashboard/StatusChart";
 import { ExportCsvButton } from "@/components/reports/ExportCsvButton";
+import { Wallet, TrendingUp, Clock } from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -77,6 +79,7 @@ interface KpiCardProps {
   value: string;
   description: string;
   accentClassName: string;
+  Icon: React.ElementType;
 }
 
 function KpiCard({
@@ -84,19 +87,25 @@ function KpiCard({
   value,
   description,
   accentClassName,
+  Icon: IconComponent,
 }: KpiCardProps) {
   return (
-    <Card className="relative overflow-hidden">
+    <Card
+      className="relative overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200"
+    >
       <span
         aria-hidden="true"
         className={`absolute inset-x-0 top-0 h-1 ${accentClassName}`}
       />
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 flex items-center justify-between">
         <CardDescription>{title}</CardDescription>
-        <p className="text-3xl font-bold tracking-tight tabular-nums text-slate-950">
-          {value}
-        </p>
+        <div className={`flex size-8 items-center justify-center rounded-xl ${accentClassName.replace("bg-", "bg-")} text-white`}>
+          <IconComponent className="size-5" />
+        </div>
       </CardHeader>
+      <p className="text-3xl font-bold tracking-tight tabular-nums text-slate-950">
+        {value}
+      </p>
       <CardContent>
         <p className="text-sm text-slate-500">{description}</p>
       </CardContent>
@@ -159,19 +168,22 @@ export default async function HomePage() {
                 title="Ingresos Totales"
                 value={formatCurrency(summary.total_revenue)}
                 description="Pagos recibidos sobre facturas."
-                accentClassName="bg-emerald-500"
+                accentClassName="bg-emerald-500 text-emerald-600"
+                Icon={Wallet}
               />
               <KpiCard
                 title="Facturado Total"
                 value={formatCurrency(summary.total_invoiced)}
                 description="Facturas emitidas vigentes."
-                accentClassName="bg-blue-500"
+                accentClassName="bg-indigo-500 text-indigo-600"
+                Icon={TrendingUp}
               />
               <KpiCard
                 title="Saldo Pendiente"
                 value={formatCurrency(summary.pending_balance)}
                 description="Cartera por cobrar de facturas emitidas."
-                accentClassName="bg-amber-500"
+                accentClassName="bg-amber-500 text-amber-600"
+                Icon={Clock}
               />
             </div>
           </section>
