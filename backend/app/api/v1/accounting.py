@@ -9,14 +9,18 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user, require_role
+from app.application.accounting.period_service import FiscalPeriodService
 from app.application.accounting.schemas import (
     AccountingAccountRead,
     AccountingEntryRead,
+    ClosePeriodRequest,
+    FiscalPeriodRead,
 )
 from app.domain.accounting_repository import AccountingRepository
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.models.auth import UserRole
 from app.infrastructure.database import get_db
+from app.infrastructure.transactions import operation_transaction
 
 router = APIRouter(
     prefix="/accounting",
@@ -36,6 +40,30 @@ def get_accounting_repository(db: DbSession) -> AccountingRepository:
 
 
 AccountingRepositoryDep = Annotated[AccountingRepository, Depends(get_accounting_repository)]
+
+
+def get_fiscal_period_service(db: DbSession) -> FiscalPeriodService:
+    """Construye el servicio de cierre de periodos."""
+    return FiscalPeriodService(db)
+
+
+FiscalPeriodServiceDep = Annotated[FiscalPeriodService, Depends(get_fiscal_period_service)]
+
+
+@router.post("/close-period", response_model=FiscalPeriodRead)
+def close_period(
+    payload: ClosePeriodRequest,
+    db: DbSession,
+    service: FiscalPeriodServiceDep,
+) -> FiscalPeriodRead:
+    """Cierra un mes contable y bloquea la creación de nuevos asientos.
+
+    El cierre valida que no existan asientos descuadrados y se ejecuta en una
+    transacción atómica con ``operation_transaction``.
+    """
+    with operation_transaction(db):
+        period = service.close_period(year=payload.year, month=payload.month)
+    return FiscalPeriodRead.model_validate(period)
 
 
 @router.get("/accounts", response_model=list[AccountingAccountRead])

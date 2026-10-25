@@ -1325,6 +1325,105 @@ export interface CashFlowReport {
   projection: CashFlowProjection;
 }
 
+export interface LedgerMovement {
+  id: string;
+  entry_id: string;
+  entry_date: string;
+  description: string;
+  source_type: string;
+  debit: string;
+  credit: string;
+  balance: string;
+}
+
+export interface LedgerReport {
+  account_code: string;
+  account_name: string;
+  nature: string;
+  start_date: string | null;
+  end_date: string | null;
+  opening_balance: string;
+  total_debits: string;
+  total_credits: string;
+  closing_balance: string;
+  movements: LedgerMovement[];
+}
+
+export type TrialBalanceType = "DEUDOR" | "ACREEDOR" | "NEUTRO";
+
+export interface TrialBalanceRow {
+  code: string;
+  name: string;
+  debit: string;
+  credit: string;
+  balance: string;
+  balance_type: TrialBalanceType;
+}
+
+export interface TrialBalanceReport {
+  as_of_date: string | null;
+  accounts: TrialBalanceRow[];
+  total_debit: string;
+  total_credit: string;
+  difference: string;
+  balanced: boolean;
+}
+
+export type FiscalPeriodStatus = "OPEN" | "CLOSED";
+
+export interface FiscalPeriod {
+  id: string;
+  month: number;
+  year: number;
+  status: FiscalPeriodStatus;
+  closed_at: string | null;
+  created_at: string;
+}
+
+export function getLedgerAccounts(
+  search?: string,
+  cookieHeader?: string,
+): Promise<AccountingAccount[]> {
+  const params = new URLSearchParams();
+  if (search) params.set("search", search);
+  const query = params.toString();
+  return apiGet<AccountingAccount[]>(
+    `/reports/ledger/accounts${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
+
+export function getLedger(
+  accountCode: string,
+  startDate?: string,
+  endDate?: string,
+): Promise<LedgerReport> {
+  const params = new URLSearchParams({ account_code: accountCode });
+  if (startDate) params.set("start_date", startDate);
+  if (endDate) params.set("end_date", endDate);
+  return apiGet<LedgerReport>(`/reports/ledger?${params.toString()}`);
+}
+
+export function getTrialBalance(
+  asOfDate?: string,
+  cookieHeader?: string,
+): Promise<TrialBalanceReport> {
+  const params = new URLSearchParams();
+  if (asOfDate) params.set("as_of_date", asOfDate);
+  const query = params.toString();
+  return apiGet<TrialBalanceReport>(
+    `/reports/trial-balance${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
+
+export function closePeriod(
+  month: number,
+  year: number,
+): Promise<FiscalPeriod> {
+  return apiPost<FiscalPeriod>("/accounting/close-period", { month, year });
+}
+
 export function getIncomeStatement(
   startDate?: string,
   endDate?: string,

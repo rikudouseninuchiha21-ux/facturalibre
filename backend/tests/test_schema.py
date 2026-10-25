@@ -29,6 +29,7 @@ EXPECTED_TABLES = {
     "accounting_entry_lines",
     "contacts",
     "employees",
+    "fiscal_periods",
     "idempotency_keys",
     "invoice_lines",
     "invoices",

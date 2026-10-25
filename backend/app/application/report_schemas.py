@@ -41,6 +41,56 @@ class BalanceSheetResponse(BaseModel):
     balanced: bool
 
 
+class LedgerMovementRead(BaseModel):
+    """Movimiento individual del Libro Mayor."""
+
+    id: UUID
+    entry_id: UUID
+    entry_date: date
+    description: str
+    source_type: str
+    debit: Decimal
+    credit: Decimal
+    balance: Decimal
+
+
+class LedgerReportResponse(BaseModel):
+    """Libro Mayor de una cuenta con saldo inicial y final."""
+
+    account_code: str
+    account_name: str
+    nature: str
+    start_date: date | None
+    end_date: date | None
+    opening_balance: Decimal
+    total_debits: Decimal
+    total_credits: Decimal
+    closing_balance: Decimal
+    movements: list[LedgerMovementRead]
+
+
+class TrialBalanceRow(BaseModel):
+    """Saldo deudor o acreedor de una cuenta en el Balance de Prueba."""
+
+    code: str
+    name: str
+    debit: Decimal
+    credit: Decimal
+    balance: Decimal
+    balance_type: str
+
+
+class TrialBalanceResponse(BaseModel):
+    """Balance de Prueba con el control global de partida doble."""
+
+    as_of_date: date | None
+    accounts: list[TrialBalanceRow]
+    total_debit: Decimal
+    total_credit: Decimal
+    difference: Decimal
+    balanced: bool
+
+
 class AgingBucketSummary(BaseModel):
     """Total y cantidad de facturas de un rango de mora."""
 

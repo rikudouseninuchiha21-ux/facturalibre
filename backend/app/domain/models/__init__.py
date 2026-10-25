@@ -11,6 +11,8 @@ from app.domain.models.accounting import (
     AccountingSourceType,
     AccountNature,
     AccountType,
+    FiscalPeriod,
+    FiscalPeriodStatus,
 )
 from app.domain.models.auth import AuthSession, User, UserRole
 from app.domain.models.bank import (
@@ -69,6 +71,8 @@ __all__ = [
     "CreditNoteStatus",
     "Employee",
     "Expense",
+    "FiscalPeriod",
+    "FiscalPeriodStatus",
     "IdempotencyKey",
     "Invoice",
     "InvoiceLine",

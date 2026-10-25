@@ -51,6 +51,10 @@ class AccountingImbalanceError(AccountingError):
     """El asiento no cumple la regla débitos = créditos."""
 
 
+class AccountingPeriodClosedError(AccountingError):
+    """El asiento intenta registrarse en un periodo contable cerrado."""
+
+
 @dataclass(frozen=True)
 class JournalLine:
     """Movimiento calculado antes de persistirse."""
@@ -539,6 +543,11 @@ class AccountingService:
         if total_debit != total_credit:
             raise AccountingImbalanceError(
                 f"Asiento desbalanceado: débitos {total_debit}, créditos {total_credit}"
+            )
+
+        if self.repository.is_period_closed(year=entry_date.year, month=entry_date.month):
+            raise AccountingPeriodClosedError(
+                f"El periodo contable {entry_date.month:02d}/{entry_date.year} está cerrado"
             )
 
         accounts = self.repository.get_accounts_by_codes(line.account_code for line in normalized)

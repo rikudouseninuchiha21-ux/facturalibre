@@ -25,6 +25,8 @@ from app.api.v1 import (
     treasury,
     warehouses,
 )
+from app.application.accounting.period_service import FiscalPeriodError
+from app.application.accounting.service import AccountingPeriodClosedError
 from app.domain.exceptions import (
     InventoryError,
     InvoiceStateError,
@@ -163,6 +165,30 @@ async def treasury_error_handler(
     exc: TreasuryError,
 ) -> JSONResponse:
     """Traduce un conflicto de tesorería a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(AccountingPeriodClosedError)
+async def accounting_period_closed_handler(
+    _request: Request,
+    exc: AccountingPeriodClosedError,
+) -> JSONResponse:
+    """Rechaza asientos nuevos en un periodo cerrado con un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(FiscalPeriodError)
+async def fiscal_period_error_handler(
+    _request: Request,
+    exc: FiscalPeriodError,
+) -> JSONResponse:
+    """Traduce un cierre inválido o repetido a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},

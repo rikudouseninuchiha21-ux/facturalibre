@@ -13,6 +13,8 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
+    Integer,
     Numeric,
     String,
     UniqueConstraint,
@@ -64,6 +66,13 @@ class AccountingEntryStatus(enum.StrEnum):
 
     DRAFT = "DRAFT"
     POSTED = "POSTED"
+
+
+class FiscalPeriodStatus(enum.StrEnum):
+    """Estado de bloqueo contable de un mes calendario."""
+
+    OPEN = "OPEN"
+    CLOSED = "CLOSED"
 
 
 def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
@@ -215,3 +224,46 @@ class AccountingEntryLine(Base):
     def account_name(self) -> str:
         """Nombre de la cuenta para la representación pública del movimiento."""
         return self.account.name
+
+
+class FiscalPeriod(Base):
+    """Periodo contable mensual.
+
+    La ausencia de fila equivale a un periodo abierto. La fila se crea cuando
+    se cierra el mes para conservar la fecha y hora del cierre. Una vez que el
+    estado es ``CLOSED``, el servicio contable rechaza nuevos asientos con
+    fecha dentro de ese mes.
+    """
+
+    __tablename__ = "fiscal_periods"
+
+    __table_args__ = (
+        CheckConstraint("month >= 1 AND month <= 12", name="ck_fiscal_periods_month_range"),
+        CheckConstraint("year >= 2000", name="ck_fiscal_periods_year_min"),
+        UniqueConstraint("month", "year", name="uq_fiscal_periods_month_year"),
+        Index("ix_fiscal_periods_year_month", "year", "month"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    month: Mapped[int] = mapped_column(Integer, nullable=False)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[FiscalPeriodStatus] = mapped_column(
+        Enum(
+            FiscalPeriodStatus,
+            name="fiscal_period_status",
+            native_enum=True,
+            values_callable=_enum_values,
+        ),
+        nullable=False,
+        default=FiscalPeriodStatus.OPEN,
+        server_default=text("'OPEN'"),
+    )
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

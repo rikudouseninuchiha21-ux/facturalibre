@@ -11,12 +11,13 @@ from decimal import Decimal
 from typing import Annotated, Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user, require_role
+from app.application.accounting.schemas import AccountingAccountRead
 from app.application.report_schemas import (
     AccountReportRow,
     AgingBucketSummary,
@@ -29,9 +30,14 @@ from app.application.report_schemas import (
     CashFlowProjection,
     CashFlowReportResponse,
     IncomeStatementResponse,
+    LedgerMovementRead,
+    LedgerReportResponse,
+    TrialBalanceResponse,
+    TrialBalanceRow,
 )
 from app.domain.accounting_repository import AccountingRepository
 from app.domain.calculations import ZERO_MONEY, round_money
+from app.domain.exceptions import ResourceNotFoundError
 from app.domain.models.accounting import (
     AccountingAccount,
     AccountingEntry,
@@ -151,12 +157,25 @@ AccountingRepositoryDep = Annotated[
 def _parse_date(value: str | None) -> date | None:
     if value is None:
         return None
-    return date.fromisoformat(value)
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=f"Fecha inválida: {value}. Usa el formato AAAA-MM-DD",
+        ) from exc
 
 
 def _format_money(value: Decimal) -> str:
     """Formatea un importe decimal con dos decimales para los reportes."""
     return f"{value:.2f}"
+
+
+def _natural_balance(*, debit: Decimal, credit: Decimal, nature: str) -> Decimal:
+    """Convierte débitos/créditos al saldo según la naturaleza de la cuenta."""
+    if nature == "DEBITO":
+        return round_money(debit - credit)
+    return round_money(credit - debit)
 
 
 def _client_sort_key(
@@ -480,6 +499,154 @@ def get_balance_sheet(
         total_liabilities=_format_money(total_liabilities),
         total_equity=_format_money(total_equity),
         balanced=balanced,
+    )
+
+
+@router.get("/ledger/accounts", response_model=list[AccountingAccountRead])
+def search_ledger_accounts(
+    repository: AccountingRepositoryDep,
+    search: Annotated[str | None, Query(max_length=100)] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 100,
+) -> list[AccountingAccountRead]:
+    """Busca cuentas PUC por código o nombre para el selector del Libro Mayor."""
+    accounts = repository.search_accounts(query=search, limit=limit)
+    return [AccountingAccountRead.model_validate(account) for account in accounts]
+
+
+@router.get("/ledger", response_model=LedgerReportResponse)
+def get_ledger(
+    repository: AccountingRepositoryDep,
+    account_code: Annotated[str, Query(min_length=1, max_length=20)],
+    start_date: Annotated[str | None, Query()] = None,
+    end_date: Annotated[str | None, Query()] = None,
+) -> LedgerReportResponse:
+    """Libro Mayor de una cuenta con saldo inicial, movimientos y saldo final.
+
+    El saldo inicial suma los movimientos POSTED anteriores a ``start_date``.
+    Si no se envía fecha inicial, el libro arranca en cero y muestra todo el
+    historial. Los saldos se expresan según la naturaleza de la cuenta.
+    """
+    start = _parse_date(start_date)
+    end = _parse_date(end_date)
+    if start is not None and end is not None and start > end:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="La fecha inicial no puede ser posterior a la fecha final",
+        )
+
+    account = repository.get_account_by_code(account_code)
+    if account is None:
+        raise ResourceNotFoundError("Cuenta contable no encontrada")
+
+    if start is None:
+        opening_debit = ZERO_MONEY
+        opening_credit = ZERO_MONEY
+    else:
+        opening_debit, opening_credit = repository.get_account_totals_before(
+            account_code=account_code,
+            before_date=start,
+        )
+    opening_balance = _natural_balance(
+        debit=opening_debit,
+        credit=opening_credit,
+        nature=account.nature.value,
+    )
+
+    movement_rows = repository.list_account_movements(
+        account_code=account_code,
+        start_date=start,
+        end_date=end,
+    )
+    running_balance = opening_balance
+    total_debits = ZERO_MONEY
+    total_credits = ZERO_MONEY
+    movements: list[LedgerMovementRead] = []
+    for row in movement_rows:
+        total_debits = round_money(total_debits + row.debit)
+        total_credits = round_money(total_credits + row.credit)
+        running_balance = round_money(
+            running_balance
+            + _natural_balance(
+                debit=row.debit,
+                credit=row.credit,
+                nature=account.nature.value,
+            )
+        )
+        movements.append(
+            LedgerMovementRead(
+                id=row.id,
+                entry_id=row.entry_id,
+                entry_date=row.entry_date,
+                description=row.description,
+                source_type=row.source_type.value,
+                debit=row.debit,
+                credit=row.credit,
+                balance=running_balance,
+            )
+        )
+
+    return LedgerReportResponse(
+        account_code=account.code,
+        account_name=account.name,
+        nature=account.nature.value,
+        start_date=start,
+        end_date=end,
+        opening_balance=opening_balance,
+        total_debits=total_debits,
+        total_credits=total_credits,
+        closing_balance=running_balance,
+        movements=movements,
+    )
+
+
+@router.get("/trial-balance", response_model=TrialBalanceResponse)
+def get_trial_balance(
+    repository: AccountingRepositoryDep,
+    as_of_date: Annotated[str | None, Query()] = None,
+) -> TrialBalanceResponse:
+    """Balance de Prueba de todas las cuentas a una fecha de corte.
+
+    Cada fila indica si el saldo es deudor o acreedor. El reporte incluye el
+    control global de partida doble: la suma de débitos debe igualar la suma de
+    créditos.
+    """
+    cutoff = _parse_date(as_of_date)
+    balances = repository.get_account_balances(as_of_date=cutoff)
+
+    rows: list[TrialBalanceRow] = []
+    total_debit = ZERO_MONEY
+    total_credit = ZERO_MONEY
+    for balance in balances:
+        debit = round_money(balance["total_debit"])
+        credit = round_money(balance["total_credit"])
+        net = round_money(debit - credit)
+        if net > ZERO_MONEY:
+            balance_type = "DEUDOR"
+        elif net < ZERO_MONEY:
+            balance_type = "ACREEDOR"
+        else:
+            balance_type = "NEUTRO"
+        rows.append(
+            TrialBalanceRow(
+                code=balance["code"],
+                name=balance["name"],
+                debit=debit,
+                credit=credit,
+                balance=abs(net),
+                balance_type=balance_type,
+            )
+        )
+        total_debit = round_money(total_debit + debit)
+        total_credit = round_money(total_credit + credit)
+
+    difference = round_money(total_debit - total_credit)
+    return TrialBalanceResponse(
+        as_of_date=cutoff,
+        accounts=rows,
+        total_debit=total_debit,
+        total_credit=total_credit,
+        difference=difference,
+        balanced=difference == ZERO_MONEY,
     )
 
 

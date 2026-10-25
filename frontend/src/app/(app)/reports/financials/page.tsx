@@ -13,7 +13,10 @@ import {
   getAgingReport,
   getBalanceSheet,
   getCashFlowReport,
+  getCurrentUser,
   getIncomeStatement,
+  getLedgerAccounts,
+  type AccountingAccount,
 } from "@/lib/api";
 import { getSessionCookieHeader } from "@/lib/server-auth";
 
@@ -39,6 +42,8 @@ export default async function FinancialsPage() {
   let balanceSheet: Awaited<ReturnType<typeof getBalanceSheet>> | null = null;
   let aging: Awaited<ReturnType<typeof getAgingReport>> | null = null;
   let cashFlow: Awaited<ReturnType<typeof getCashFlowReport>> | null = null;
+  let accounts: AccountingAccount[] = [];
+  let isAdmin = false;
   let error: string | null = null;
   let liquidityError: string | null = null;
 
@@ -56,6 +61,20 @@ export default async function FinancialsPage() {
       cause instanceof Error
         ? cause.message
         : "No se pudieron cargar los estados financieros.";
+  }
+
+  try {
+    const [ledgerAccounts, currentUser] = await Promise.all([
+      getLedgerAccounts(undefined, cookieHeader),
+      cookieHeader ? getCurrentUser(cookieHeader) : Promise.resolve(null),
+    ]);
+    accounts = ledgerAccounts;
+    isAdmin = currentUser?.role === "ADMIN";
+  } catch {
+    // El Libro Mayor y el cierre de periodo quedan deshabilitados, pero los
+    // reportes existentes pueden seguir mostrándose.
+    accounts = [];
+    isAdmin = false;
   }
 
   try {
@@ -130,6 +149,11 @@ export default async function FinancialsPage() {
         <FinancialsClient
           incomeStatement={incomeStatement!}
           balanceSheet={balanceSheet!}
+          accounts={accounts}
+          isAdmin={isAdmin}
+          initialStartDate={toISODate(startOfMonth)}
+          initialEndDate={toISODate(endOfMonth)}
+          initialAsOfDate={toISODate(today)}
         />
       )}
     </div>
