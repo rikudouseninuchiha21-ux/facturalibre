@@ -85,6 +85,22 @@ def test_accountant_cannot_access_payroll_periods(db_session) -> None:
     assert response.status_code == 403, response.text
 
 
+def test_cashier_cannot_access_treasury(db_session) -> None:
+    """Un cajero no puede administrar cuentas bancarias (debe devolver 403)."""
+    client = _make_client_with_user(db_session, UserRole.CASHIER, "cajero-tesoreria@test.com")
+
+    response = client.get("/api/v1/treasury/accounts")
+    assert response.status_code == 403, response.text
+
+
+def test_accountant_can_access_treasury(db_session) -> None:
+    """Un contador puede consultar cuentas bancarias."""
+    client = _make_client_with_user(db_session, UserRole.ACCOUNTANT, "contador-tesoreria@test.com")
+
+    response = client.get("/api/v1/treasury/accounts")
+    assert response.status_code == 200, response.text
+
+
 def test_admin_can_access_everything(db_session) -> None:
     """Un administrador puede acceder a payroll, pos y reports."""
     client = _make_client_with_user(db_session, UserRole.ADMIN, "admin@test.com")

@@ -29,6 +29,14 @@ class PayrollError(Exception):
     """Operación de nómina inválida o periodo no liquidable."""
 
 
+class TreasuryError(Exception):
+    """Operación de tesorería inválida para el estado actual."""
+
+
+class TreasuryValidationError(TreasuryError):
+    """Datos de tesorería inconsistentes con el catálogo o las cuentas."""
+
+
 class AuthError(Exception):
     """Error de autenticación o registro."""
 

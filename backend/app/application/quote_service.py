@@ -71,9 +71,7 @@ class QuoteService:
         for line in lines:
             item = self.items.get_by_id(line["item_id"])
             if item is None:
-                raise ResourceNotFoundError(
-                    f"item_id {line['item_id']} no existe o está eliminado"
-                )
+                raise ResourceNotFoundError(f"item_id {line['item_id']} no existe o está eliminado")
 
             tax_rate = line.get("tax_rate")
             if tax_rate is not None:
@@ -130,12 +128,10 @@ class QuoteService:
         if quote_result is None:
             raise ResourceNotFoundError("Cotización no encontrada")
         quote, _contact_name = quote_result
-        if quote.status is not QuoteStatus.ACCEPTED:
-            raise QuoteStateError(
-                "Solo se pueden convertir cotizaciones en estado ACEPTADA"
-            )
         if quote.converted_invoice_id is not None:
             raise QuoteStateError("La cotización ya fue convertida a factura")
+        if quote.status is not QuoteStatus.ACCEPTED:
+            raise QuoteStateError("Solo se pueden convertir cotizaciones en estado ACEPTADA")
 
         # Validar que los campos obligatorios no sean None
         if quote.issue_date is None:
@@ -147,9 +143,7 @@ class QuoteService:
         invoice_lines: list[InvoiceLineCreate] = []
         for line in quote.lines:
             if line.item_id is None:
-                raise ResourceNotFoundError(
-                    f"item_id no definido para la línea {line.description}"
-                )
+                raise ResourceNotFoundError(f"item_id no definido para la línea {line.description}")
             invoice_lines.append(
                 InvoiceLineCreate(
                     item_id=line.item_id,

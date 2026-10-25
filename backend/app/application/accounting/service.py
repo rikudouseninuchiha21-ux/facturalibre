@@ -28,7 +28,13 @@ from app.domain.models.accounting import (
     AccountingEntryStatus,
     AccountingSourceType,
 )
+from app.domain.models.bank import (
+    BankAccount,
+    BankTransaction,
+    BankTransactionType,
+)
 from app.domain.models.credit_note import CreditNote
+from app.domain.models.expense import Expense
 from app.domain.models.invoice import Invoice
 from app.domain.models.payment import Payment
 from app.domain.models.payroll import PayrollPeriod
@@ -330,6 +336,113 @@ class AccountingService:
             description=f"Liquidación de nómina {period.month:02d}/{period.year}",
             source_type=AccountingSourceType.PAYROLL,
             source_id=period.id,
+            lines=lines,
+        )
+
+    def record_expense(self, expense: Expense) -> AccountingEntry:
+        """Genera el asiento de un gasto operativo.
+
+        Débito a Gastos diversos (5199) por el monto del gasto.
+        Crédito a Caja o Bancos según el método de pago.
+        """
+        payment_account = (
+            self.mapping.cash
+            if expense.payment_method.strip().lower() in CASH_PAYMENT_METHODS
+            else self.mapping.bank
+        )
+        return self._post_entry(
+            entry_date=expense.date,
+            description=f"Gasto: {expense.concept}",
+            source_type=AccountingSourceType.EXPENSE,
+            source_id=expense.id,
+            lines=[
+                JournalLine(account_code=self.mapping.expense_account, debit=expense.amount),
+                JournalLine(account_code=payment_account, credit=expense.amount),
+            ],
+        )
+
+    def record_expense_reversal(self, expense: Expense) -> AccountingEntry | None:
+        """Revierte el asiento de un gasto eliminado lógicamente.
+
+        Si el gasto es histórico y no tiene asiento, no inventa un movimiento
+        contable; se requiere un backfill contable previo.
+        """
+        original = self.repository.get_entry_by_source(
+            AccountingSourceType.EXPENSE,
+            expense.id,
+        )
+        if original is None:
+            return None
+
+        return self._reverse_entry(
+            original=original,
+            entry_date=date.today(),
+            description=f"Reversión eliminación gasto: {expense.concept}",
+            source_type=AccountingSourceType.EXPENSE_REVERSAL,
+            source_id=expense.id,
+        )
+
+    def record_bank_transaction(
+        self,
+        transaction: BankTransaction,
+        account: BankAccount,
+        counterpart_account: BankAccount | None,
+    ) -> AccountingEntry:
+        """Genera el asiento de un movimiento de tesorería.
+
+        - Depósito: débito al banco y crédito a la cuenta de contrapartida.
+        - Retiro: débito a la contrapartida y crédito al banco.
+        - Transferencia: débito al banco destino y crédito al banco origen.
+        """
+        if transaction.transaction_type == BankTransactionType.TRANSFER:
+            if counterpart_account is None:
+                raise AccountingError("La transferencia requiere cuenta destino")
+            lines = [
+                JournalLine(
+                    account_code=counterpart_account.accounting_account_code,
+                    debit=transaction.amount,
+                ),
+                JournalLine(
+                    account_code=account.accounting_account_code,
+                    credit=transaction.amount,
+                ),
+            ]
+        else:
+            counterpart_code = transaction.counterpart_account_code
+            if counterpart_code is None:
+                raise AccountingError(
+                    "El depósito o retiro requiere cuenta contable de contrapartida"
+                )
+            if transaction.transaction_type == BankTransactionType.DEPOSIT:
+                lines = [
+                    JournalLine(
+                        account_code=account.accounting_account_code,
+                        debit=transaction.amount,
+                    ),
+                    JournalLine(
+                        account_code=counterpart_code,
+                        credit=transaction.amount,
+                    ),
+                ]
+            else:
+                lines = [
+                    JournalLine(
+                        account_code=counterpart_code,
+                        debit=transaction.amount,
+                    ),
+                    JournalLine(
+                        account_code=account.accounting_account_code,
+                        credit=transaction.amount,
+                    ),
+                ]
+
+        return self._post_entry(
+            entry_date=transaction.date,
+            description=(
+                f"Tesorería {transaction.transaction_type.value.lower()}: {transaction.description}"
+            ),
+            source_type=AccountingSourceType.BANK_TRANSACTION,
+            source_id=transaction.id,
             lines=lines,
         )
 

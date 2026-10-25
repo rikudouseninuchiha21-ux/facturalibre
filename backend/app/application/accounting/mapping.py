@@ -26,6 +26,7 @@ class AccountingMapping:
     payroll_expense: str = "510506"
     payroll_payable: str = "250505"
     payroll_contributions: str = "237005"
+    expense_account: str = "5199"
 
 
 # Códigos provisionales, alineados con los grupos 1305, 4135, 2408, 1105, 1110
@@ -39,6 +40,7 @@ DEFAULT_ACCOUNTING_MAPPING = AccountingMapping(
     inventory_account="143505",
     vat_deductible_account="240802",
     accounts_payable_account="220505",
+    expense_account="5199",
 )
 
 # El método de pago es texto libre en el MVP. Solo estos valores se consideran

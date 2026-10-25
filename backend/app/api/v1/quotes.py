@@ -151,6 +151,7 @@ def create_quote(
         total=totals.total,
     )
 
+    quote.contact_name = contact.name  # type: ignore[attr-defined]
     response_body = QuoteRead.model_validate(quote).model_dump(mode="json")
     repository.add_idempotency_key(
         key=key,
@@ -228,6 +229,7 @@ def get_quote(
 def update_quote_status(
     quote_id: UUID,
     payload: QuoteStatusUpdate,
+    db: DbSession,
     repository: QuoteRepositoryDep,
 ) -> QuoteRead:
     """Cambia el estado de una cotización.
@@ -250,16 +252,15 @@ def update_quote_status(
         QuoteStatus.SENT: {QuoteStatus.ACCEPTED, QuoteStatus.REJECTED},
     }
     if new not in allowed.get(current, set()):
-        raise QuoteStateError(
-            f"No se puede pasar de {current.value} a {new.value}"
-        )
+        raise QuoteStateError(f"No se puede pasar de {current.value} a {new.value}")
 
     quote_obj.contact_name = contact_name  # type: ignore[attr-defined]
-    updated = repository.update_status(
-        quote_id,
-        expected_status=current,
-        new_status=new,
-    )
+    with operation_transaction(db):
+        updated = repository.update_status(
+            quote_id,
+            expected_status=current,
+            new_status=new,
+        )
     updated.contact_name = contact_name  # type: ignore[attr-defined]
     return QuoteRead.model_validate(updated)
 
@@ -282,8 +283,10 @@ def list_quotes(
 @router.delete("/{quote_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_quote(
     quote_id: UUID,
+    db: DbSession,
     repository: QuoteRepositoryDep,
 ) -> Response:
     """Elimina una cotización únicamente si está en DRAFT."""
-    repository.soft_delete(quote_id)
+    with operation_transaction(db):
+        repository.soft_delete(quote_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

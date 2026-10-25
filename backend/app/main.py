@@ -9,6 +9,7 @@ from app.api.v1 import (
     contacts,
     dashboard,
     employees,
+    expenses,
     inventory,
     invoices,
     items,
@@ -20,6 +21,7 @@ from app.api.v1 import (
     reports,
     settings,
     taxes,
+    treasury,
     warehouses,
 )
 from app.domain.exceptions import (
@@ -28,6 +30,8 @@ from app.domain.exceptions import (
     PayrollError,
     QuoteStateError,
     ResourceNotFoundError,
+    TreasuryError,
+    TreasuryValidationError,
     VersionConflictError,
 )
 
@@ -42,6 +46,7 @@ app.include_router(invoices.router, prefix="/api/v1")
 app.include_router(payments.router, prefix="/api/v1")
 app.include_router(accounting.router, prefix="/api/v1")
 app.include_router(warehouses.router, prefix="/api/v1")
+app.include_router(expenses.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
 app.include_router(employees.router, prefix="/api/v1")
 app.include_router(payroll.router, prefix="/api/v1")
@@ -50,6 +55,7 @@ app.include_router(purchases.router, prefix="/api/v1")
 app.include_router(quotes.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
+app.include_router(treasury.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)
@@ -118,6 +124,30 @@ async def payroll_error_handler(
     exc: PayrollError,
 ) -> JSONResponse:
     """Traduce un periodo ya liquidado o sin empleados a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(TreasuryValidationError)
+async def treasury_validation_handler(
+    _request: Request,
+    exc: TreasuryValidationError,
+) -> JSONResponse:
+    """Traduce datos inconsistentes de tesorería a un 422."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(TreasuryError)
+async def treasury_error_handler(
+    _request: Request,
+    exc: TreasuryError,
+) -> JSONResponse:
+    """Traduce un conflicto de tesorería a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},

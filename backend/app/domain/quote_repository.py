@@ -115,9 +115,7 @@ class QuoteRepository:
     ) -> Quote:
         """Cambia el estado de una cotización (bloqueo optimista por estado)."""
         quote = self.db.scalar(
-            select(Quote)
-            .where(Quote.id == quote_id, Quote.deleted_at.is_(None))
-            .with_for_update()
+            select(Quote).where(Quote.id == quote_id, Quote.deleted_at.is_(None)).with_for_update()
         )
         if quote is None:
             raise ResourceNotFoundError("Cotización no encontrada")
@@ -129,15 +127,12 @@ class QuoteRepository:
         quote.version += 1
         quote.updated_at = datetime.now(UTC)
         self.db.flush()
-        self.db.commit()
         return quote
 
     def soft_delete(self, quote_id: UUID) -> None:
         """Elimina lógicamente una cotización (solo borradores)."""
         quote = self.db.scalar(
-            select(Quote)
-            .where(Quote.id == quote_id, Quote.deleted_at.is_(None))
-            .with_for_update()
+            select(Quote).where(Quote.id == quote_id, Quote.deleted_at.is_(None)).with_for_update()
         )
         if quote is None:
             raise ResourceNotFoundError("Cotización no encontrada")
@@ -148,11 +143,9 @@ class QuoteRepository:
         quote.deleted_at = now
         quote.version += 1
         quote.updated_at = now
-        self.db.commit()
+        self.db.flush()
 
-    def set_converted_invoice(
-        self, quote_id: UUID, invoice_id: UUID
-    ) -> None:
+    def set_converted_invoice(self, quote_id: UUID, invoice_id: UUID) -> None:
         """Asigna la factura generada al convertir y marca la cotización."""
         statement = (
             update(Quote)

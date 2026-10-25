@@ -10,6 +10,7 @@ import {
   FilePlus,
   FileText,
   GraduationCap,
+  Landmark,
   LayoutDashboard,
   Layers,
   Package,
@@ -56,6 +57,8 @@ const NAVIGATION = [
     label: "Contabilidad",
     items: [
       { href: "/reports/financials", label: "Reportes", icon: BarChart3, roles: ["ADMIN", "ACCOUNTANT"] },
+      { href: "/expenses", label: "Gastos", icon: FileText, roles: ["ADMIN", "ACCOUNTANT"] },
+      { href: "/treasury", label: "Tesorería", icon: Landmark, roles: ["ADMIN", "ACCOUNTANT"] },
     ],
   },
   {

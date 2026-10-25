@@ -68,9 +68,7 @@ class Quote(Base):
     # -- REQUIERE VALIDACIÓN: contador/experto DIAN (numeración de cotizaciones).
     number: Mapped[str | None] = mapped_column(
         String(50),
-        comment=(
-            "REQUIERE VALIDACIÓN: contador/experto DIAN. Numeración de cotizaciones."
-        ),
+        comment=("REQUIERE VALIDACIÓN: contador/experto DIAN. Numeración de cotizaciones."),
     )
     contact_id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -87,8 +85,7 @@ class Quote(Base):
     expiry_date: Mapped[date | None] = mapped_column(
         Date,
         comment=(
-            "REQUIERE VALIDACIÓN: contador/experto DIAN. "
-            "Fecha de vencimiento de la cotización."
+            "REQUIERE VALIDACIÓN: contador/experto DIAN. Fecha de vencimiento de la cotización."
         ),
     )
 
@@ -123,9 +120,7 @@ class Quote(Base):
     tax_total: Mapped[Decimal] = mapped_column(
         Numeric(18, 2), nullable=False, server_default=text("0")
     )
-    total: Mapped[Decimal] = mapped_column(
-        Numeric(18, 2), nullable=False, server_default=text("0")
-    )
+    total: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, server_default=text("0"))
     # MVP solo COP.
     currency: Mapped[str] = mapped_column(
         String(3),
@@ -149,9 +144,7 @@ class Quote(Base):
     )
 
     contact: Mapped[Contact] = relationship(back_populates="quotes")
-    converted_invoice: Mapped[Invoice | None] = relationship(
-        foreign_keys=[converted_invoice_id]
-    )
+    converted_invoice: Mapped[Invoice | None] = relationship(foreign_keys=[converted_invoice_id])
     lines: Mapped[list[QuoteLine]] = relationship(
         back_populates="quote",
         cascade="all, delete-orphan",

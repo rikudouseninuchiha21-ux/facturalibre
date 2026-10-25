@@ -154,9 +154,7 @@ def upgrade() -> None:
     )
     op.create_index("ix_quotes_contact_id", "quotes", ["contact_id"])
     op.create_index("ix_quotes_status", "quotes", ["status"])
-    op.create_index(
-        "ix_quotes_converted_invoice_id", "quotes", ["converted_invoice_id"]
-    )
+    op.create_index("ix_quotes_converted_invoice_id", "quotes", ["converted_invoice_id"])
 
     # Tabla quote_lines.
     op.create_table(
@@ -226,16 +224,12 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name="pk_quote_lines"),
         sa.CheckConstraint("quantity > 0", name="ck_quote_lines_quantity_positive"),
-        sa.CheckConstraint(
-            "unit_price >= 0", name="ck_quote_lines_unit_price_non_negative"
-        ),
+        sa.CheckConstraint("unit_price >= 0", name="ck_quote_lines_unit_price_non_negative"),
         sa.CheckConstraint(
             "tax_rate >= 0 AND tax_rate <= 100",
             name="ck_quote_lines_tax_rate_range",
         ),
-        sa.CheckConstraint(
-            "line_subtotal >= 0", name="ck_quote_lines_subtotal_non_negative"
-        ),
+        sa.CheckConstraint("line_subtotal >= 0", name="ck_quote_lines_subtotal_non_negative"),
         sa.CheckConstraint("line_tax >= 0", name="ck_quote_lines_tax_non_negative"),
         sa.CheckConstraint("line_total >= 0", name="ck_quote_lines_total_non_negative"),
     )

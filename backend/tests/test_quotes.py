@@ -57,11 +57,26 @@ def _create_warehouse(client: TestClient) -> dict[str, Any]:
     return response.json()
 
 
+def _stock_item(client: TestClient, item_id: str, warehouse_id: str, quantity: str = "100") -> None:
+    """Carga stock inicial para que la conversión pueda descontar inventario."""
+    response = client.post(
+        "/api/v1/inventory/movements",
+        json={
+            "item_id": item_id,
+            "warehouse_id": warehouse_id,
+            "movement_type": "IN",
+            "quantity": quantity,
+        },
+    )
+    assert response.status_code == 201, response.text
+
+
 def _setup_quote_data(client: TestClient) -> tuple[str, str]:
     contact = _create_contact(client)
     tax = _create_tax(client)
     item = _create_item(client, tax_id=str(tax["id"]))
-    _create_warehouse(client)
+    warehouse = _create_warehouse(client)
+    _stock_item(client, str(item["id"]), str(warehouse["id"]))
     return str(contact["id"]), str(item["id"])
 
 
@@ -244,7 +259,7 @@ def test_convert_accepted_quote_to_invoice(client: TestClient) -> None:
     # El contacto debe haber pasado a CUSTOMER
     contact = client.get(f"/api/v1/contacts/{contact_id}")
     assert contact.status_code == 200
-    assert contact.json()["type"] == "CUSTOMER"
+    assert contact.json()["type"] == "customer"
 
 
 def test_convert_non_accepted_quote_returns_409(client: TestClient) -> None:

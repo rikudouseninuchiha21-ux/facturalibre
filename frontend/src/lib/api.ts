@@ -238,6 +238,25 @@ export interface WarehouseCreateInput {
   code: string;
 }
 
+export interface Expense {
+  id: string;
+  date: string;
+  concept: string;
+  amount: string;
+  payment_method: string;
+  reference: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ExpenseCreateInput {
+  date: string;
+  concept: string;
+  amount: string;
+  payment_method: string;
+  reference?: string;
+}
+
 export type StockMovementType = "IN" | "OUT";
 
 export interface StockBalance {
@@ -744,6 +763,184 @@ export function createWarehouse(
   payload: WarehouseCreateInput,
 ): Promise<Warehouse> {
   return apiPost<Warehouse>("/warehouses", payload);
+}
+
+export function getExpenses(cookieHeader?: string): Promise<Expense[]> {
+  return apiGet<Expense[]>("/expenses", cookieHeader);
+}
+
+export function createExpense(
+  payload: ExpenseCreateInput,
+): Promise<Expense> {
+  return apiPost<Expense>("/expenses", payload);
+}
+
+export type BankAccountType = "CHECKING" | "SAVINGS";
+
+export interface BankAccount {
+  id: string;
+  name: string;
+  bank_name: string;
+  account_number: string;
+  account_type: BankAccountType;
+  currency: string;
+  accounting_account_code: string;
+  accounting_account_name: string;
+  is_active: boolean;
+  balance: string;
+  reconciled_balance: string;
+  unreconciled_balance: string;
+  unreconciled_transactions: number;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BankAccountCreateInput {
+  name: string;
+  bank_name: string;
+  account_number: string;
+  account_type: BankAccountType;
+  currency: "COP";
+  accounting_account_code: string;
+}
+
+export interface BankAccountUpdateInput {
+  name?: string;
+  is_active?: boolean;
+  version: number;
+}
+
+export type BankTransactionType = "DEPOSIT" | "WITHDRAWAL" | "TRANSFER";
+
+export interface BankTransaction {
+  id: string;
+  bank_account_id: string;
+  bank_account_name: string;
+  transaction_type: BankTransactionType;
+  date: string;
+  amount: string;
+  description: string;
+  reference: string | null;
+  counterpart_account_id: string | null;
+  counterpart_account_name: string | null;
+  counterpart_account_code: string | null;
+  is_reconciled: boolean;
+  reconciled_at: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BankTransactionCreateInput {
+  transaction_type: BankTransactionType;
+  date: string;
+  amount: string;
+  description: string;
+  reference?: string;
+  counterpart_account_id?: string;
+  counterpart_account_code?: string;
+}
+
+export interface TreasurySummary {
+  total_balance: string;
+  total_reconciled_balance: string;
+  total_unreconciled_balance: string;
+  total_accounts: number;
+  active_accounts: number;
+  unreconciled_transactions: number;
+}
+
+export interface AccountingAccount {
+  code: string;
+  name: string;
+  account_type: string;
+  nature: string;
+  parent_code: string | null;
+}
+
+export function getTreasuryPucAccounts(
+  cookieHeader?: string,
+): Promise<AccountingAccount[]> {
+  return apiGet<AccountingAccount[]>("/treasury/puc-accounts", cookieHeader);
+}
+
+export function getBankAccounts(
+  cookieHeader?: string,
+): Promise<BankAccount[]> {
+  return apiGet<BankAccount[]>("/treasury/accounts", cookieHeader);
+}
+
+export function getBankAccount(
+  id: string,
+  cookieHeader?: string,
+): Promise<BankAccount> {
+  return apiGet<BankAccount>(
+    `/treasury/accounts/${encodeURIComponent(id)}`,
+    cookieHeader,
+  );
+}
+
+export function createBankAccount(
+  payload: BankAccountCreateInput,
+): Promise<BankAccount> {
+  return apiPost<BankAccount>("/treasury/accounts", payload);
+}
+
+export function updateBankAccount(
+  id: string,
+  payload: BankAccountUpdateInput,
+): Promise<BankAccount> {
+  return apiPatch<BankAccount>(
+    `/treasury/accounts/${encodeURIComponent(id)}`,
+    payload,
+  );
+}
+
+export function getBankTransactions(
+  accountId: string,
+  cookieHeader?: string,
+): Promise<BankTransaction[]> {
+  return apiGet<BankTransaction[]>(
+    `/treasury/accounts/${encodeURIComponent(accountId)}/transactions`,
+    cookieHeader,
+  );
+}
+
+export function createBankTransaction(
+  accountId: string,
+  payload: BankTransactionCreateInput,
+): Promise<BankTransaction> {
+  return apiPost<BankTransaction>(
+    `/treasury/accounts/${encodeURIComponent(accountId)}/transactions`,
+    payload,
+  );
+}
+
+export function reconcileBankTransaction(
+  transactionId: string,
+  version: number,
+): Promise<BankTransaction> {
+  return apiPost<BankTransaction>(
+    `/treasury/transactions/${encodeURIComponent(transactionId)}/reconcile`,
+    { version },
+  );
+}
+
+export function unreconcileBankTransaction(
+  transactionId: string,
+  version: number,
+): Promise<BankTransaction> {
+  return apiPost<BankTransaction>(
+    `/treasury/transactions/${encodeURIComponent(transactionId)}/unreconcile`,
+    { version },
+  );
+}
+
+export function getTreasurySummary(
+  cookieHeader?: string,
+): Promise<TreasurySummary> {
+  return apiGet<TreasurySummary>("/treasury/summary", cookieHeader);
 }
 
 export function getStockBalances(
