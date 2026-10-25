@@ -193,6 +193,13 @@ class ReportsRepository:
         Las transferencias bancarias se excluyen porque son movimientos
         internos entre cuentas de la misma empresa y no representan ingreso ni
         egreso económico.
+
+        Cuando un pago o gasto ya está vinculado a un movimiento bancario, el
+        movimiento se excluye del agregado bancario. Así el pago/gasto es la
+        fuente primaria y no se suma dos veces el mismo flujo. La exclusión se
+        hace por identificador de movimiento, no por la bandera manual
+        ``is_reconciled``: marcar contra el extracto no debe hacer desaparecer
+        un ingreso que aún no tiene contrapartida en el sistema.
         """
         payment_year = func.extract("year", Payment.payment_date)
         payment_month = func.extract("month", Payment.payment_date)
@@ -243,6 +250,17 @@ class ReportsRepository:
             .order_by(expense_year, expense_month)
         ).all()
 
+        linked_bank_movement_ids = (
+            select(Payment.bank_movement_id)
+            .where(Payment.bank_movement_id.is_not(None))
+            .union(
+                select(Expense.bank_movement_id).where(
+                    Expense.bank_movement_id.is_not(None),
+                    Expense.deleted_at.is_(None),
+                )
+            )
+        )
+
         bank_year = func.extract("year", BankTransaction.date)
         bank_month = func.extract("month", BankTransaction.date)
         bank_deposit_rows = self.db.execute(
@@ -256,6 +274,7 @@ class ReportsRepository:
                 BankTransaction.date < end_date,
                 BankTransaction.deleted_at.is_(None),
                 BankTransaction.transaction_type == BankTransactionType.DEPOSIT,
+                BankTransaction.id.not_in(linked_bank_movement_ids),
             )
             .group_by(bank_year, bank_month)
             .order_by(bank_year, bank_month)
@@ -272,6 +291,7 @@ class ReportsRepository:
                 BankTransaction.date < end_date,
                 BankTransaction.deleted_at.is_(None),
                 BankTransaction.transaction_type == BankTransactionType.WITHDRAWAL,
+                BankTransaction.id.not_in(linked_bank_movement_ids),
             )
             .group_by(bank_year, bank_month)
             .order_by(bank_year, bank_month)

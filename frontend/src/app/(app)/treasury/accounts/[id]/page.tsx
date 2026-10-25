@@ -8,10 +8,12 @@ import {
   getBankAccount,
   getBankAccounts,
   getBankTransactions,
+  getReconciliationCandidates,
   getTreasuryPucAccounts,
   type AccountingAccount,
   type BankAccount,
   type BankTransaction,
+  type ReconciliationCandidates,
 } from "@/lib/api";
 import { getSessionCookieHeader } from "@/lib/server-auth";
 
@@ -40,15 +42,18 @@ export default async function BankAccountPage({
   let accounts: BankAccount[] = [];
   let transactions: BankTransaction[] = [];
   let pucAccounts: AccountingAccount[] = [];
+  let reconciliation: ReconciliationCandidates | null = null;
   let error: string | null = null;
 
   try {
-    [account, accounts, transactions, pucAccounts] = await Promise.all([
-      getBankAccount(id, cookieHeader),
-      getBankAccounts(cookieHeader),
-      getBankTransactions(id, cookieHeader),
-      getTreasuryPucAccounts(cookieHeader),
-    ]);
+    [account, accounts, transactions, pucAccounts, reconciliation] =
+      await Promise.all([
+        getBankAccount(id, cookieHeader),
+        getBankAccounts(cookieHeader),
+        getBankTransactions(id, cookieHeader),
+        getTreasuryPucAccounts(cookieHeader),
+        getReconciliationCandidates(id, cookieHeader),
+      ]);
   } catch (cause) {
     if (cause instanceof ApiError && cause.status === 404) {
       notFound();
@@ -118,6 +123,12 @@ export default async function BankAccountPage({
         accounts={accounts}
         transactions={transactions}
         pucAccounts={pucAccounts}
+        reconciliation={
+          reconciliation ?? {
+            bank_account_id: account.id,
+            bank_movements: [],
+          }
+        }
         today={today}
       />
     </div>

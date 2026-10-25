@@ -195,6 +195,7 @@ export interface Payment {
   payment_date: string;
   method: string;
   reference: string | null;
+  bank_movement_id: string | null;
   created_at: string;
 }
 
@@ -245,6 +246,8 @@ export interface Expense {
   amount: string;
   payment_method: string;
   reference: string | null;
+  bank_movement_id: string | null;
+  version: number;
   created_at: string;
   updated_at: string;
 }
@@ -842,6 +845,50 @@ export interface BankTransactionCreateInput {
   counterpart_account_code?: string;
 }
 
+export type ReconciliationTransactionKind = "payment" | "expense";
+
+export interface ReconciliationTransactionCandidate {
+  id: string;
+  kind: ReconciliationTransactionKind;
+  date: string;
+  amount: string;
+  description: string;
+  reference: string | null;
+  party_name: string;
+  invoice_number: string | null;
+}
+
+export interface ReconciliationBankMovement {
+  id: string;
+  date: string;
+  amount: string;
+  transaction_type: BankTransactionType;
+  description: string;
+  reference: string | null;
+  version: number;
+  candidates: ReconciliationTransactionCandidate[];
+}
+
+export interface ReconciliationCandidates {
+  bank_account_id: string;
+  bank_movements: ReconciliationBankMovement[];
+}
+
+export interface ReconcileBankMovementInput {
+  bank_movement_id: string;
+  transaction_id: string;
+}
+
+export interface ReconcileBankMovementResult {
+  bank_account_id: string;
+  bank_movement_id: string;
+  bank_movement_date: string;
+  bank_movement_amount: string;
+  transaction: ReconciliationTransactionCandidate;
+  is_reconciled: boolean;
+  reconciled_at: string;
+}
+
 export interface TreasurySummary {
   total_balance: string;
   total_reconciled_balance: string;
@@ -934,6 +981,26 @@ export function unreconcileBankTransaction(
   return apiPost<BankTransaction>(
     `/treasury/transactions/${encodeURIComponent(transactionId)}/unreconcile`,
     { version },
+  );
+}
+
+export function getReconciliationCandidates(
+  accountId: string,
+  cookieHeader?: string,
+): Promise<ReconciliationCandidates> {
+  return apiGet<ReconciliationCandidates>(
+    `/banks/${encodeURIComponent(accountId)}/reconciliation-candidates`,
+    cookieHeader,
+  );
+}
+
+export function reconcileBankMovement(
+  accountId: string,
+  payload: ReconcileBankMovementInput,
+): Promise<ReconcileBankMovementResult> {
+  return apiPost<ReconcileBankMovementResult>(
+    `/banks/${encodeURIComponent(accountId)}/reconcile`,
+    payload,
   );
 }
 

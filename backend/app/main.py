@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from app.api.v1 import (
     accounting,
     auth,
+    banks,
     contacts,
     dashboard,
     employees,
@@ -57,6 +58,7 @@ app.include_router(quotes.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 app.include_router(treasury.router, prefix="/api/v1")
+app.include_router(banks.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)

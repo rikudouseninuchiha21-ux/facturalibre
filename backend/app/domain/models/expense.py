@@ -10,6 +10,7 @@ from sqlalchemy import (
     CheckConstraint,
     Date,
     DateTime,
+    ForeignKey,
     Integer,
     Numeric,
     String,
@@ -45,6 +46,13 @@ class Expense(Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     payment_method: Mapped[str] = mapped_column(String(50), nullable=False)
     reference: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    bank_movement_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("bank_transactions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+        comment="Movimiento bancario conciliado con este gasto.",
+    )
 
     # DECISIONES.md: bloqueo optimista y soft delete en datos transaccionales.
     version: Mapped[int] = mapped_column(

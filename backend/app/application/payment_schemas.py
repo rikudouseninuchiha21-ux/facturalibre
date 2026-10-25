@@ -46,6 +46,7 @@ class PaymentRead(BaseModel):
     payment_date: date
     method: str
     reference: str | None
+    bank_movement_id: UUID | None
     created_at: datetime
 
 

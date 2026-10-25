@@ -34,6 +34,7 @@ from app.domain.models.bank import (
     BankTransaction,
     BankTransactionType,
 )
+from app.domain.reconciliation_repository import ReconciliationRepository
 
 ZERO = Decimal("0.00")
 BANK_PUC_PREFIX = "11"
@@ -159,12 +160,20 @@ class TreasuryService:
         *,
         reconciled: bool,
     ) -> BankTransaction:
-        """Marca o desmarca un movimiento como conciliado."""
-        return self.transactions.set_reconciled(
+        """Marca o desmarca un movimiento como conciliado.
+
+        Al desmarcar también se elimina el vínculo con el pago o gasto. De lo
+        contrario el movimiento quedaría pendiente pero seguiría excluido del
+        flujo de caja y no podría volver a conciliarse.
+        """
+        transaction = self.transactions.set_reconciled(
             transaction_id,
             expected_version,
             reconciled=reconciled,
         )
+        if not reconciled:
+            ReconciliationRepository(self.db).unlink_movement(transaction_id)
+        return transaction
 
     def summary(self) -> TreasurySummary:
         """Calcula los totales de tesorería a partir de las cuentas."""

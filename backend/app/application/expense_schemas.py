@@ -35,6 +35,7 @@ class ExpenseRead(BaseModel):
     amount: Decimal
     payment_method: str
     reference: str | None
+    bank_movement_id: UUID | None
     version: int
     created_at: datetime
     updated_at: datetime

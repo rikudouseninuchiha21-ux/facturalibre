@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
+import { ReconciliationPanel } from "@/components/treasury/ReconciliationPanel";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,6 +31,7 @@ import {
   type BankTransaction,
   type BankTransactionCreateInput,
   type BankTransactionType,
+  type ReconciliationCandidates,
 } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
@@ -60,6 +62,7 @@ interface TreasuryAccountDetailProps {
   accounts: BankAccount[];
   transactions: BankTransaction[];
   pucAccounts: AccountingAccount[];
+  reconciliation: ReconciliationCandidates;
   today: string;
 }
 
@@ -80,6 +83,7 @@ export function TreasuryAccountDetail({
   accounts,
   transactions,
   pucAccounts,
+  reconciliation,
   today,
 }: TreasuryAccountDetailProps) {
   const router = useRouter();
@@ -108,6 +112,9 @@ export function TreasuryAccountDetail({
     null,
   );
   const [isToggling, setIsToggling] = useState(false);
+  const [activeTab, setActiveTab] = useState<"movements" | "reconciliation">(
+    "movements",
+  );
 
   function handleTypeChange(nextType: BankTransactionType): void {
     setTransactionType(nextType);
@@ -303,7 +310,45 @@ export function TreasuryAccountDetail({
         </CardContent>
       </Card>
 
-      <Card>
+      <div
+        role="tablist"
+        aria-label="Secciones de la cuenta bancaria"
+        className="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "movements"}
+          onClick={() => setActiveTab("movements")}
+          className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "movements"
+              ? "bg-white text-slate-950 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          Movimientos
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "reconciliation"}
+          onClick={() => setActiveTab("reconciliation")}
+          className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+            activeTab === "reconciliation"
+              ? "bg-white text-slate-950 shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          Conciliación
+          {reconciliation.bank_movements.length > 0 ? (
+            <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[11px] font-bold text-amber-800">
+              {reconciliation.bank_movements.length}
+            </span>
+          ) : null}
+        </button>
+      </div>
+
+      <Card className={activeTab === "movements" ? "" : "hidden"}>
         <CardHeader>
           <CardTitle>Registrar movimiento</CardTitle>
           <CardDescription>
@@ -526,7 +571,7 @@ export function TreasuryAccountDetail({
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className={activeTab === "movements" ? "" : "hidden"}>
         <CardHeader>
           <CardTitle>Movimientos</CardTitle>
           <CardDescription>
@@ -641,6 +686,13 @@ export function TreasuryAccountDetail({
           )}
         </CardContent>
       </Card>
+
+      {activeTab === "reconciliation" ? (
+        <ReconciliationPanel
+          account={account}
+          reconciliation={reconciliation}
+        />
+      ) : null}
     </div>
   );
 }
