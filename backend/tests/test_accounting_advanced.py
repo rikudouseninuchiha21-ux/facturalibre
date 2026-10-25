@@ -371,3 +371,128 @@ def test_roles_for_advanced_reports_and_close_period(
     )
     assert response.status_code == 200, response.text
     assert response.json()["status"] == "CLOSED"
+
+
+def test_register_initial_capital_creates_entry_and_balance(
+    client: TestClient,
+) -> None:
+    """El aporte de capital genera DR Bancos / CR 3105 y el balance cuadra."""
+    response = client.post(
+        "/api/v1/accounting/initial-capital",
+        json={"amount": "50000.00"},
+    )
+    assert response.status_code == 201, response.text
+    entry = response.json()
+    assert entry["source_type"] == "INITIAL_CAPITAL"
+    assert entry["status"] == "POSTED"
+    assert _money(entry["total_debit"]) == Decimal("50000.00")
+    assert _money(entry["total_credit"]) == Decimal("50000.00")
+
+    lines = {line["account_code"]: line for line in entry["lines"]}
+    assert _money(lines["111005"]["debit"]) == Decimal("50000.00")
+    assert _money(lines["3105"]["credit"]) == Decimal("50000.00")
+
+    # El balance general refleja el capital en el patrimonio y sigue cuadrado.
+    sheet = client.get("/api/v1/reports/balance-sheet").json()
+    equity_balances = {a["code"]: _money(a["balance"]) for a in sheet["equity_accounts"]}
+    assert equity_balances["3105"] == Decimal("50000.00")
+    assert sheet["balanced"] is True
+    assert _money(sheet["total_assets"]) == _money(sheet["total_liabilities"]) + _money(
+        sheet["total_equity"]
+    )
+
+
+def test_register_initial_capital_with_bank_account(
+    client: TestClient,
+) -> None:
+    """Con cuenta bancaria seleccionada, el débito va a su auxiliar contable."""
+    account = client.post(
+        "/api/v1/treasury/accounts",
+        json={
+            "name": "Cuenta Capital",
+            "bank_name": "Banco Capital",
+            "account_number": "999-000111-02",
+            "account_type": "CHECKING",
+            "currency": "COP",
+            "accounting_account_code": "11100502",
+        },
+    )
+    assert account.status_code == 201, account.text
+
+    response = client.post(
+        "/api/v1/accounting/initial-capital",
+        json={
+            "amount": "1000.00",
+            "entry_date": "2026-01-15",
+            "bank_account_id": account.json()["id"],
+            "description": "Aporte de los socios",
+        },
+    )
+    assert response.status_code == 201, response.text
+    entry = response.json()
+    assert entry["entry_date"] == "2026-01-15"
+    assert entry["description"] == "Aporte de los socios"
+
+    lines = {line["account_code"]: line for line in entry["lines"]}
+    assert _money(lines["11100502"]["debit"]) == Decimal("1000.00")
+    assert _money(lines["3105"]["credit"]) == Decimal("1000.00")
+
+
+def test_register_initial_capital_validates_amount_and_bank_account(
+    client: TestClient,
+) -> None:
+    """El monto debe ser positivo y la cuenta bancaria debe existir."""
+    zero = client.post(
+        "/api/v1/accounting/initial-capital",
+        json={"amount": "0.00"},
+    )
+    assert zero.status_code == 422, zero.text
+
+    negative = client.post(
+        "/api/v1/accounting/initial-capital",
+        json={"amount": "-5.00"},
+    )
+    assert negative.status_code == 422, negative.text
+
+    missing = client.post(
+        "/api/v1/accounting/initial-capital",
+        json={"amount": "10.00", "bank_account_id": str(uuid4())},
+    )
+    assert missing.status_code == 404, missing.text
+
+
+def test_register_initial_capital_roles(db_session: Session) -> None:
+    """Solo el ADMIN puede registrar el capital inicial."""
+    accountant = _make_client_with_role(db_session, UserRole.ACCOUNTANT)
+    forbidden = accountant.post(
+        "/api/v1/accounting/initial-capital",
+        json={"amount": "100.00"},
+    )
+    assert forbidden.status_code == 403, forbidden.text
+
+    cashier = _make_client_with_role(db_session, UserRole.CASHIER)
+    assert (
+        cashier.post(
+            "/api/v1/accounting/initial-capital",
+            json={"amount": "100.00"},
+        ).status_code
+        == 403
+    )
+
+
+def test_register_initial_capital_rejects_closed_period(
+    client: TestClient,
+) -> None:
+    """El aporte respeta el bloqueo de periodos cerrados."""
+    close = client.post(
+        "/api/v1/accounting/close-period",
+        json={"month": 1, "year": 2026},
+    )
+    assert close.status_code == 200, close.text
+
+    blocked = client.post(
+        "/api/v1/accounting/initial-capital",
+        json={"amount": "100.00", "entry_date": "2026-01-20"},
+    )
+    assert blocked.status_code == 409, blocked.text
+    assert "cerrado" in blocked.json()["detail"].lower()

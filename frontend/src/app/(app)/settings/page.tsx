@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { InitialCapitalForm } from "@/components/settings/InitialCapitalForm";
 import { SettingsForm } from "@/components/settings/SettingsForm";
 import {
   Card,
@@ -8,7 +9,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getCompanySettings } from "@/lib/api";
+import {
+  getBankAccounts,
+  getCompanySettings,
+  getCurrentUser,
+  type BankAccount,
+} from "@/lib/api";
 import { getSessionCookieHeader } from "@/lib/server-auth";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +29,8 @@ export default async function SettingsPage() {
   let companySettings: Awaited<
     ReturnType<typeof getCompanySettings>
   > | null = null;
+  let bankAccounts: BankAccount[] = [];
+  let isAdmin = false;
   let error: string | null = null;
 
   try {
@@ -33,6 +41,22 @@ export default async function SettingsPage() {
         ? cause.message
         : "No se pudo cargar la configuración de la empresa.";
   }
+
+  try {
+    const [accounts, currentUser] = await Promise.all([
+      cookieHeader ? getBankAccounts(cookieHeader) : Promise.resolve([]),
+      cookieHeader ? getCurrentUser(cookieHeader) : Promise.resolve(null),
+    ]);
+    bankAccounts = accounts;
+    isAdmin = currentUser?.role === "ADMIN";
+  } catch {
+    // Sin usuario o sin cuentas bancarias: el formulario de capital queda
+    // deshabilitado, pero la configuración de la empresa sigue disponible.
+    bankAccounts = [];
+    isAdmin = false;
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="space-y-6">
@@ -69,6 +93,22 @@ export default async function SettingsPage() {
           ) : null}
         </CardContent>
       </Card>
+
+      {isAdmin ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Capital Inicial</CardTitle>
+            <CardDescription>
+              Registra el aporte de capital de los socios. El asiento contable
+              debita la cuenta bancaria seleccionada y acredita el capital
+              suscrito y pagado (3105) del Balance General.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InitialCapitalForm bankAccounts={bankAccounts} initialDate={today} />
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

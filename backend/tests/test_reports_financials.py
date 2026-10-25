@@ -190,6 +190,73 @@ def test_balance_sheet_balances(client: TestClient) -> None:
     assert asset_found, f"No se encontró Cuentas por Cobrar en {report['asset_accounts']}"
 
 
+def test_balance_sheet_reclassifies_debit_balance_liabilities(
+    client: TestClient,
+) -> None:
+    """Un pasivo con saldo débito se presenta como activo, no como pasivo negativo.
+
+    Regresión H-1 de la auditoría contable: la 240802 (IVA descontable a
+    favor) debe reclasificarse al activo con signo positivo en lugar de
+    desinflar el total de pasivos, sin romper A = P + Pt.
+    """
+    supplier = client.post(
+        "/api/v1/contacts",
+        json={"name": "Proveedor IVA", "email": "iva-reporte@example.com", "type": "supplier"},
+    )
+    assert supplier.status_code == 201, supplier.text
+    item = client.post(
+        "/api/v1/items",
+        json={"name": "Producto IVA", "description": "Producto IVA", "unit_price": "100.00"},
+    )
+    assert item.status_code == 201, item.text
+
+    warehouse = client.post(
+        "/api/v1/warehouses",
+        json={"name": "Bodega IVA", "code": "IVA-BS"},
+    )
+    assert warehouse.status_code == 201, warehouse.text
+
+    purchase = client.post(
+        "/api/v1/purchases",
+        json={
+            "supplier_id": supplier.json()["id"],
+            "issue_date": date.today().isoformat(),
+            "due_date": (date.today() + timedelta(days=30)).isoformat(),
+            "lines": [
+                {
+                    "item_id": item.json()["id"],
+                    "description": "Producto IVA",
+                    "quantity": "1",
+                    "unit_cost": "100.00",
+                    "tax_rate": "19",
+                }
+            ],
+        },
+        headers={"Idempotency-Key": str(uuid4())},
+    )
+    assert purchase.status_code == 201, purchase.text
+    issued = client.post(f"/api/v1/purchases/{purchase.json()['id']}/issue")
+    assert issued.status_code == 200, issued.text
+    # La compra quedó impaga: 240802 tiene saldo débito de 19.00.
+
+    response = client.get("/api/v1/reports/balance-sheet")
+    assert response.status_code == 200, response.text
+    sheet = response.json()
+
+    asset_balances = {a["code"]: _money(a["balance"]) for a in sheet["asset_accounts"]}
+    liability_balances = {a["code"]: _money(a["balance"]) for a in sheet["liability_accounts"]}
+
+    # El IVA descontable a favor se presenta del lado del activo, positivo.
+    assert asset_balances.get("240802") == Decimal("19.00")
+    assert "240802" not in liability_balances
+
+    # Y el balance sigue cuadrando.
+    assert sheet["balanced"] is True
+    assert _money(sheet["total_assets"]) == _money(sheet["total_liabilities"]) + _money(
+        sheet["total_equity"]
+    )
+
+
 def test_income_statement_requires_authentication(
     anonymous_client: TestClient,
 ) -> None:

@@ -31,11 +31,13 @@ class AccountingMapping:
     expense_account: str = "5199"
     depreciation_expense: str = "5160"
     accumulated_depreciation: str = "1592"
+    # Patrimonio
+    capital_account: str = "3105"
 
 
 # Códigos provisionales, alineados con los grupos 1305, 4135, 2408, 1105, 1110,
-# la cuenta de inventario 1435, la cuenta de costo de ventas 6135 y las cuentas
-# de nómina 510506, 250505 y 237005.
+# la cuenta de inventario 1435, la cuenta de costo de ventas 6135, las cuentas
+# de nómina 510506, 250505 y 237005, y el capital suscrito y pagado 3105.
 DEFAULT_ACCOUNTING_MAPPING = AccountingMapping(
     accounts_receivable="130505",
     sales_revenue="413505",
@@ -49,6 +51,7 @@ DEFAULT_ACCOUNTING_MAPPING = AccountingMapping(
     expense_account="5199",
     depreciation_expense="5160",
     accumulated_depreciation="1592",
+    capital_account="3105",
 )
 
 # El método de pago es texto libre en el MVP. Solo estos valores se consideran

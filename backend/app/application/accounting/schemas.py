@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
@@ -73,6 +74,17 @@ class ClosePeriodRequest(BaseModel):
 
     month: int = Field(ge=1, le=12)
     year: int = Field(ge=2000, le=9999)
+
+
+class InitialCapitalCreate(BaseModel):
+    """Datos para registrar el aporte de capital inicial de la empresa."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
+
+    amount: Annotated[Decimal, Field(gt=0, max_digits=18, decimal_places=2)]
+    entry_date: date | None = None
+    bank_account_id: UUID | None = None
+    description: str | None = Field(default=None, max_length=500)
 
 
 class FiscalPeriodRead(BaseModel):

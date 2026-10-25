@@ -472,28 +472,65 @@ def get_balance_sheet(
     for b in balances:
         balance = b["balance"]
         if b["account_type"] == "ACTIVO":
-            # Las cuentas de activo con naturaleza crédito son contra-activos
-            # (por ejemplo, 1592 Depreciación acumulada). Se presentan con
-            # saldo negativo para que el total de activos sea el valor neto.
-            display_balance = -balance if b["nature"] == "CREDITO" else balance
-            asset_accounts.append(
-                AccountReportRow(
-                    code=b["code"],
-                    name=b["name"],
-                    balance=_format_money(display_balance),
+            if b["nature"] == "CREDITO":
+                # Las cuentas de activo con naturaleza crédito son contra-activos
+                # (por ejemplo, 1592 Depreciación acumulada). Se presentan con
+                # saldo negativo para que el total de activos sea el valor neto.
+                asset_accounts.append(
+                    AccountReportRow(
+                        code=b["code"],
+                        name=b["name"],
+                        balance=_format_money(-balance),
+                    )
                 )
-            )
-            total_assets += display_balance
+                total_assets += -balance
+            elif balance < ZERO_MONEY:
+                # Un activo de naturaleza débito con saldo crédito (por ejemplo,
+                # un sobregiro bancario) es en sustancia un pasivo: se presenta
+                # del lado del pasivo con signo positivo para no inflar activos.
+                liability_accounts.append(
+                    AccountReportRow(
+                        code=b["code"],
+                        name=b["name"],
+                        balance=_format_money(-balance),
+                    )
+                )
+                total_liabilities += -balance
+            else:
+                asset_accounts.append(
+                    AccountReportRow(
+                        code=b["code"],
+                        name=b["name"],
+                        balance=_format_money(balance),
+                    )
+                )
+                total_assets += balance
         elif b["account_type"] == "PASIVO":
-            liability_accounts.append(
-                AccountReportRow(
-                    code=b["code"],
-                    name=b["name"],
-                    balance=_format_money(balance),
+            if balance < ZERO_MONEY:
+                # Un pasivo con saldo débito (por ejemplo, 240802 IVA
+                # descontable a favor) es en sustancia un activo: se
+                # reclasifica con signo positivo del lado del activo en lugar
+                # de mostrar un pasivo negativo que desinfla el total.
+                asset_accounts.append(
+                    AccountReportRow(
+                        code=b["code"],
+                        name=b["name"],
+                        balance=_format_money(-balance),
+                    )
                 )
-            )
-            total_liabilities += balance
+                total_assets += -balance
+            else:
+                liability_accounts.append(
+                    AccountReportRow(
+                        code=b["code"],
+                        name=b["name"],
+                        balance=_format_money(balance),
+                    )
+                )
+                total_liabilities += balance
         elif b["account_type"] == "PATRIMONIO":
+            # El patrimonio con saldo débito (déficit acumulado) se sigue
+            # presentando con signo negativo dentro del patrimonio.
             equity_accounts.append(
                 AccountReportRow(
                     code=b["code"],

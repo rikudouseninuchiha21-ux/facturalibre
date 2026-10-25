@@ -1476,6 +1476,38 @@ export function closePeriod(
   return apiPost<FiscalPeriod>("/accounting/close-period", { month, year });
 }
 
+export interface InitialCapitalInput {
+  amount: string;
+  entry_date?: string;
+  bank_account_id?: string;
+  description?: string;
+}
+
+export interface AccountingEntryLineRead {
+  id: string;
+  account_code: string;
+  account_name: string;
+  debit: string;
+  credit: string;
+}
+
+export interface InitialCapitalEntry {
+  id: string;
+  entry_date: string;
+  description: string;
+  source_type: string;
+  status: string;
+  lines: AccountingEntryLineRead[];
+  total_debit: string;
+  total_credit: string;
+}
+
+export function registerInitialCapital(
+  payload: InitialCapitalInput,
+): Promise<InitialCapitalEntry> {
+  return apiPost<InitialCapitalEntry>("/accounting/initial-capital", payload);
+}
+
 export function getIncomeStatement(
   startDate?: string,
   endDate?: string,

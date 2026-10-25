@@ -8,6 +8,7 @@ operación de facturación también se revierte.
 from __future__ import annotations
 
 import calendar
+import uuid
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -509,6 +510,45 @@ class AccountingService:
             source_type=AccountingSourceType.BANK_TRANSACTION,
             source_id=transaction.id,
             lines=lines,
+        )
+
+    def record_initial_capital(
+        self,
+        *,
+        amount: Decimal,
+        entry_date: date,
+        bank_account: BankAccount | None = None,
+        description: str | None = None,
+    ) -> AccountingEntry:
+        """Registra el aporte de capital inicial de la empresa.
+
+        Débito a la cuenta contable de la cuenta bancaria indicada —o a
+        Bancos (111005) cuando no se selecciona una— y crédito a Capital
+        suscrito y pagado (3105). Se permiten aportes sucesivos; cada uno
+        genera su propio asiento con un ``source_id`` único.
+
+        REQUIERE VALIDACIÓN: contador público colombiano. El exceso del aporte
+        sobre el capital suscrito debería acreditar 311505 (Aportes sociales)
+        o 3205 (Primas en colocación de acciones) según la naturaleza del
+        exceso; el MVP lo registra íntegro en 3105.
+        """
+        amount = round_money(amount)
+        if amount <= ZERO:
+            raise AccountingError("El aporte de capital debe ser mayor que cero")
+
+        debit_account = (
+            bank_account.accounting_account_code if bank_account is not None else self.mapping.bank
+        )
+
+        return self._post_entry(
+            entry_date=entry_date,
+            description=description or "Registro de capital inicial",
+            source_type=AccountingSourceType.INITIAL_CAPITAL,
+            source_id=uuid.uuid4(),
+            lines=[
+                JournalLine(account_code=debit_account, debit=amount),
+                JournalLine(account_code=self.mapping.capital_account, credit=amount),
+            ],
         )
 
     def _reverse_entry(
