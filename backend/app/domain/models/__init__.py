@@ -21,6 +21,7 @@ from app.domain.models.bank import (
     BankTransaction,
     BankTransactionType,
 )
+from app.domain.models.budgeting import Budget, BudgetLine, BudgetStatus, CostCenter
 from app.domain.models.company_setting import CompanySetting
 from app.domain.models.contact import Contact, ContactStatus, ContactType
 from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNoteStatus
@@ -63,10 +64,14 @@ __all__ = [
     "BankAccountType",
     "BankTransaction",
     "BankTransactionType",
+    "Budget",
+    "BudgetLine",
+    "BudgetStatus",
     "CompanySetting",
     "Contact",
     "ContactStatus",
     "ContactType",
+    "CostCenter",
     "CreditNote",
     "CreditNoteLine",
     "CreditNoteStatus",

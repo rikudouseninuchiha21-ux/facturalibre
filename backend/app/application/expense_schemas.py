@@ -22,6 +22,7 @@ class ExpenseCreate(BaseModel):
     amount: Money
     payment_method: str = Field(min_length=1, max_length=50)
     reference: str | None = Field(default=None, max_length=200)
+    cost_center_id: UUID | None = None
 
 
 class ExpenseRead(BaseModel):
@@ -36,6 +37,7 @@ class ExpenseRead(BaseModel):
     payment_method: str
     reference: str | None
     bank_movement_id: UUID | None
+    cost_center_id: UUID | None
     version: int
     created_at: datetime
     updated_at: datetime

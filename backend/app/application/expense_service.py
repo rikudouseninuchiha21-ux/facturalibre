@@ -14,6 +14,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.application.accounting.service import AccountingService
+from app.domain.cost_center_repository import CostCenterRepository
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.expense_repository import ExpenseRepository
 from app.domain.models.expense import Expense
@@ -26,6 +27,7 @@ class ExpenseService:
         self.db = db
         self.expenses = ExpenseRepository(db)
         self.accounting = AccountingService(db)
+        self.cost_centers = CostCenterRepository(db)
 
     def create_expense(
         self,
@@ -35,6 +37,7 @@ class ExpenseService:
         amount: Decimal,
         payment_method: str,
         reference: str | None = None,
+        cost_center_id: UUID | None = None,
     ) -> Expense:
         """Crea un gasto operativo y genera el asiento contable asociado.
 
@@ -42,7 +45,14 @@ class ExpenseService:
         - Débito a Gastos diversos (5199) por el monto.
         - Crédito a Caja (110505) si el método es efectivo, o a Bancos (111005)
           en cualquier otro caso.
+
+        Si se indica un centro de costo, se propaga a todas las líneas del
+        asiento para que el reporte Presupuesto vs Real lo capture.
         """
+        if cost_center_id is not None:
+            center = self.cost_centers.get_by_id(cost_center_id)
+            if center is None or not center.is_active:
+                raise ResourceNotFoundError("Centro de costo no existe o está inactivo")
         expense = self.expenses.create(
             {
                 "date": date,
@@ -50,6 +60,7 @@ class ExpenseService:
                 "amount": amount,
                 "payment_method": payment_method,
                 "reference": reference,
+                "cost_center_id": cost_center_id,
             }
         )
 

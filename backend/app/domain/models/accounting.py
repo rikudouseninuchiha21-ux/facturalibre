@@ -214,6 +214,15 @@ class AccountingEntryLine(Base):
         nullable=False,
         index=True,
     )
+    # Dimensión opcional de centro de costo. NULL en asientos históricos o
+    # cuando el documento de origen no está etiquetado.
+    cost_center_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("cost_centers.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="Centro de costo al que se atribuye el movimiento.",
+    )
     debit: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False, server_default=text("0"))
     credit: Mapped[Decimal] = mapped_column(
         Numeric(18, 2), nullable=False, server_default=text("0")

@@ -258,6 +258,7 @@ export interface ExpenseCreateInput {
   amount: string;
   payment_method: string;
   reference?: string;
+  cost_center_id?: string;
 }
 
 export type FixedAssetStatus = "ACTIVE" | "DISPOSED";
@@ -1638,6 +1639,232 @@ export function updateUser(
     `/users/${encodeURIComponent(userId)}`,
     payload,
     { headers: { "Idempotency-Key": crypto.randomUUID() } },
+    cookieHeader,
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Centros de costo y presupuestos
+// ---------------------------------------------------------------------------
+
+export interface CostCenter {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CostCenterCreateInput {
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export interface CostCenterUpdateInput {
+  code?: string;
+  name?: string;
+  description?: string;
+  is_active?: boolean;
+}
+
+export function getCostCenters(
+  includeInactive = false,
+  cookieHeader?: string,
+): Promise<CostCenter[]> {
+  const params = new URLSearchParams();
+  if (includeInactive) params.set("include_inactive", "true");
+  const query = params.toString();
+  return apiGet<CostCenter[]>(
+    `/cost-centers${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
+
+export function createCostCenter(
+  payload: CostCenterCreateInput,
+): Promise<CostCenter> {
+  return apiPost<CostCenter>("/cost-centers", payload);
+}
+
+export function updateCostCenter(
+  id: string,
+  payload: CostCenterUpdateInput,
+): Promise<CostCenter> {
+  return apiPatch<CostCenter>(
+    `/cost-centers/${encodeURIComponent(id)}`,
+    payload,
+  );
+}
+
+export function deleteCostCenter(id: string): Promise<void> {
+  return apiDelete<void>(`/cost-centers/${encodeURIComponent(id)}`);
+}
+
+export type BudgetStatus = "DRAFT" | "APPROVED" | "CLOSED";
+
+export interface BudgetLine {
+  id: string;
+  account_code: string;
+  account_name: string;
+  amount: string;
+  notes: string | null;
+}
+
+export interface Budget {
+  id: string;
+  cost_center: CostCenter;
+  period_year: number;
+  period_month: number;
+  name: string | null;
+  status: BudgetStatus;
+  notes: string | null;
+  lines: BudgetLine[];
+  total: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BudgetCreateInput {
+  cost_center_id: string;
+  period_year: number;
+  period_month: number;
+  name?: string;
+  notes?: string;
+}
+
+export interface BudgetLineCreateInput {
+  account_code: string;
+  amount: string;
+  notes?: string;
+}
+
+export interface BudgetVsActualLine {
+  account_code: string;
+  account_name: string;
+  budgeted: string;
+  actual: string;
+  variance: string;
+  variance_pct: string | null;
+}
+
+export interface BudgetVsActualTotals {
+  budgeted: string;
+  actual: string;
+  variance: string;
+  variance_pct: string | null;
+}
+
+export interface BudgetVsActualResponse {
+  budget_id: string;
+  cost_center: CostCenter;
+  period_year: number;
+  period_month: number;
+  status: BudgetStatus;
+  lines: BudgetVsActualLine[];
+  totals: BudgetVsActualTotals;
+}
+
+export interface BudgetVsActualReport {
+  period_year: number;
+  period_month: number;
+  cost_center_id: string | null;
+  blocks: BudgetVsActualResponse[];
+}
+
+export function getBudgets(
+  query?: string,
+  cookieHeader?: string,
+): Promise<Budget[]> {
+  return apiGet<Budget[]>(
+    `/budgets${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
+
+export function getBudget(
+  id: string,
+  cookieHeader?: string,
+): Promise<Budget> {
+  return apiGet<Budget>(`/budgets/${encodeURIComponent(id)}`, cookieHeader);
+}
+
+export function createBudget(payload: BudgetCreateInput): Promise<Budget> {
+  return apiPost<Budget>("/budgets", payload);
+}
+
+export function updateBudget(
+  id: string,
+  payload: { name?: string; notes?: string },
+): Promise<Budget> {
+  return apiPatch<Budget>(`/budgets/${encodeURIComponent(id)}`, payload);
+}
+
+export function deleteBudget(id: string): Promise<void> {
+  return apiDelete<void>(`/budgets/${encodeURIComponent(id)}`);
+}
+
+export function addBudgetLine(
+  budgetId: string,
+  payload: BudgetLineCreateInput,
+): Promise<BudgetLine> {
+  return apiPost<BudgetLine>(
+    `/budgets/${encodeURIComponent(budgetId)}/lines`,
+    payload,
+  );
+}
+
+export function updateBudgetLine(
+  budgetId: string,
+  lineId: string,
+  payload: { amount?: string; notes?: string },
+): Promise<BudgetLine> {
+  return apiPatch<BudgetLine>(
+    `/budgets/${encodeURIComponent(budgetId)}/lines/${encodeURIComponent(lineId)}`,
+    payload,
+  );
+}
+
+export function deleteBudgetLine(
+  budgetId: string,
+  lineId: string,
+): Promise<void> {
+  return apiDelete<void>(
+    `/budgets/${encodeURIComponent(budgetId)}/lines/${encodeURIComponent(lineId)}`,
+  );
+}
+
+export function approveBudget(budgetId: string): Promise<Budget> {
+  return apiPost<Budget>(`/budgets/${encodeURIComponent(budgetId)}/approve`);
+}
+
+export function closeBudget(budgetId: string): Promise<Budget> {
+  return apiPost<Budget>(`/budgets/${encodeURIComponent(budgetId)}/close`);
+}
+
+export function getBudgetActuals(
+  budgetId: string,
+): Promise<BudgetVsActualResponse> {
+  return apiGet<BudgetVsActualResponse>(
+    `/budgets/${encodeURIComponent(budgetId)}/actuals`,
+  );
+}
+
+export function getBudgetVsActualReport(
+  periodYear: number,
+  periodMonth: number,
+  costCenterId?: string,
+  cookieHeader?: string,
+): Promise<BudgetVsActualReport> {
+  const params = new URLSearchParams({
+    period_year: String(periodYear),
+    period_month: String(periodMonth),
+  });
+  if (costCenterId) params.set("cost_center_id", costCenterId);
+  return apiGet<BudgetVsActualReport>(
+    `/reports/budget-vs-actual?${params.toString()}`,
     cookieHeader,
   );
 }

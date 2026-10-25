@@ -40,6 +40,7 @@ class PurchaseCreate(BaseModel):
     issue_date: date
     due_date: date
     lines: list[PurchaseLineCreate] = Field(min_length=1)
+    cost_center_id: UUID | None = None
 
     @model_validator(mode="after")
     def validate_due_date(self) -> Self:
@@ -80,6 +81,7 @@ class PurchaseRead(BaseModel):
     tax_total: Decimal
     total: Decimal
     balance: Decimal
+    cost_center_id: UUID | None
     version: int
     created_at: datetime
     updated_at: datetime

@@ -27,6 +27,7 @@ from app.domain.calculations import (
     round_money,
 )
 from app.domain.contact_repository import ContactRepository
+from app.domain.cost_center_repository import CostCenterRepository
 from app.domain.exceptions import InventoryError, ResourceNotFoundError
 from app.domain.item_repository import ItemRepository
 from app.domain.models.auth import UserRole
@@ -98,6 +99,14 @@ def create_purchase(
             detail="supplier_id no existe o está eliminado",
         )
 
+    if payload.cost_center_id is not None:
+        cost_center = CostCenterRepository(db).get_by_id(payload.cost_center_id)
+        if cost_center is None or not cost_center.is_active:
+            raise HTTPException(
+                status_code=422,
+                detail="cost_center_id no existe o está inactivo",
+            )
+
     item_repository = ItemRepository(db)
     calculated_lines = []
     new_lines: list[NewPurchaseLine] = []
@@ -153,6 +162,7 @@ def create_purchase(
         subtotal=totals.subtotal,
         tax_total=totals.tax_total,
         total=totals.total,
+        cost_center_id=payload.cost_center_id,
     )
 
     response_body = PurchaseRead.model_validate(purchase).model_dump(mode="json")

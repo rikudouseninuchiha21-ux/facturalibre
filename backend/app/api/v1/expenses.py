@@ -62,6 +62,7 @@ def create_expense(
             amount=payload.amount,
             payment_method=payload.payment_method,
             reference=payload.reference,
+            cost_center_id=payload.cost_center_id,
         )
 
     return ExpenseRead.model_validate(expense)

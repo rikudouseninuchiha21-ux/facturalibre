@@ -191,16 +191,12 @@ class ReconciliationRepository:
     def movement_is_linked(self, movement_id: UUID) -> bool:
         """Indica si el movimiento ya está vinculado a un pago o gasto."""
         payment_id = self.db.scalar(
-            select(Payment.id)
-            .where(Payment.bank_movement_id == movement_id)
-            .limit(1)
+            select(Payment.id).where(Payment.bank_movement_id == movement_id).limit(1)
         )
         if payment_id is not None:
             return True
         expense_id = self.db.scalar(
-            select(Expense.id)
-            .where(Expense.bank_movement_id == movement_id)
-            .limit(1)
+            select(Expense.id).where(Expense.bank_movement_id == movement_id).limit(1)
         )
         return expense_id is not None
 

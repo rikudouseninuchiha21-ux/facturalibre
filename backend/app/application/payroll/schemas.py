@@ -91,6 +91,7 @@ class PayrollPeriodCreate(BaseModel):
 
     month: int = Field(ge=1, le=12)
     year: int = Field(ge=2000, le=2100)
+    cost_center_id: UUID | None = None
 
 
 class PayrollDetailRead(BaseModel):
@@ -119,6 +120,7 @@ class PayrollPeriodRead(BaseModel):
     month: int
     year: int
     status: PayrollPeriodStatus
+    cost_center_id: UUID | None
     created_at: datetime
     details: list[PayrollDetailRead]
 

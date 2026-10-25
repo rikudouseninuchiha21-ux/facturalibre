@@ -53,6 +53,14 @@ class Expense(Base):
         index=True,
         comment="Movimiento bancario conciliado con este gasto.",
     )
+    # Dimensión opcional de centro de costo; se propaga al asiento del gasto.
+    cost_center_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("cost_centers.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="Centro de costo al que se atribuye el gasto.",
+    )
 
     # DECISIONES.md: bloqueo optimista y soft delete en datos transaccionales.
     version: Mapped[int] = mapped_column(

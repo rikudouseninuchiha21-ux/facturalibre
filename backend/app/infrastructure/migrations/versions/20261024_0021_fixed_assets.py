@@ -90,9 +90,7 @@ def upgrade() -> None:
     # PostgreSQL permite agregar el valor dentro de la transacción de Alembic,
     # pero no usarlo en la misma transacción. Esta migración no inserta
     # asientos con el nuevo valor.
-    op.execute(
-        "ALTER TYPE accounting_entry_source_type ADD VALUE IF NOT EXISTS 'DEPRECIATION'"
-    )
+    op.execute("ALTER TYPE accounting_entry_source_type ADD VALUE IF NOT EXISTS 'DEPRECIATION'")
 
     bind = op.get_bind()
     fixed_asset_status_enum.create(bind, checkfirst=True)
@@ -256,9 +254,7 @@ def downgrade() -> None:
     # PostgreSQL no permite eliminar un valor de un ENUM. Se reconstruye el
     # tipo conservando exactamente los valores existentes antes de esta
     # migración.
-    op.execute(
-        "ALTER TYPE accounting_entry_source_type RENAME TO accounting_entry_source_type_old"
-    )
+    op.execute("ALTER TYPE accounting_entry_source_type RENAME TO accounting_entry_source_type_old")
     op.execute(
         """
         CREATE TYPE accounting_entry_source_type AS ENUM (

@@ -247,9 +247,7 @@ def test_candidates_and_reconcile_payment(client: TestClient) -> None:
     assert payments.status_code == 200, payments.text
     assert payments.json()[0]["bank_movement_id"] == deposit["id"]
 
-    transactions = client.get(
-        f"/api/v1/treasury/accounts/{account_id}/transactions"
-    )
+    transactions = client.get(f"/api/v1/treasury/accounts/{account_id}/transactions")
     assert transactions.status_code == 200, transactions.text
     assert transactions.json()[0]["is_reconciled"] is True
 
@@ -453,10 +451,7 @@ def test_cash_flow_excludes_only_linked_bank_movements(client: TestClient) -> No
 
     response = client.get("/api/v1/reports/cash-flow")
     assert response.status_code == 200, response.text
-    months = {
-        month["month"]: month
-        for month in response.json()["months"]
-    }
+    months = {month["month"]: month for month in response.json()["months"]}
     current = months[f"{today.year:04d}-{today.month:02d}"]
 
     # El pago y el gasto siguen siendo la fuente primaria; solo se excluyen
@@ -474,9 +469,7 @@ def test_reconciliation_endpoints_require_authentication(
 ) -> None:
     account_id = uuid4()
     assert (
-        anonymous_client.get(
-            f"/api/v1/banks/{account_id}/reconciliation-candidates"
-        ).status_code
+        anonymous_client.get(f"/api/v1/banks/{account_id}/reconciliation-candidates").status_code
         == 401
     )
     assert (

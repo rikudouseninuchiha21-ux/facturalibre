@@ -56,6 +56,7 @@ from app.core.config import get_settings
 from app.domain.calculations import LineAmounts, calculate_invoice_totals, round_money
 from app.domain.company_setting_repository import CompanySettingRepository
 from app.domain.contact_repository import ContactRepository
+from app.domain.cost_center_repository import CostCenterRepository
 from app.domain.invoice_repository import InvoiceRepository
 from app.domain.item_repository import ItemRepository
 from app.domain.models.accounting import AccountingEntry, AccountingEntryLine
@@ -66,6 +67,7 @@ from app.domain.models.bank import (
     BankTransaction,
     BankTransactionType,
 )
+from app.domain.models.budgeting import CostCenter
 from app.domain.models.company_setting import CompanySetting
 from app.domain.models.contact import Contact, ContactStatus, ContactType
 from app.domain.models.expense import Expense
@@ -194,6 +196,13 @@ EXPENSES = (
     ("Internet y telefonía corporativa", Decimal("289000.00")),
     ("Papelería y elementos de aseo", Decimal("175000.00")),
     ("Mantenimiento de equipos de cómputo", Decimal("450000.00")),
+)
+
+# Centros de costo base de la demostración. Se crean solo si no existen.
+COST_CENTERS = (
+    {"code": "CC-VEN", "name": "Ventas", "description": "Área comercial y de ventas"},
+    {"code": "CC-ADM", "name": "Administración", "description": "Área administrativa"},
+    {"code": "CC-PRO", "name": "Producción", "description": "Área de producción y operaciones"},
 )
 
 
@@ -373,6 +382,19 @@ def _seed_warehouse(db: Session) -> Warehouse:
     """Crea la bodega principal usada por inventario y facturación."""
     repository = WarehouseRepository(db)
     return repository.create({"name": "Bodega Principal", "code": "PRINCIPAL", "is_active": True})
+
+
+def _seed_cost_centers(db: Session) -> list[CostCenter]:
+    """Crea los tres centros de costo base si no existen (idempotente)."""
+    repository = CostCenterRepository(db)
+    centers: list[CostCenter] = []
+    for data in COST_CENTERS:
+        center = repository.get_by_code(data["code"])
+        if center is None:
+            center = repository.create(dict(data))
+        centers.append(center)
+    db.commit()
+    return centers
 
 
 def _purchase_line(
@@ -757,6 +779,7 @@ def _print_summary(db: Session, *, reset: bool) -> None:
     print(f"Impuestos:             {_count(db, Tax)}")
     print(f"Ítems:                 {_count(db, Item)}")
     print(f"Bodegas:               {_count(db, Warehouse)}")
+    print(f"Centros de costo:      {_count(db, CostCenter)}")
     print("Stock inicial:         500 unidades (100 por ítem)")
     print(f"Stock actual:          {stock_total:,.2f} unidades")
     print(f"Facturas de compra:    {_count(db, PurchaseInvoice)}")
@@ -833,6 +856,7 @@ def main() -> None:
         customers, suppliers = _seed_contacts(db)
         items = _seed_items(db, taxes)
         warehouse = _seed_warehouse(db)
+        _seed_cost_centers(db)
         # WarehouseRepository refresca la instancia después del commit; ese
         # refresh abre una transacción implícita que debe cerrarse antes de
         # comenzar las operaciones contables.

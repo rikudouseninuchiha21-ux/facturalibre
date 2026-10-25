@@ -64,6 +64,9 @@ class JournalLine:
     account_code: str
     debit: Decimal = ZERO
     credit: Decimal = ZERO
+    # Dimensión opcional de centro de costo. NULL conserva el comportamiento
+    # previo (asientos históricos y documentos sin etiqueta).
+    cost_center_id: UUID | None = None
 
 
 class AccountingService:
@@ -181,6 +184,7 @@ class AccountingService:
             JournalLine(
                 account_code=self.mapping.inventory_account,
                 debit=purchase.subtotal,
+                cost_center_id=purchase.cost_center_id,
             ),
         ]
         if purchase.tax_total > ZERO:
@@ -188,12 +192,14 @@ class AccountingService:
                 JournalLine(
                     account_code=self.mapping.vat_deductible_account,
                     debit=purchase.tax_total,
+                    cost_center_id=purchase.cost_center_id,
                 )
             )
         lines.append(
             JournalLine(
                 account_code=self.mapping.accounts_payable_account,
                 credit=purchase.total,
+                cost_center_id=purchase.cost_center_id,
             )
         )
 
@@ -352,15 +358,26 @@ class AccountingService:
         )
 
         lines = [
-            JournalLine(account_code=self.mapping.payroll_expense, debit=gross),
+            JournalLine(
+                account_code=self.mapping.payroll_expense,
+                debit=gross,
+                cost_center_id=period.cost_center_id,
+            ),
         ]
         if net > ZERO:
-            lines.append(JournalLine(account_code=self.mapping.payroll_payable, credit=net))
+            lines.append(
+                JournalLine(
+                    account_code=self.mapping.payroll_payable,
+                    credit=net,
+                    cost_center_id=period.cost_center_id,
+                )
+            )
         if contributions > ZERO:
             lines.append(
                 JournalLine(
                     account_code=self.mapping.payroll_contributions,
                     credit=contributions,
+                    cost_center_id=period.cost_center_id,
                 )
             )
 
@@ -393,8 +410,16 @@ class AccountingService:
             source_type=AccountingSourceType.EXPENSE,
             source_id=expense.id,
             lines=[
-                JournalLine(account_code=self.mapping.expense_account, debit=expense.amount),
-                JournalLine(account_code=payment_account, credit=expense.amount),
+                JournalLine(
+                    account_code=self.mapping.expense_account,
+                    debit=expense.amount,
+                    cost_center_id=expense.cost_center_id,
+                ),
+                JournalLine(
+                    account_code=payment_account,
+                    credit=expense.amount,
+                    cost_center_id=expense.cost_center_id,
+                ),
             ],
         )
 
@@ -602,6 +627,7 @@ class AccountingService:
                     account_code=line.account_code,
                     debit=debit,
                     credit=credit,
+                    cost_center_id=line.cost_center_id,
                 )
             )
 
@@ -640,6 +666,7 @@ class AccountingService:
                     account_code=line.account_code,
                     debit=line.debit,
                     credit=line.credit,
+                    cost_center_id=line.cost_center_id,
                 )
                 for line in normalized
             ],

@@ -78,9 +78,7 @@ class FixedAssetService:
             raise FixedAssetValidationError("La vida útil debe ser mayor que cero")
 
         if self.assets.get_by_code(normalized_code) is not None:
-            raise FixedAssetError(
-                f"Ya existe un activo fijo con el código {normalized_code}"
-            )
+            raise FixedAssetError(f"Ya existe un activo fijo con el código {normalized_code}")
 
         asset = self.assets.create(
             {
@@ -117,9 +115,7 @@ class FixedAssetService:
             raise ResourceNotFoundError("Activo fijo no encontrado")
 
         if asset.status != FixedAssetStatus.ACTIVE:
-            raise FixedAssetError(
-                "Solo se pueden depreciar activos fijos en estado ACTIVE"
-            )
+            raise FixedAssetError("Solo se pueden depreciar activos fijos en estado ACTIVE")
 
         start_date, end_date = _month_bounds(year, month)
         if asset.purchase_date > end_date:
@@ -133,9 +129,7 @@ class FixedAssetService:
             end_date=end_date,
         )
         if existing is not None:
-            raise FixedAssetError(
-                f"El activo ya fue depreciado para el periodo {month:02d}/{year}"
-            )
+            raise FixedAssetError(f"El activo ya fue depreciado para el periodo {month:02d}/{year}")
 
         base = round_money(asset.initial_cost - asset.salvage_value)
         monthly_amount = round_money(base / Decimal(asset.useful_life_months))

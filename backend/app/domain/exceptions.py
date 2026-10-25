@@ -49,6 +49,22 @@ class FixedAssetValidationError(FixedAssetError):
     """Datos del activo incompatibles con su política de depreciación."""
 
 
+class CostCenterError(Exception):
+    """Operación inválida sobre un centro de costo (código duplicado, etc.)."""
+
+
+class BudgetError(Exception):
+    """Operación inválida sobre un presupuesto."""
+
+
+class BudgetStateError(BudgetError):
+    """La operación no está permitida para el estado actual del presupuesto."""
+
+
+class BudgetValidationError(BudgetError):
+    """Datos de presupuesto inconsistentes con el catálogo o el periodo."""
+
+
 class AuthError(Exception):
     """Error de autenticación o registro."""
 

@@ -94,6 +94,15 @@ class PurchaseInvoice(Base):
     version: Mapped[int] = mapped_column(
         Integer, nullable=False, default=1, server_default=text("1")
     )
+    # Dimensión opcional de centro de costo; se propaga a todas las líneas
+    # del asiento de emisión de la compra.
+    cost_center_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("cost_centers.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="Centro de costo al que se atribuye la compra.",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

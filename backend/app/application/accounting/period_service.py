@@ -29,16 +29,13 @@ class FiscalPeriodService:
         """
         period = self.repository.get_period(year=year, month=month)
         if period is not None and period.status == FiscalPeriodStatus.CLOSED:
-            raise FiscalPeriodError(
-                f"El periodo contable {month:02d}/{year} ya está cerrado"
-            )
+            raise FiscalPeriodError(f"El periodo contable {month:02d}/{year} ya está cerrado")
 
         unbalanced = self.repository.list_unbalanced_entry_ids(year=year, month=month)
         if unbalanced:
             identifiers = ", ".join(str(entry_id) for entry_id in unbalanced)
             raise FiscalPeriodError(
-                "No se puede cerrar el periodo: hay asientos descuadrados "
-                f"({identifiers})"
+                f"No se puede cerrar el periodo: hay asientos descuadrados ({identifiers})"
             )
 
         closed_at = datetime.now(UTC)

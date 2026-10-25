@@ -40,6 +40,7 @@ class AccountingEntryLineRead(BaseModel):
     account_name: str
     debit: Decimal
     credit: Decimal
+    cost_center_id: UUID | None
 
 
 class AccountingEntryRead(BaseModel):

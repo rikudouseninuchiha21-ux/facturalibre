@@ -8,7 +8,9 @@ from app.api.v1 import (
     assets,
     auth,
     banks,
+    budgets,
     contacts,
+    cost_centers,
     dashboard,
     employees,
     expenses,
@@ -29,6 +31,10 @@ from app.api.v1 import (
 from app.application.accounting.period_service import FiscalPeriodError
 from app.application.accounting.service import AccountingPeriodClosedError
 from app.domain.exceptions import (
+    BudgetError,
+    BudgetStateError,
+    BudgetValidationError,
+    CostCenterError,
     FixedAssetError,
     FixedAssetValidationError,
     InventoryError,
@@ -65,6 +71,8 @@ app.include_router(reports.router, prefix="/api/v1")
 app.include_router(settings.router, prefix="/api/v1")
 app.include_router(treasury.router, prefix="/api/v1")
 app.include_router(banks.router, prefix="/api/v1")
+app.include_router(cost_centers.router, prefix="/api/v1")
+app.include_router(budgets.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)
@@ -217,6 +225,54 @@ async def fiscal_period_error_handler(
     exc: FiscalPeriodError,
 ) -> JSONResponse:
     """Traduce un cierre inválido o repetido a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(CostCenterError)
+async def cost_center_error_handler(
+    _request: Request,
+    exc: CostCenterError,
+) -> JSONResponse:
+    """Traduce un conflicto de centro de costo (código duplicado) a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(BudgetStateError)
+async def budget_state_error_handler(
+    _request: Request,
+    exc: BudgetStateError,
+) -> JSONResponse:
+    """Traduce una transición inválida de presupuesto a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(BudgetValidationError)
+async def budget_validation_error_handler(
+    _request: Request,
+    exc: BudgetValidationError,
+) -> JSONResponse:
+    """Traduce datos de presupuesto inconsistentes a un 422."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(BudgetError)
+async def budget_error_handler(
+    _request: Request,
+    exc: BudgetError,
+) -> JSONResponse:
+    """Traduce un conflicto de presupuesto (periodo duplicado) a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},

@@ -63,17 +63,9 @@ class ReconciliationService:
         result: list[ReconciliationBankMovementRead] = []
         for movement in movements:
             if movement.transaction_type == BankTransactionType.DEPOSIT:
-                candidates = [
-                    row
-                    for row in payments
-                    if self._matches(movement, row)
-                ]
+                candidates = [row for row in payments if self._matches(movement, row)]
             elif movement.transaction_type == BankTransactionType.WITHDRAWAL:
-                candidates = [
-                    row
-                    for row in expenses
-                    if self._matches(movement, row)
-                ]
+                candidates = [row for row in expenses if self._matches(movement, row)]
             else:
                 # Una transferencia es un movimiento interno: no tiene
                 # contrapartida en pagos ni gastos.
@@ -156,13 +148,9 @@ class ReconciliationService:
     ) -> ReconciliationTransactionRead:
         payment = self.reconciliation.get_payment_for_reconciliation(transaction_id)
         if payment is None:
-            raise ResourceNotFoundError(
-                "No se encontró un pago de cliente con ese identificador"
-            )
+            raise ResourceNotFoundError("No se encontró un pago de cliente con ese identificador")
         if payment.invoice.deleted_at is not None:
-            raise ResourceNotFoundError(
-                "No se encontró un pago de cliente con ese identificador"
-            )
+            raise ResourceNotFoundError("No se encontró un pago de cliente con ese identificador")
         if payment.bank_movement_id is not None:
             raise TreasuryError("El pago de cliente ya está conciliado")
         row = self._payment_row(payment)

@@ -18,6 +18,8 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user, require_role
 from app.application.accounting.schemas import AccountingAccountRead
+from app.application.budget_actuals_service import BudgetActualsService
+from app.application.budget_schemas import BudgetVsActualReportResponse
 from app.application.report_schemas import (
     AccountReportRow,
     AgingBucketSummary,
@@ -151,6 +153,17 @@ def get_accounting_repository(db: DbSession) -> AccountingRepository:
 AccountingRepositoryDep = Annotated[
     AccountingRepository,
     Depends(get_accounting_repository),
+]
+
+
+def get_budget_actuals_service(db: DbSession) -> BudgetActualsService:
+    """Construye el servicio del reporte Presupuesto vs Real."""
+    return BudgetActualsService(db)
+
+
+BudgetActualsServiceDep = Annotated[
+    BudgetActualsService,
+    Depends(get_budget_actuals_service),
 ]
 
 
@@ -572,6 +585,25 @@ def search_ledger_accounts(
     """Busca cuentas PUC por código o nombre para el selector del Libro Mayor."""
     accounts = repository.search_accounts(query=search, limit=limit)
     return [AccountingAccountRead.model_validate(account) for account in accounts]
+
+
+@router.get("/budget-vs-actual", response_model=BudgetVsActualReportResponse)
+def get_budget_vs_actual_report(
+    actuals: BudgetActualsServiceDep,
+    period_year: Annotated[int, Query(ge=2000, le=2100)],
+    period_month: Annotated[int, Query(ge=1, le=12)],
+    cost_center_id: Annotated[UUID | None, Query()] = None,
+) -> BudgetVsActualReportResponse:
+    """Presupuesto vs Real: un bloque por centro de costo del periodo.
+
+    El gasto real se deriva de las líneas contables etiquetadas con centro
+    de costo (compras, gastos y nómina del mes), sin tablas paralelas.
+    """
+    return actuals.report_by_period(
+        period_year=period_year,
+        period_month=period_month,
+        cost_center_id=cost_center_id,
+    )
 
 
 @router.get("/ledger", response_model=LedgerReportResponse)

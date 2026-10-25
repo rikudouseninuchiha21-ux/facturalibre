@@ -58,6 +58,7 @@ class PurchaseRepository:
         subtotal: Decimal,
         tax_total: Decimal,
         total: Decimal,
+        cost_center_id: UUID | None = None,
     ) -> PurchaseInvoice:
         """Crea una factura de compra DRAFT con sus líneas, sin número."""
         purchase = PurchaseInvoice(
@@ -70,6 +71,7 @@ class PurchaseRepository:
             tax_total=tax_total,
             total=total,
             balance=total,
+            cost_center_id=cost_center_id,
         )
         purchase.lines = [
             PurchaseLine(

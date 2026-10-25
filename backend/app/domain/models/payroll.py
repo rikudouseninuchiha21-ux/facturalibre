@@ -103,6 +103,14 @@ class PayrollPeriod(Base):
         server_default=text("'DRAFT'"),
         index=True,
     )
+    # Dimensión opcional de centro de costo; se propaga al asiento de nómina.
+    cost_center_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("cost_centers.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+        comment="Centro de costo al que se atribuye la liquidación de nómina.",
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

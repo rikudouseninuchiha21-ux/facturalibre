@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import get_current_user, require_role
 from app.application.payroll.schemas import PayrollPeriodCreate, PayrollPeriodRead
 from app.application.payroll.service import PayrollService
+from app.domain.cost_center_repository import CostCenterRepository
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.models.auth import UserRole
 from app.domain.payroll_repository import PayrollRepository
@@ -46,9 +47,17 @@ PayrollRepositoryDep = Annotated[PayrollRepository, Depends(get_payroll_reposito
 )
 def create_period(
     payload: PayrollPeriodCreate,
+    db: DbSession,
     repository: PayrollRepositoryDep,
 ) -> PayrollPeriodRead:
     """Abre un periodo mensual de nómina en estado DRAFT."""
+    if payload.cost_center_id is not None:
+        cost_center = CostCenterRepository(db).get_by_id(payload.cost_center_id)
+        if cost_center is None or not cost_center.is_active:
+            raise HTTPException(
+                status_code=422,
+                detail="cost_center_id no existe o está inactivo",
+            )
     try:
         period = repository.create_period(payload.model_dump())
     except IntegrityError:

@@ -167,9 +167,7 @@ def test_depreciate_creates_entry_and_updates_asset(
     assert updated["is_fully_depreciated"] is False
 
     depreciation = db_session.scalar(
-        select(DepreciationEntry).where(
-            DepreciationEntry.asset_id == UUID(str(asset["id"]))
-        )
+        select(DepreciationEntry).where(DepreciationEntry.asset_id == UUID(str(asset["id"])))
     )
     assert depreciation is not None
     assert depreciation.date == date(
@@ -216,9 +214,7 @@ def test_depreciate_duplicate_month_returns_conflict(
     assert second.status_code == 409, second.text
     assert "ya fue depreciado" in second.json()["detail"]
 
-    count = db_session.scalar(
-        select(func.count()).select_from(DepreciationEntry)
-    )
+    count = db_session.scalar(select(func.count()).select_from(DepreciationEntry))
     assert count == 1
 
 

@@ -40,9 +40,7 @@ def get_reconciliation_service(db: DbSession) -> ReconciliationService:
     return ReconciliationService(db)
 
 
-ReconciliationServiceDep = Annotated[
-    ReconciliationService, Depends(get_reconciliation_service)
-]
+ReconciliationServiceDep = Annotated[ReconciliationService, Depends(get_reconciliation_service)]
 
 
 @router.get(
