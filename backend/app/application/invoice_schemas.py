@@ -124,8 +124,12 @@ def _canonicalize(value: Any) -> Any:
     return value
 
 
-def canonical_body_hash(payload: InvoiceCreate) -> str:
-    """Calcula SHA-256 del body normalizado, con claves ordenadas."""
+def canonical_body_hash(payload: BaseModel) -> str:
+    """Calcula SHA-256 del body normalizado, con claves ordenadas.
+
+    Acepta cualquier schema Pydantic que represente el body de la petición,
+    incluido el checkout del POS, sin acoplar la función a un endpoint.
+    """
     canonical = _canonicalize(payload.model_dump(mode="python"))
     encoded = json.dumps(
         canonical,

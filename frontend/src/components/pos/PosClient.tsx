@@ -22,7 +22,7 @@ import {
   ApiError,
   checkoutPos,
   type Contact,
-  type InvoiceCreateInput,
+  type PosCheckoutInput,
   type PosItemSearchResult,
   searchPosItems,
 } from "@/lib/api";
@@ -193,8 +193,8 @@ export function PosClient({ contacts }: PosClientProps) {
     try {
       const idempotencyKey = crypto.randomUUID();
 
-      const payload: InvoiceCreateInput = {
-        contact_id: customerId || "",
+      const payload: PosCheckoutInput = {
+        contact_id: customerId || null,
         issue_date: new Date().toISOString().slice(0, 10),
         due_date: new Date().toISOString().slice(0, 10),
         currency: "COP",

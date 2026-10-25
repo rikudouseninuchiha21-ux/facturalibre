@@ -10,7 +10,7 @@ from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
 from app.domain.exceptions import ResourceNotFoundError, VersionConflictError
-from app.domain.models.contact import Contact
+from app.domain.models.contact import Contact, ContactStatus
 
 
 class ContactRepository:
@@ -32,6 +32,43 @@ class ContactRepository:
             Contact.deleted_at.is_(None),
         )
         return self.db.scalar(statement)
+
+    def get_by_tax_id(self, tax_id: str) -> Contact | None:
+        """Busca un contacto activo por identificación fiscal."""
+        statement = (
+            select(Contact)
+            .where(
+                Contact.tax_id == tax_id,
+                Contact.deleted_at.is_(None),
+            )
+            .order_by(Contact.created_at, Contact.id)
+            .limit(1)
+        )
+        return self.db.scalar(statement)
+
+    def get_first_by_status(self, status: ContactStatus) -> Contact | None:
+        """Devuelve el primer contacto activo con el estado indicado."""
+        statement = (
+            select(Contact)
+            .where(
+                Contact.status == status,
+                Contact.deleted_at.is_(None),
+            )
+            .order_by(Contact.created_at, Contact.id)
+            .limit(1)
+        )
+        return self.db.scalar(statement)
+
+    def create_pending(self, values: dict[str, Any]) -> Contact:
+        """Crea un contacto dentro de la transacción actual, sin commit.
+
+        Se usa para entidades genéricas que deben revertirse junto con la
+        operación de negocio que las crea, como el "Consumidor Final" del POS.
+        """
+        contact = Contact(**values)
+        self.db.add(contact)
+        self.db.flush()
+        return contact
 
     def list(self, limit: int, offset: int) -> list[Contact]:
         statement = (

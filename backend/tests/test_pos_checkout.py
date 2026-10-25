@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from app.application.accounting.service import AccountingError
 from app.domain.models.accounting import AccountingAccount, AccountingEntry
+from app.domain.models.contact import Contact, ContactStatus, ContactType
 from app.domain.models.invoice import Invoice
 from app.domain.models.payment import Payment
 from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
@@ -25,19 +26,13 @@ def _money(value: object) -> Decimal:
     return Decimal(str(value)).quantize(TWOPLACES)
 
 
-def _setup_pos_data(
+def _setup_pos_stock(
     client: TestClient,
     *,
     quantity: str = "10",
     unit_cost: str = "40.00",
 ) -> dict[str, str]:
-    """Crea contacto, ítem y stock valorizado en la bodega PRINCIPAL."""
-    contact = client.post(
-        "/api/v1/contacts",
-        json={"name": "Cliente POS", "email": "pos@example.com"},
-    )
-    assert contact.status_code == 201, contact.text
-
+    """Crea ítem y stock valorizado en la bodega PRINCIPAL, sin contacto."""
     item = client.post(
         "/api/v1/items",
         json={
@@ -68,10 +63,26 @@ def _setup_pos_data(
     assert movement.status_code == 201, movement.text
 
     return {
-        "contact_id": str(contact.json()["id"]),
         "item_id": str(item.json()["id"]),
         "warehouse_id": str(warehouse.json()["id"]),
     }
+
+
+def _setup_pos_data(
+    client: TestClient,
+    *,
+    quantity: str = "10",
+    unit_cost: str = "40.00",
+) -> dict[str, str]:
+    """Crea contacto, ítem y stock valorizado en la bodega PRINCIPAL."""
+    data = _setup_pos_stock(client, quantity=quantity, unit_cost=unit_cost)
+    contact = client.post(
+        "/api/v1/contacts",
+        json={"name": "Cliente POS", "email": "pos@example.com"},
+    )
+    assert contact.status_code == 201, contact.text
+    data["contact_id"] = str(contact.json()["id"])
+    return data
 
 
 def _add_stock(
@@ -102,7 +113,7 @@ def _checkout_payload(
 ) -> dict[str, Any]:
     today = date.today()
     return {
-        "contact_id": data["contact_id"],
+        "contact_id": data.get("contact_id"),
         "issue_date": today.isoformat(),
         "due_date": (today + timedelta(days=30)).isoformat(),
         "currency": "COP",
@@ -219,6 +230,62 @@ def test_pos_checkout_uses_weighted_average_cost(client: TestClient) -> None:
     # (10 * 40 + 10 * 60) / 20 = 50 por unidad; 2 unidades = 100 de COGS.
     assert _money(lines["6135"]["debit"]) == Decimal("100.00")
     assert _money(lines["1435"]["credit"]) == Decimal("100.00")
+
+
+def test_pos_checkout_creates_generic_customer_for_null_or_blank_contact(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    data = _setup_pos_stock(client)
+
+    first = _checkout(client, _checkout_payload(data))
+    assert first.status_code == 201, first.text
+    first_invoice = first.json()["invoice"]
+
+    second_payload = _checkout_payload(data)
+    second_payload["contact_id"] = ""
+    second = _checkout(client, second_payload)
+    assert second.status_code == 201, second.text
+    second_invoice = second.json()["invoice"]
+
+    assert second_invoice["contact_id"] == first_invoice["contact_id"]
+    contact = db_session.get(Contact, UUID(first_invoice["contact_id"]))
+    assert contact is not None
+    assert contact.name == "Consumidor Final"
+    assert contact.tax_id == "222222222222"
+    assert contact.type is ContactType.CUSTOMER
+    assert contact.status is ContactStatus.CUSTOMER
+    assert (
+        db_session.scalar(
+            select(func.count()).select_from(Contact).where(Contact.tax_id == "222222222222")
+        )
+        == 1
+    )
+    assert db_session.scalar(select(func.count()).select_from(Contact)) == 1
+
+
+def test_pos_checkout_falls_back_to_first_customer(
+    client: TestClient,
+    db_session: Session,
+) -> None:
+    data = _setup_pos_stock(client)
+    existing = client.post(
+        "/api/v1/contacts",
+        json={"name": "Cliente Existente", "tax_id": "900123456"},
+    )
+    assert existing.status_code == 201, existing.text
+
+    response = _checkout(client, _checkout_payload(data))
+
+    assert response.status_code == 201, response.text
+    invoice = response.json()["invoice"]
+    assert invoice["contact_id"] == existing.json()["id"]
+    assert (
+        db_session.scalar(
+            select(func.count()).select_from(Contact).where(Contact.tax_id == "222222222222")
+        )
+        == 0
+    )
 
 
 def test_pos_checkout_is_idempotent(client: TestClient, db_session: Session) -> None:

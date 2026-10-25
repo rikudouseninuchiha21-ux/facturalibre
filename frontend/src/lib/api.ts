@@ -1031,6 +1031,10 @@ export interface PosItemSearchResult {
   stock_current: string;
 }
 
+export interface PosCheckoutInput extends Omit<InvoiceCreateInput, "contact_id"> {
+  contact_id: string | null;
+}
+
 export interface PosCheckoutResult {
   invoice: Invoice;
   payment: Payment | null;
@@ -1044,7 +1048,7 @@ export function searchPosItems(
 }
 
 export function checkoutPos(
-  payload: InvoiceCreateInput,
+  payload: PosCheckoutInput,
   idempotencyKey: string,
 ): Promise<PosCheckoutResult> {
   return apiPost<PosCheckoutResult>("/pos/checkout", payload, {

@@ -21,9 +21,11 @@ from app.application.invoice_service import (
 )
 from app.application.payment_schemas import PaymentRead
 from app.application.payment_service import PaymentService
-from app.application.pos_schemas import PosCheckoutRead
+from app.application.pos_schemas import PosCheckoutCreate, PosCheckoutRead
+from app.domain.contact_repository import ContactRepository
 from app.domain.invoice_repository import InvoiceRepository
 from app.domain.models.auth import UserRole
+from app.domain.models.contact import ContactStatus, ContactType
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.item import Item
 from app.domain.models.stock import StockBalance
@@ -48,6 +50,48 @@ IdempotencyKeyHeader = Annotated[UUID, Header(alias="Idempotency-Key")]
 MAX_RESULTS = 10
 ZERO = Decimal("0.00")
 IDEMPOTENCY_MISMATCH = "Idempotency-Key reutilizada con body diferente"
+GENERIC_CUSTOMER_TAX_ID = "222222222222"
+GENERIC_CUSTOMER_NAME = "Consumidor Final"
+
+
+def _resolve_contact_id(db: Session, contact_id: UUID | None) -> UUID:
+    """Resuelve el contacto real de una venta POS.
+
+    Si el cajero eligió "Consumidor Final", busca el contacto genérico por NIT;
+    si no existe, usa el primer contacto con estado CUSTOMER y, como última
+    alternativa, lo crea dentro de la misma transacción del checkout.
+    """
+    if contact_id is not None:
+        return contact_id
+
+    repository = ContactRepository(db)
+    contact = repository.get_by_tax_id(GENERIC_CUSTOMER_TAX_ID)
+    if contact is None:
+        contact = repository.get_first_by_status(ContactStatus.CUSTOMER)
+    if contact is None:
+        contact = repository.create_pending(
+            {
+                "name": GENERIC_CUSTOMER_NAME,
+                "tax_id": GENERIC_CUSTOMER_TAX_ID,
+                "type": ContactType.CUSTOMER,
+                "status": ContactStatus.CUSTOMER,
+            }
+        )
+    return contact.id
+
+
+def _build_invoice_payload(
+    db: Session,
+    payload: PosCheckoutCreate,
+) -> InvoiceCreate:
+    """Convierte el checkout del POS en el payload de facturación normal."""
+    return InvoiceCreate(
+        contact_id=_resolve_contact_id(db, payload.contact_id),
+        issue_date=payload.issue_date,
+        due_date=payload.due_date,
+        currency=payload.currency,
+        lines=payload.lines,
+    )
 
 
 def _replay_response(
@@ -129,7 +173,7 @@ def search_items(
     status_code=status.HTTP_201_CREATED,
 )
 def checkout(
-    payload: InvoiceCreate,
+    payload: PosCheckoutCreate,
     idempotency_key: IdempotencyKeyHeader,
     db: DbSession,
 ) -> JSONResponse:
@@ -152,7 +196,8 @@ def checkout(
                 request_hash,
             )
             if response_body is None:
-                draft = create_invoice_draft(db, payload)
+                invoice_payload = _build_invoice_payload(db, payload)
+                draft = create_invoice_draft(db, invoice_payload)
                 invoice = repository.issue(draft.id)
                 apply_invoice_issue_effects(db, invoice)
 
