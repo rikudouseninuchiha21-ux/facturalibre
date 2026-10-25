@@ -59,6 +59,7 @@ class AccountingSourceType(enum.StrEnum):
     EXPENSE = "EXPENSE"
     EXPENSE_REVERSAL = "EXPENSE_REVERSAL"
     BANK_TRANSACTION = "BANK_TRANSACTION"
+    DEPRECIATION = "DEPRECIATION"
 
 
 class AccountingEntryStatus(enum.StrEnum):

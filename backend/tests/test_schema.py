@@ -28,8 +28,10 @@ EXPECTED_TABLES = {
     "accounting_entries",
     "accounting_entry_lines",
     "contacts",
+    "depreciation_entries",
     "employees",
     "fiscal_periods",
+    "fixed_assets",
     "idempotency_keys",
     "invoice_lines",
     "invoices",
@@ -48,7 +50,9 @@ EXPECTED_TABLES = {
 
 MONETARY_COLUMNS: dict[str, tuple[str, ...]] = {
     "accounting_entry_lines": ("debit", "credit"),
+    "depreciation_entries": ("amount",),
     "employees": ("base_salary",),
+    "fixed_assets": ("initial_cost", "salvage_value"),
     "items": ("unit_price",),
     "invoices": ("subtotal", "tax_total", "total", "balance"),
     "invoice_lines": (

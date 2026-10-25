@@ -41,6 +41,14 @@ class TreasuryValidationError(TreasuryError):
     """Datos de tesorería inconsistentes con el catálogo o las cuentas."""
 
 
+class FixedAssetError(Exception):
+    """Operación inválida sobre un activo fijo o su depreciación."""
+
+
+class FixedAssetValidationError(FixedAssetError):
+    """Datos del activo incompatibles con su política de depreciación."""
+
+
 class AuthError(Exception):
     """Error de autenticación o registro."""
 

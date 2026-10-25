@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 
 from app.api.v1 import (
     accounting,
+    assets,
     auth,
     banks,
     contacts,
@@ -28,6 +29,8 @@ from app.api.v1 import (
 from app.application.accounting.period_service import FiscalPeriodError
 from app.application.accounting.service import AccountingPeriodClosedError
 from app.domain.exceptions import (
+    FixedAssetError,
+    FixedAssetValidationError,
     InventoryError,
     InvoiceStateError,
     InvoiceValidationError,
@@ -49,6 +52,7 @@ app.include_router(taxes.router, prefix="/api/v1")
 app.include_router(invoices.router, prefix="/api/v1")
 app.include_router(payments.router, prefix="/api/v1")
 app.include_router(accounting.router, prefix="/api/v1")
+app.include_router(assets.router, prefix="/api/v1")
 app.include_router(warehouses.router, prefix="/api/v1")
 app.include_router(expenses.router, prefix="/api/v1")
 app.include_router(inventory.router, prefix="/api/v1")
@@ -165,6 +169,30 @@ async def treasury_error_handler(
     exc: TreasuryError,
 ) -> JSONResponse:
     """Traduce un conflicto de tesorería a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(FixedAssetValidationError)
+async def fixed_asset_validation_handler(
+    _request: Request,
+    exc: FixedAssetValidationError,
+) -> JSONResponse:
+    """Traduce datos inválidos de un activo a un 422."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(FixedAssetError)
+async def fixed_asset_error_handler(
+    _request: Request,
+    exc: FixedAssetError,
+) -> JSONResponse:
+    """Traduce un conflicto de activos fijos a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},

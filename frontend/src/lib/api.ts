@@ -260,6 +260,38 @@ export interface ExpenseCreateInput {
   reference?: string;
 }
 
+export type FixedAssetStatus = "ACTIVE" | "DISPOSED";
+
+export interface FixedAsset {
+  id: string;
+  code: string;
+  name: string;
+  purchase_date: string;
+  initial_cost: string;
+  salvage_value: string;
+  useful_life_months: number;
+  status: FixedAssetStatus;
+  monthly_depreciation: string;
+  accumulated_depreciation: string;
+  current_value: string;
+  is_fully_depreciated: boolean;
+  created_at: string;
+}
+
+export interface FixedAssetCreateInput {
+  code: string;
+  name: string;
+  purchase_date: string;
+  initial_cost: string;
+  salvage_value: string;
+  useful_life_months: number;
+}
+
+export interface DepreciateAssetInput {
+  month: number;
+  year: number;
+}
+
 export type StockMovementType = "IN" | "OUT";
 
 export interface StockBalance {
@@ -776,6 +808,26 @@ export function createExpense(
   payload: ExpenseCreateInput,
 ): Promise<Expense> {
   return apiPost<Expense>("/expenses", payload);
+}
+
+export function getFixedAssets(cookieHeader?: string): Promise<FixedAsset[]> {
+  return apiGet<FixedAsset[]>("/assets", cookieHeader);
+}
+
+export function createFixedAsset(
+  payload: FixedAssetCreateInput,
+): Promise<FixedAsset> {
+  return apiPost<FixedAsset>("/assets", payload);
+}
+
+export function depreciateFixedAsset(
+  assetId: string,
+  payload: DepreciateAssetInput,
+): Promise<FixedAsset> {
+  return apiPost<FixedAsset>(
+    `/assets/${encodeURIComponent(assetId)}/depreciate`,
+    payload,
+  );
 }
 
 export type BankAccountType = "CHECKING" | "SAVINGS";

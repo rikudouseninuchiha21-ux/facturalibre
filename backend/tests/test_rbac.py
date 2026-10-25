@@ -101,6 +101,22 @@ def test_accountant_can_access_treasury(db_session) -> None:
     assert response.status_code == 200, response.text
 
 
+def test_cashier_cannot_access_fixed_assets(db_session) -> None:
+    """Un cajero no puede consultar ni depreciar activos fijos."""
+    client = _make_client_with_user(db_session, UserRole.CASHIER, "cajero-activos@test.com")
+
+    response = client.get("/api/v1/assets")
+    assert response.status_code == 403, response.text
+
+
+def test_accountant_can_access_fixed_assets(db_session) -> None:
+    """Un contador puede consultar el portafolio de activos fijos."""
+    client = _make_client_with_user(db_session, UserRole.ACCOUNTANT, "contador-activos@test.com")
+
+    response = client.get("/api/v1/assets")
+    assert response.status_code == 200, response.text
+
+
 def test_admin_can_access_everything(db_session) -> None:
     """Un administrador puede acceder a payroll, pos y reports."""
     client = _make_client_with_user(db_session, UserRole.ADMIN, "admin@test.com")

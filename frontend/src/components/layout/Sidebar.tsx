@@ -7,6 +7,7 @@ import { useState } from "react";
 import { type User } from "@/lib/api";
 import {
   BarChart3,
+  Building2,
   FilePlus,
   FileText,
   GraduationCap,
@@ -58,6 +59,7 @@ const NAVIGATION = [
     items: [
       { href: "/reports/financials", label: "Reportes", icon: BarChart3, roles: ["ADMIN", "ACCOUNTANT"] },
       { href: "/expenses", label: "Gastos", icon: FileText, roles: ["ADMIN", "ACCOUNTANT"] },
+      { href: "/assets", label: "Activos Fijos", icon: Building2, roles: ["ADMIN", "ACCOUNTANT"] },
       { href: "/treasury", label: "Tesorería", icon: Landmark, roles: ["ADMIN", "ACCOUNTANT"] },
     ],
   },

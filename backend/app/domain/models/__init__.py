@@ -25,6 +25,7 @@ from app.domain.models.company_setting import CompanySetting
 from app.domain.models.contact import Contact, ContactStatus, ContactType
 from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNoteStatus
 from app.domain.models.expense import Expense
+from app.domain.models.fixed_asset import DepreciationEntry, FixedAsset, FixedAssetStatus
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
 from app.domain.models.invoice_line import InvoiceLine
@@ -69,9 +70,12 @@ __all__ = [
     "CreditNote",
     "CreditNoteLine",
     "CreditNoteStatus",
+    "DepreciationEntry",
     "Employee",
     "Expense",
     "FiscalPeriod",
+    "FixedAsset",
+    "FixedAssetStatus",
     "FiscalPeriodStatus",
     "IdempotencyKey",
     "Invoice",

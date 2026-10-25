@@ -35,6 +35,7 @@ from app.domain.models.bank import (
 )
 from app.domain.models.credit_note import CreditNote
 from app.domain.models.expense import Expense
+from app.domain.models.fixed_asset import DepreciationEntry
 from app.domain.models.invoice import Invoice
 from app.domain.models.payment import Payment
 from app.domain.models.payroll import PayrollPeriod
@@ -415,6 +416,35 @@ class AccountingService:
             description=f"Reversión eliminación gasto: {expense.concept}",
             source_type=AccountingSourceType.EXPENSE_REVERSAL,
             source_id=expense.id,
+        )
+
+    def record_depreciation(self, depreciation: DepreciationEntry) -> AccountingEntry:
+        """Genera el asiento de la depreciación mensual de un activo fijo.
+
+        Débito a Gastos por depreciación (5160) por la cuota del mes y
+        crédito a Depreciación acumulada (1592). El asiento queda vinculado al
+        registro de depreciación mediante ``source_id`` y se crea dentro de la
+        misma transacción que la cuota.
+        """
+        asset = depreciation.asset
+        return self._post_entry(
+            entry_date=depreciation.date,
+            description=(
+                f"Depreciación {asset.code} - {asset.name} "
+                f"({depreciation.date.month:02d}/{depreciation.date.year})"
+            ),
+            source_type=AccountingSourceType.DEPRECIATION,
+            source_id=depreciation.id,
+            lines=[
+                JournalLine(
+                    account_code=self.mapping.depreciation_expense,
+                    debit=depreciation.amount,
+                ),
+                JournalLine(
+                    account_code=self.mapping.accumulated_depreciation,
+                    credit=depreciation.amount,
+                ),
+            ],
         )
 
     def record_bank_transaction(

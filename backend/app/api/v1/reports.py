@@ -464,19 +464,36 @@ def get_balance_sheet(
 
     for b in balances:
         balance = b["balance"]
-        row_data = AccountReportRow(
-            code=b["code"],
-            name=b["name"],
-            balance=_format_money(balance),
-        )
         if b["account_type"] == "ACTIVO":
-            asset_accounts.append(row_data)
-            total_assets += balance
+            # Las cuentas de activo con naturaleza crédito son contra-activos
+            # (por ejemplo, 1592 Depreciación acumulada). Se presentan con
+            # saldo negativo para que el total de activos sea el valor neto.
+            display_balance = -balance if b["nature"] == "CREDITO" else balance
+            asset_accounts.append(
+                AccountReportRow(
+                    code=b["code"],
+                    name=b["name"],
+                    balance=_format_money(display_balance),
+                )
+            )
+            total_assets += display_balance
         elif b["account_type"] == "PASIVO":
-            liability_accounts.append(row_data)
+            liability_accounts.append(
+                AccountReportRow(
+                    code=b["code"],
+                    name=b["name"],
+                    balance=_format_money(balance),
+                )
+            )
             total_liabilities += balance
         elif b["account_type"] == "PATRIMONIO":
-            equity_accounts.append(row_data)
+            equity_accounts.append(
+                AccountReportRow(
+                    code=b["code"],
+                    name=b["name"],
+                    balance=_format_money(balance),
+                )
+            )
             total_equity += balance
 
     # El resultado del ejercicio (Ingresos - Gastos) se incorpora al patrimonio

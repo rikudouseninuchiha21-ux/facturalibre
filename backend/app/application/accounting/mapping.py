@@ -29,6 +29,8 @@ class AccountingMapping:
     payroll_payable: str = "250505"
     payroll_contributions: str = "237005"
     expense_account: str = "5199"
+    depreciation_expense: str = "5160"
+    accumulated_depreciation: str = "1592"
 
 
 # Códigos provisionales, alineados con los grupos 1305, 4135, 2408, 1105, 1110,
@@ -45,6 +47,8 @@ DEFAULT_ACCOUNTING_MAPPING = AccountingMapping(
     accounts_payable_account="220505",
     cogs_account="6135",
     expense_account="5199",
+    depreciation_expense="5160",
+    accumulated_depreciation="1592",
 )
 
 # El método de pago es texto libre en el MVP. Solo estos valores se consideran
