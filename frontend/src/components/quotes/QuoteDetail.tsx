@@ -34,7 +34,7 @@ const statusStyles: Record<string, string> = {
   SENT: "bg-blue-50 text-blue-700 ring-blue-200",
   ACCEPTED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   REJECTED: "bg-red-50 text-red-700 ring-red-200",
-  CONVERTED: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+  CONVERTED: "bg-amber-50 text-amber-700 ring-amber-200",
 };
 
 interface QuoteDetailProps {
@@ -119,7 +119,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             <Button
               onClick={() => handleSetStatus("SENT")}
               disabled={isSending}
-              className="bg-blue-600 hover:bg-blue-700 shadow-sm shadow-blue-500/30"
+              className="bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-500/30"
             >
               {isSending ? "Enviando..." : "Marcar como Enviada"}
             </Button>
@@ -146,7 +146,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             <Button
               onClick={handleConvert}
               disabled={isConverting}
-              className="bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-500/30"
+              className="bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-500/30"
             >
               {isConverting ? "Convirtiendo..." : "Convertir a Factura"}
             </Button>

@@ -314,7 +314,7 @@ export function InvoiceDetail({
             onClick={() => {
               setIsCreditNoteOpen(true);
             }}
-            className="bg-blue-600 text-white hover:bg-blue-700"
+            className="bg-amber-600 text-white hover:bg-amber-700"
           >
             Crear Nota Crédito
           </Button>

@@ -26,17 +26,18 @@ from app.application.invoice_schemas import (
     VoidInvoiceRequest,
     canonical_body_hash,
 )
+from app.application.invoice_service import (
+    apply_invoice_issue_effects,
+    create_invoice_draft,
+)
 from app.domain.calculations import (
     LineAmounts,
     calculate_invoice_totals,
-    calculate_line,
     round_money,
 )
-from app.domain.contact_repository import ContactRepository
 from app.domain.credit_note_repository import CreditNoteRepository, NewCreditNoteLine
 from app.domain.exceptions import InventoryError, ResourceNotFoundError
-from app.domain.invoice_repository import InvoiceRepository, NewInvoiceLine
-from app.domain.item_repository import ItemRepository
+from app.domain.invoice_repository import InvoiceRepository
 from app.domain.models.auth import UserRole
 from app.domain.models.invoice_line import InvoiceLine
 from app.domain.models.stock import StockMovementType
@@ -103,68 +104,7 @@ def create_invoice(
             content=existing.response_body,
         )
 
-    contact = ContactRepository(db).get_by_id(payload.contact_id)
-    if contact is None:
-        raise HTTPException(
-            status_code=422,
-            detail="contact_id no existe o está eliminado",
-        )
-
-    item_repository = ItemRepository(db)
-    calculated_lines: list[LineAmounts] = []
-    new_lines: list[NewInvoiceLine] = []
-
-    for line in payload.lines:
-        item = item_repository.get_by_id(line.item_id)
-        if item is None:
-            raise HTTPException(
-                status_code=422,
-                detail=f"item_id {line.item_id} no existe o está eliminado",
-            )
-
-        # REQUIERE VALIDACIÓN: contador/experto DIAN. La tarifa por defecto y el
-        # código de impuesto deben alinearse con el catálogo tributario oficial.
-        if line.tax_rate is not None:
-            tax_rate = line.tax_rate
-        elif item.tax is not None and item.tax.deleted_at is None:
-            tax_rate = item.tax.rate
-        else:
-            tax_rate = Decimal("0")
-
-        description = line.description or item.description or item.name
-        amounts = calculate_line(
-            quantity=line.quantity,
-            unit_price=line.unit_price,
-            discount_percent=line.discount_percent,
-            tax_rate=tax_rate,
-            price_includes_tax=item.price_includes_tax,
-        )
-        calculated_lines.append(amounts)
-        new_lines.append(
-            NewInvoiceLine(
-                item_id=item.id,
-                description=description,
-                quantity=line.quantity,
-                unit_price=line.unit_price,
-                discount_percent=line.discount_percent,
-                tax_rate=tax_rate,
-                subtotal=amounts.subtotal,
-                tax=amounts.tax,
-                total=amounts.total,
-            )
-        )
-
-    totals = calculate_invoice_totals(calculated_lines)
-    invoice = repository.create_draft(
-        contact_id=contact.id,
-        issue_date=payload.issue_date,
-        due_date=payload.due_date,
-        currency=payload.currency,
-        lines=new_lines,
-        subtotal=totals.subtotal,
-        tax_total=totals.tax_total,
-        total=totals.total,
-    )
+    invoice = create_invoice_draft(db, payload)
 
     response_body = InvoiceRead.model_validate(invoice).model_dump(mode="json")
     repository.add_idempotency_key(
@@ -216,8 +156,7 @@ def issue_invoice(
     """
     with operation_transaction(db):
         invoice = repository.issue(invoice_id)
-        InventoryService(db).register_invoice_issue(invoice)
-        AccountingService(db).record_invoice_issued(invoice)
+        apply_invoice_issue_effects(db, invoice)
 
     issued = repository.get_by_id(invoice_id)
     if issued is None:

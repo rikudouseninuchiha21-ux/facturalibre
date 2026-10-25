@@ -2,13 +2,25 @@
 
 from __future__ import annotations
 
+from decimal import ROUND_HALF_UP, Decimal
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session, joinedload
 
-from app.domain.models.stock import StockBalance, StockMovement
+from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
+
+COST_PRECISION = Decimal("0.0001")
+INCREASE_TYPES = (
+    StockMovementType.IN,
+    StockMovementType.TRANSFER_IN,
+    StockMovementType.ADJUSTMENT,
+)
+DECREASE_TYPES = (
+    StockMovementType.OUT,
+    StockMovementType.TRANSFER_OUT,
+)
 
 
 class InventoryRepository:
@@ -58,6 +70,53 @@ class InventoryRepository:
         self.db.flush()
         self.db.refresh(movement)
         return movement
+
+    def get_weighted_average_cost(
+        self,
+        item_id: UUID,
+        warehouse_id: UUID,
+        *,
+        quantity_on_hand: Decimal,
+    ) -> Decimal | None:
+        """Calcula el costo promedio ponderado del inventario disponible.
+
+        Solo se consideran movimientos con ``unit_cost`` conocido. El valor
+        disponible es el valor de las entradas costeadas menos el de las salidas
+        ya costeadas. El denominador es la cantidad total en existencia, de modo
+        que el stock histórico sin costo se trata como costo cero y nunca se
+        acredita a inventario más valor del que realmente se registró.
+
+        Devuelve ``None`` cuando no hay valor o unidades disponibles. El método
+        no hace commit y debe invocarse dentro de la transacción de inventario,
+        después de bloquear el saldo del ítem/bodega.
+        """
+        incoming_statement = select(
+            func.coalesce(func.sum(StockMovement.quantity * StockMovement.unit_cost), 0),
+        ).where(
+            StockMovement.item_id == item_id,
+            StockMovement.warehouse_id == warehouse_id,
+            StockMovement.movement_type.in_(INCREASE_TYPES),
+            StockMovement.unit_cost.is_not(None),
+        )
+        outgoing_statement = select(
+            func.coalesce(func.sum(StockMovement.quantity * StockMovement.unit_cost), 0),
+        ).where(
+            StockMovement.item_id == item_id,
+            StockMovement.warehouse_id == warehouse_id,
+            StockMovement.movement_type.in_(DECREASE_TYPES),
+            StockMovement.unit_cost.is_not(None),
+        )
+
+        incoming_value = self.db.execute(incoming_statement).scalar_one()
+        outgoing_value = self.db.execute(outgoing_statement).scalar_one()
+        available_value = Decimal(str(incoming_value)) - Decimal(str(outgoing_value))
+        if quantity_on_hand <= 0 or available_value <= 0:
+            return None
+
+        return (available_value / quantity_on_hand).quantize(
+            COST_PRECISION,
+            rounding=ROUND_HALF_UP,
+        )
 
     def list_balances(
         self,

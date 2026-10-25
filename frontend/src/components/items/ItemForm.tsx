@@ -193,7 +193,7 @@ export function ItemForm({ taxes }: ItemFormProps) {
               No hay impuestos registrados. Puedes crear el ítem sin impuesto o{" "}
               <Link
                 href="/taxes"
-                className="font-semibold text-blue-600 underline decoration-blue-300 underline-offset-2 hover:text-blue-700"
+                className="font-semibold text-amber-600 underline decoration-amber-300 underline-offset-2 hover:text-amber-700"
               >
                 crear un impuesto
               </Link>
@@ -211,7 +211,7 @@ export function ItemForm({ taxes }: ItemFormProps) {
               checked={priceIncludesTax}
               onChange={(event) => setPriceIncludesTax(event.target.checked)}
               disabled={isSubmitting}
-              className="rounded border-slate-300 bg-slate-50 text-indigo-600 focus:ring-indigo-600 focus:ring-1"
+              className="rounded border-slate-300 bg-slate-50 text-amber-600 focus:ring-amber-600 focus:ring-1"
             />
             <label
               htmlFor="item-price-includes-tax"

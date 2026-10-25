@@ -60,7 +60,7 @@ export default async function NewQuotePage() {
         <div>
           <Link
             href="/quotes"
-            className="text-sm font-medium text-blue-600 transition-colors hover:text-blue-700"
+            className="text-sm font-medium text-amber-600 transition-colors hover:text-amber-700"
           >
             ← Volver a cotizaciones
           </Link>

@@ -71,36 +71,67 @@ class AccountingService:
         self.repository = AccountingRepository(db)
         self.mapping = mapping
 
-    def record_invoice_issued(self, invoice: Invoice) -> AccountingEntry | None:
+    def record_invoice_issued(
+        self,
+        invoice: Invoice,
+        *,
+        cogs: Decimal = ZERO,
+    ) -> AccountingEntry | None:
         """Genera el asiento de emisión de una factura de venta.
 
         Débito a Cuentas por Cobrar por el total; crédito a Ingresos por el
-        subtotal y a IVA generado por el impuesto.
+        subtotal y a IVA generado por el impuesto. Cuando la venta tiene costo
+        conocido, se agregan el débito a Costo de Ventas (6135) y el crédito a
+        Inventario (1435), de modo que el asiento refleje la venta completa.
 
-        Una factura con total cero no representa un hecho económico contable y
-        no genera asiento. REQUIERE VALIDACIÓN: confirmar si el negocio debe
-        prohibir este tipo de facturas o manejarlas con una cuenta de orden.
+        Una factura con total cero y sin costo no representa un hecho económico
+        contable y no genera asiento. REQUIERE VALIDACIÓN: confirmar si el
+        negocio debe prohibir este tipo de facturas o manejarlas con una cuenta
+        de orden.
         """
-        if invoice.total <= ZERO:
+        cogs = round_money(cogs)
+        if invoice.total <= ZERO and cogs <= ZERO:
             return None
 
-        lines = [
-            JournalLine(
-                account_code=self.mapping.accounts_receivable,
-                debit=invoice.total,
-            ),
-            JournalLine(
-                account_code=self.mapping.sales_revenue,
-                credit=invoice.subtotal,
-            ),
-        ]
-        if invoice.tax_total > ZERO:
+        lines: list[JournalLine] = []
+        if invoice.total > ZERO:
             lines.append(
                 JournalLine(
-                    account_code=self.mapping.vat_payable,
-                    credit=invoice.tax_total,
+                    account_code=self.mapping.accounts_receivable,
+                    debit=invoice.total,
                 )
             )
+            if invoice.subtotal > ZERO:
+                lines.append(
+                    JournalLine(
+                        account_code=self.mapping.sales_revenue,
+                        credit=invoice.subtotal,
+                    )
+                )
+            if invoice.tax_total > ZERO:
+                lines.append(
+                    JournalLine(
+                        account_code=self.mapping.vat_payable,
+                        credit=invoice.tax_total,
+                    )
+                )
+
+        if cogs > ZERO:
+            lines.append(
+                JournalLine(
+                    account_code=self.mapping.cogs_account,
+                    debit=cogs,
+                )
+            )
+            lines.append(
+                JournalLine(
+                    account_code=self.mapping.inventory_account,
+                    credit=cogs,
+                )
+            )
+
+        if len(lines) < 2:
+            return None
 
         return self._post_entry(
             entry_date=invoice.issue_date or date.today(),

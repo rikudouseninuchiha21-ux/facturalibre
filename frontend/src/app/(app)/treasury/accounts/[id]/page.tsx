@@ -71,7 +71,7 @@ export default async function BankAccountPage({
         <div className="mt-6">
           <Link
             href="/treasury"
-            className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+            className="text-sm font-medium text-amber-600 hover:text-amber-800"
           >
             ← Volver a tesorería
           </Link>
@@ -87,7 +87,7 @@ export default async function BankAccountPage({
       <header>
         <Link
           href="/treasury"
-          className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800"
+          className="text-sm font-medium text-amber-600 transition-colors hover:text-amber-800"
         >
           ← Volver a tesorería
         </Link>

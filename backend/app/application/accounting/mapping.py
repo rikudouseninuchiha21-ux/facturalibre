@@ -23,23 +23,27 @@ class AccountingMapping:
     inventory_account: str
     vat_deductible_account: str
     accounts_payable_account: str
+    # Costo de ventas
+    cogs_account: str = "6135"
     payroll_expense: str = "510506"
     payroll_payable: str = "250505"
     payroll_contributions: str = "237005"
     expense_account: str = "5199"
 
 
-# Códigos provisionales, alineados con los grupos 1305, 4135, 2408, 1105, 1110
-# y las cuentas de nómina 510506, 250505 y 237005.
+# Códigos provisionales, alineados con los grupos 1305, 4135, 2408, 1105, 1110,
+# la cuenta de inventario 1435, la cuenta de costo de ventas 6135 y las cuentas
+# de nómina 510506, 250505 y 237005.
 DEFAULT_ACCOUNTING_MAPPING = AccountingMapping(
     accounts_receivable="130505",
     sales_revenue="413505",
     vat_payable="240801",
     cash="110505",
     bank="111005",
-    inventory_account="143505",
+    inventory_account="1435",
     vat_deductible_account="240802",
     accounts_payable_account="220505",
+    cogs_account="6135",
     expense_account="5199",
 )
 

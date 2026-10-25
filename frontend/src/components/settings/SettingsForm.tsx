@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ApiError, updateCompanySettings, type CompanySetting } from "@/lib/api";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
+  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
 
 interface SettingsFormProps {
   companySettings: CompanySetting;

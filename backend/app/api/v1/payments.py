@@ -17,6 +17,7 @@ from app.application.payment_schemas import (
     PaymentRead,
     canonical_payment_hash,
 )
+from app.application.payment_service import PaymentService
 from app.domain.calculations import round_money
 from app.domain.exceptions import InvoiceStateError, ResourceNotFoundError
 from app.domain.models.idempotency_key import IdempotencyKey
@@ -113,15 +114,13 @@ def create_payment(
                             detail=OVERPAYMENT_NOT_ALLOWED,
                         )
 
-                    payment = repository.create_payment(
-                        invoice_id=invoice.id,
+                    payment = PaymentService(db).register_payment(
+                        invoice=invoice,
                         amount=amount,
                         payment_date=payload.payment_date,
                         method=payload.method,
                         reference=payload.reference,
                     )
-                    repository.recalculate_invoice(invoice)
-                    AccountingService(db).record_payment(payment, invoice)
                     response_body = PaymentRead.model_validate(payment).model_dump(mode="json")
                     repository.add_idempotency_key(
                         key=key,

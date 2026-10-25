@@ -80,15 +80,21 @@ export function Sidebar({ currentUser }: SidebarProps) {
 
   return (
     <aside
-      className="w-64 bg-slate-950 border-r border-slate-800 text-white z-50 shrink-0 flex flex-col h-screen"
+      className="w-64 bg-zinc-950 border-r border-zinc-800 text-white z-50 shrink-0 flex flex-col h-screen"
     >
       {/* Sidebar header with logo */}
-      <div className="flex items-center justify-between px-4 py-6 border-b border-slate-800 bg-slate-950 shrink-0">
+      <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-800 bg-zinc-950 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-full bg-indigo-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/30">
+          <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-200 to-amber-600 text-xs font-bold text-zinc-950 shadow-lg shadow-amber-500/30">
             N
           </div>
-          <span className={isCollapsed ? "hidden" : "text-lg font-bold tracking-tight text-white"}>
+          <span
+            className={
+              isCollapsed
+                ? "hidden"
+                : "bg-gradient-to-r from-amber-200 to-amber-500 bg-clip-text text-lg font-bold tracking-tight text-transparent"
+            }
+          >
             Nexus ERP
           </span>
         </div>
@@ -96,7 +102,7 @@ export function Sidebar({ currentUser }: SidebarProps) {
           type="button"
           onClick={() => setIsCollapsed((prev) => !prev)}
           aria-label="Colapsar menú"
-          className="md:hidden p-2 rounded-md text-slate-400 hover:bg-slate-900 hover:text-white transition-colors"
+          className="md:hidden p-2 rounded-md text-zinc-400 hover:bg-zinc-900 hover:text-amber-300 transition-colors"
         >
           <svg
             className={`size-5 ${isCollapsed ? "-rotate-90" : ""}`}
@@ -121,7 +127,7 @@ export function Sidebar({ currentUser }: SidebarProps) {
 
           return (
             <div key={category.label}>
-              <h3 className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              <h3 className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
                 {category.label}
               </h3>
               <ul className="space-y-0.5">
@@ -131,8 +137,8 @@ export function Sidebar({ currentUser }: SidebarProps) {
                     href={item.href}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname === item.href
-                        ? "bg-indigo-500/10 text-indigo-400 font-medium"
-                        : "text-slate-400 hover:bg-slate-900 hover:text-white"
+                        ? "bg-amber-500/10 text-amber-400 font-medium"
+                        : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
                     }`}
                   >
                     <item.icon className="size-4 shrink-0" />
@@ -150,17 +156,17 @@ export function Sidebar({ currentUser }: SidebarProps) {
       </nav>
 
       {/* Footer with user profile */}
-      <div className="shrink-0 p-4 border-t border-slate-800 bg-slate-950">
+      <div className="shrink-0 p-4 border-t border-zinc-800 bg-zinc-950">
         <div className="flex items-center justify-between w-full gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-indigo-600/10 text-indigo-400 text-sm font-bold border border-indigo-500/20">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-600/10 text-amber-400 text-sm font-bold border border-amber-500/20">
               {currentUser?.full_name?.charAt(0) || "U"}
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-medium text-white truncate">
                 {currentUser?.full_name}
               </span>
-              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
                 {currentUser?.role}
               </span>
             </div>

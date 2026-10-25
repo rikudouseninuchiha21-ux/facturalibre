@@ -2,19 +2,36 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from datetime import date
+from decimal import Decimal
+from typing import Annotated, Any
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user, require_role
+from app.application.invoice_schemas import InvoiceCreate, InvoiceRead, canonical_body_hash
+from app.application.invoice_service import (
+    apply_invoice_issue_effects,
+    create_invoice_draft,
+)
+from app.application.payment_schemas import PaymentRead
+from app.application.payment_service import PaymentService
+from app.application.pos_schemas import PosCheckoutRead
+from app.domain.invoice_repository import InvoiceRepository
 from app.domain.models.auth import UserRole
+from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.item import Item
 from app.domain.models.stock import StockBalance
 from app.domain.models.tax import Tax
 from app.domain.models.warehouse import Warehouse
+from app.domain.payment_repository import PaymentRepository
 from app.infrastructure.database import get_db
+from app.infrastructure.transactions import operation_transaction
 
 router = APIRouter(
     prefix="/pos",
@@ -26,8 +43,31 @@ router = APIRouter(
 )
 
 DbSession = Annotated[Session, Depends(get_db)]
+IdempotencyKeyHeader = Annotated[UUID, Header(alias="Idempotency-Key")]
 
 MAX_RESULTS = 10
+ZERO = Decimal("0.00")
+IDEMPOTENCY_MISMATCH = "Idempotency-Key reutilizada con body diferente"
+
+
+def _replay_response(
+    existing: IdempotencyKey | None,
+    request_hash: str,
+) -> dict[str, Any] | None:
+    """Valida una Key existente y devuelve la respuesta guardada, si aplica."""
+    if existing is None:
+        return None
+    if existing.request_hash != request_hash:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=IDEMPOTENCY_MISMATCH,
+        )
+    if existing.response_body is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Idempotency-Key en proceso",
+        )
+    return existing.response_body
 
 
 @router.get("/search")
@@ -81,3 +121,81 @@ def search_items(
         )
 
     return results
+
+
+@router.post(
+    "/checkout",
+    response_model=PosCheckoutRead,
+    status_code=status.HTTP_201_CREATED,
+)
+def checkout(
+    payload: InvoiceCreate,
+    idempotency_key: IdempotencyKeyHeader,
+    db: DbSession,
+) -> JSONResponse:
+    """Cobra una venta del POS de forma atómica.
+
+    En una sola transacción crea la factura, la emite, descuenta inventario,
+    registra el COGS, contabiliza la venta, crea el pago en efectivo por el
+    total y deja la factura en ``paid`` con saldo cero. Si cualquier paso falla,
+    no queda factura, movimiento, pago ni asiento parcial.
+    """
+    key = str(idempotency_key)
+    request_hash = canonical_body_hash(payload)
+    repository = InvoiceRepository(db)
+    response_body: dict[str, Any] | None = None
+
+    try:
+        with operation_transaction(db):
+            response_body = _replay_response(
+                repository.get_idempotency_key(key),
+                request_hash,
+            )
+            if response_body is None:
+                draft = create_invoice_draft(db, payload)
+                invoice = repository.issue(draft.id)
+                apply_invoice_issue_effects(db, invoice)
+
+                payment = None
+                if invoice.total > ZERO:
+                    payment = PaymentService(db).register_payment(
+                        invoice=invoice,
+                        amount=invoice.total,
+                        payment_date=invoice.issue_date or date.today(),
+                        method="cash",
+                        reference="POS",
+                    )
+                else:
+                    # Una factura de total cero no admite un pago positivo, pero
+                    # el POS sí debe dejarla cerrada como pagada.
+                    PaymentRepository(db).recalculate_invoice(invoice)
+
+                response_body = PosCheckoutRead(
+                    invoice=InvoiceRead.model_validate(invoice),
+                    payment=(PaymentRead.model_validate(payment) if payment is not None else None),
+                ).model_dump(mode="json")
+                repository.add_idempotency_key(
+                    key=key,
+                    request_hash=request_hash,
+                    response_body=response_body,
+                )
+    except IntegrityError:
+        # Otra petición concurrente insertó la misma Key. Su transacción ganó y
+        # esta se revirtió por completo, incluidos factura, stock y pago.
+        winner_body = _replay_response(
+            repository.get_idempotency_key(key),
+            request_hash,
+        )
+        if winner_body is None:
+            raise
+        response_body = winner_body
+
+    if response_body is None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Idempotency-Key en proceso",
+        )
+    return JSONResponse(
+        status_code=status.HTTP_201_CREATED,
+        content=response_body,
+    )

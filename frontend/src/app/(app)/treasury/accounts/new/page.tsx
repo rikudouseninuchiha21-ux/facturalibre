@@ -35,7 +35,7 @@ export default async function NewBankAccountPage() {
       <header>
         <Link
           href="/treasury"
-          className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-800"
+          className="text-sm font-medium text-amber-600 transition-colors hover:text-amber-800"
         >
           ← Volver a tesorería
         </Link>

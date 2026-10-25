@@ -156,7 +156,7 @@ export default async function PurchasesPage() {
                     <TableCell className="font-mono text-xs font-medium text-slate-950">
                       <Link
                         href={`/purchases/${purchase.id}`}
-                        className="text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                        className="text-amber-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                       >
                         {purchase.number ?? "—"}
                       </Link>

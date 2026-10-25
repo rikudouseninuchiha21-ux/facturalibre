@@ -97,6 +97,16 @@ class InventoryService:
                 f"disponible {balance.quantity}, solicitado {quantity}."
             )
 
+        # Las salidas sin costo explícito se valorizan con el promedio
+        # ponderado disponible. El saldo ya está bloqueado, de modo que la
+        # valorización y el descuento de unidades son consistentes entre sí.
+        if unit_cost is None and movement_type in DECREASE_TYPES:
+            unit_cost = self.repository.get_weighted_average_cost(
+                item_id,
+                warehouse_id,
+                quantity_on_hand=balance.quantity,
+            )
+
         if movement_type in INCREASE_TYPES:
             balance.quantity += quantity
         else:

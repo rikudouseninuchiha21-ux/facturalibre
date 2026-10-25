@@ -69,7 +69,7 @@ export default async function TreasuryPage() {
         </div>
         <Link
           href="/treasury/accounts/new"
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600"
         >
           <span aria-hidden="true">+</span>
           Nueva cuenta bancaria
@@ -87,10 +87,10 @@ export default async function TreasuryPage() {
 
       {summary ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <Card className="bg-gradient-to-br from-indigo-50 via-white to-white">
+          <Card className="bg-gradient-to-br from-amber-50 via-white to-white">
             <CardHeader>
               <CardDescription>Saldo total</CardDescription>
-              <CardTitle className="text-2xl tabular-nums text-indigo-950">
+              <CardTitle className="text-2xl tabular-nums text-amber-950">
                 {formatCurrency(summary.total_balance, "COP")}
               </CardTitle>
             </CardHeader>
@@ -198,7 +198,7 @@ export default async function TreasuryPage() {
                     <TableCell className="text-right">
                       <Link
                         href={`/treasury/accounts/${account.id}`}
-                        className="text-sm font-semibold text-indigo-600 transition-colors hover:text-indigo-800"
+                        className="text-sm font-semibold text-amber-600 transition-colors hover:text-amber-800"
                       >
                         Ver detalle
                       </Link>

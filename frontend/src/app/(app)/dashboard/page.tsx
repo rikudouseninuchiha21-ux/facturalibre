@@ -82,7 +82,7 @@ export default async function HomePage() {
   return (
     <div className="space-y-8">
       <header className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-widest text-blue-600">
+        <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
           Panel administrativo
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -128,17 +128,17 @@ export default async function HomePage() {
                 title="Facturado Total"
                 value={formatCurrency(summary.total_invoiced)}
                 description="Facturas emitidas vigentes."
-                cardClassName="bg-gradient-to-br from-indigo-50 to-white border-indigo-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all"
-                iconClassName="bg-gradient-to-br from-indigo-400 to-indigo-600 text-white shadow-lg shadow-indigo-500/30"
-                textClassName="text-indigo-950"
+                cardClassName="bg-gradient-to-br from-amber-50 to-white border-amber-100 shadow-sm hover:shadow-md hover:border-amber-200 transition-all"
+                iconClassName="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30"
+                textClassName="text-amber-950"
                 Icon={TrendingUp}
               />
               <KpiCard
                 title="Saldo Pendiente"
                 value={formatCurrency(summary.pending_balance)}
                 description="Cartera por cobrar de facturas emitidas."
-                cardClassName="bg-gradient-to-br from-amber-50 to-white border-amber-100 shadow-sm hover:shadow-md hover:border-amber-200 transition-all"
-                iconClassName="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30"
+                cardClassName="bg-gradient-to-br from-amber-100 to-white border-amber-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all"
+                iconClassName="bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-lg shadow-amber-700/30"
                 textClassName="text-amber-950"
                 Icon={Clock}
               />
@@ -180,10 +180,10 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
             href="/pos"
-            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100 transition-colors">
+              <div className="p-3 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition-colors">
                 <ShoppingCart className="size-6" />
               </div>
               <div>
@@ -208,10 +208,10 @@ export default async function HomePage() {
           </Link>
           <Link
             href="/contacts"
-            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-amber-400 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition-colors">
+              <div className="p-3 rounded-xl bg-amber-100 text-amber-800 group-hover:bg-amber-200 transition-colors">
                 <UserPlus className="size-6" />
               </div>
               <div>

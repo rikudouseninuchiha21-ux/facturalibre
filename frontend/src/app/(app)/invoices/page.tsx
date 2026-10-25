@@ -165,7 +165,7 @@ export default async function InvoicesPage() {
                     <TableCell className="font-mono text-xs font-medium text-slate-950">
                       <Link
                         href={`/invoices/${invoice.id}`}
-                        className="text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                        className="text-amber-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                       >
                         {invoice.number ?? "—"}
                       </Link>

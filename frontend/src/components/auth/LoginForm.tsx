@@ -111,7 +111,7 @@ export function LoginForm() {
         ¿No existe ningún usuario?{" "}
         <Link
           href="/register"
-          className="font-semibold text-blue-600 hover:text-blue-700"
+          className="font-semibold text-amber-600 hover:text-amber-700"
         >
           Crear el administrador inicial
         </Link>

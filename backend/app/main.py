@@ -27,6 +27,7 @@ from app.api.v1 import (
 from app.domain.exceptions import (
     InventoryError,
     InvoiceStateError,
+    InvoiceValidationError,
     PayrollError,
     QuoteStateError,
     ResourceNotFoundError,
@@ -90,6 +91,18 @@ async def invoice_state_handler(
     """Traduce una transición de estado inválida a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(InvoiceValidationError)
+async def invoice_validation_handler(
+    _request: Request,
+    exc: InvoiceValidationError,
+) -> JSONResponse:
+    """Traduce datos inválidos de una factura a un 422."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
         content={"detail": str(exc)},
     )
 

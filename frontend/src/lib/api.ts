@@ -1031,11 +1031,25 @@ export interface PosItemSearchResult {
   stock_current: string;
 }
 
+export interface PosCheckoutResult {
+  invoice: Invoice;
+  payment: Payment | null;
+}
+
 export function searchPosItems(
   q: string,
   cookieHeader?: string,
 ): Promise<PosItemSearchResult[]> {
   return apiGet<PosItemSearchResult[]>(`/pos/search?q=${encodeURIComponent(q)}`, cookieHeader);
+}
+
+export function checkoutPos(
+  payload: InvoiceCreateInput,
+  idempotencyKey: string,
+): Promise<PosCheckoutResult> {
+  return apiPost<PosCheckoutResult>("/pos/checkout", payload, {
+    headers: { "Idempotency-Key": idempotencyKey },
+  });
 }
 
 export type PurchasePaymentStatus = "draft" | "issued" | "void";

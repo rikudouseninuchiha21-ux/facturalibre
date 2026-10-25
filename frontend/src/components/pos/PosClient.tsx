@@ -20,9 +20,9 @@ import {
 } from "@/components/ui/table";
 import {
   ApiError,
-  createInvoice,
-  issueInvoice,
+  checkoutPos,
   type Contact,
+  type InvoiceCreateInput,
   type PosItemSearchResult,
   searchPosItems,
 } from "@/lib/api";
@@ -193,11 +193,11 @@ export function PosClient({ contacts }: PosClientProps) {
     try {
       const idempotencyKey = crypto.randomUUID();
 
-      const payload = {
+      const payload: InvoiceCreateInput = {
         contact_id: customerId || "",
         issue_date: new Date().toISOString().slice(0, 10),
         due_date: new Date().toISOString().slice(0, 10),
-        currency: "COP" as const,
+        currency: "COP",
         lines: cart.map((line) => ({
           item_id: line.itemId,
           quantity: line.quantity,
@@ -207,11 +207,10 @@ export function PosClient({ contacts }: PosClientProps) {
         })),
       };
 
-      const invoice = await createInvoice(payload, idempotencyKey);
-      await issueInvoice(invoice.id);
+      const result = await checkoutPos(payload, idempotencyKey);
 
       setSuccess(
-        `Factura ${invoice.number} emitida correctamente.`,
+        `Factura ${result.invoice.number} cobrada y emitida correctamente.`,
       );
       setCart([]);
       setCashReceived("");
@@ -466,7 +465,7 @@ export function PosClient({ contacts }: PosClientProps) {
               <Button
                 onClick={handleCheckout}
                 disabled={isProcessing || cart.length === 0 || cash < totals.total}
-                className="w-full bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed py-3"
+                className="w-full bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed py-3"
               >
                 {isProcessing
                   ? "Procesando..."

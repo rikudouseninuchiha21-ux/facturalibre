@@ -13,6 +13,10 @@ class InvoiceStateError(Exception):
     """La operación no está permitida para el estado actual de la factura."""
 
 
+class InvoiceValidationError(Exception):
+    """Los datos de entrada de una factura no son válidos."""
+
+
 class QuoteStateError(Exception):
     """La operación no está permitida para el estado actual de la cotización."""
 

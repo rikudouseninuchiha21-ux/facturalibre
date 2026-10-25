@@ -16,12 +16,11 @@ from sqlalchemy import update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.orm import Session
 
-from app.application.accounting.service import AccountingService
-from app.application.inventory.service import InventoryService
 from app.application.invoice_schemas import (
     InvoiceCreate,
     InvoiceLineCreate,
 )
+from app.application.invoice_service import apply_invoice_issue_effects
 from app.domain.calculations import (
     LineAmounts,
     calculate_invoice_totals,
@@ -35,7 +34,6 @@ from app.domain.models.contact import Contact, ContactType
 from app.domain.models.invoice import Invoice
 from app.domain.models.quote import Quote, QuoteStatus
 from app.domain.quote_repository import NewQuoteLine, QuoteRepository
-from app.domain.warehouse_repository import WarehouseRepository
 
 
 class QuoteService:
@@ -47,9 +45,6 @@ class QuoteService:
         self.invoices = InvoiceRepository(db)
         self.contacts = ContactRepository(db)
         self.items = ItemRepository(db)
-        self.inventory = InventoryService(db)
-        self.accounting = AccountingService(db)
-        self.warehouses = WarehouseRepository(db)
 
     def create_draft(
         self,
@@ -217,10 +212,9 @@ class QuoteService:
             total=totals.total,
         )
 
-        # 3. Emitir factura (número, stock, contabilidad) en la misma transacción.
+        # 3. Emitir factura (número, stock, COGS y contabilidad) en la misma transacción.
         issued_invoice = self.invoices.issue(invoice.id)
-        self.inventory.register_invoice_issue(issued_invoice)
-        self.accounting.record_invoice_issued(issued_invoice)
+        apply_invoice_issue_effects(self.db, issued_invoice)
 
         # 4. Cambiar el contacto a CUSTOMER.
         contact = self.contacts.get_by_id(quote.contact_id)

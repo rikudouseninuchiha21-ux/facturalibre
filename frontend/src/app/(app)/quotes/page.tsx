@@ -43,7 +43,7 @@ const statusStyles: Record<QuoteStatus, string> = {
   SENT: "bg-blue-50 text-blue-700 ring-blue-200",
   ACCEPTED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   REJECTED: "bg-red-50 text-red-700 ring-red-200",
-  CONVERTED: "bg-indigo-50 text-indigo-700 ring-indigo-200",
+  CONVERTED: "bg-amber-50 text-amber-700 ring-amber-200",
 };
 
 function StatusBadge({ status }: { status: QuoteStatus }) {
@@ -137,7 +137,7 @@ export default async function QuotesPage() {
                     <TableCell className="font-mono text-xs font-medium text-slate-950">
                       <Link
                         href={`/quotes/${quote.id}`}
-                        className="text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                        className="text-amber-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                       >
                         {quote.number ?? "—"}
                       </Link>
@@ -155,7 +155,7 @@ export default async function QuotesPage() {
                     <TableCell className="text-right">
                       <Link
                         href={`/quotes/${quote.id}`}
-                        className="text-sm font-medium text-blue-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500"
+                        className="text-sm font-medium text-amber-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
                       >
                         Ver detalle
                       </Link>
