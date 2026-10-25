@@ -15,17 +15,24 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.application.budget_alerts import (
+    ALERTING_LEVELS,
+    alert_level_for,
+    compute_utilization_pct,
+)
 from app.application.budget_schemas import (
+    BudgetAlertItem,
     BudgetVsActualLine,
     BudgetVsActualReportResponse,
     BudgetVsActualResponse,
     BudgetVsActualTotals,
+    CostCenterRef,
 )
 from app.application.cost_center_schemas import CostCenterRead
 from app.domain.budget_repository import BudgetRepository
 from app.domain.calculations import round_money
 from app.domain.exceptions import ResourceNotFoundError
-from app.domain.models.budgeting import Budget
+from app.domain.models.budgeting import Budget, BudgetStatus
 
 ZERO = Decimal("0.00")
 HUNDRED = Decimal("100")
@@ -83,6 +90,59 @@ class BudgetActualsService:
             blocks=blocks,
         )
 
+    def alerts(
+        self,
+        *,
+        period_year: int,
+        period_month: int,
+        level: str | None = None,
+    ) -> list[BudgetAlertItem]:
+        """Presupuestos del periodo con su utilización y nivel de alerta.
+
+        Solo incluye presupuestos APPROVED o CLOSED: un DRAFT no refleja
+        compromiso real de gasto. Reutiliza ``_build_report`` (misma consulta
+        de agregación del reporte) y nunca duplica SQL. Ordena por
+        utilización descendente; los presupuestos sin base (N/A) van al final.
+        """
+        budgets = self.budgets.list(
+            period_year=period_year,
+            period_month=period_month,
+            limit=100,
+            offset=0,
+        )
+        items: list[BudgetAlertItem] = []
+        for budget in budgets:
+            if budget.status is BudgetStatus.DRAFT:
+                continue
+            report = self._build_report(budget)
+            alert_level_total = report.totals.alert_level_total
+            if level is not None and alert_level_total != level:
+                continue
+            items.append(
+                BudgetAlertItem(
+                    budget_id=budget.id,
+                    cost_center=CostCenterRef(
+                        id=budget.cost_center.id,
+                        code=budget.cost_center.code,
+                        name=budget.cost_center.name,
+                    ),
+                    period_year=budget.period_year,
+                    period_month=budget.period_month,
+                    total_budgeted=report.totals.budgeted,
+                    total_actual=report.totals.actual,
+                    utilization_pct=report.totals.utilization_pct_total,
+                    alert_level=alert_level_total,
+                )
+            )
+
+        items.sort(
+            key=lambda item: (
+                item.utilization_pct is None,
+                -(item.utilization_pct if item.utilization_pct is not None else ZERO),
+            )
+        )
+        return items
+
     def _build_report(self, budget: Budget) -> BudgetVsActualResponse:
         start, end = _month_window(budget.period_year, budget.period_month)
         account_codes = [line.account_code for line in budget.lines]
@@ -102,6 +162,7 @@ class BudgetActualsService:
             variance = round_money(actual - budgeted)
             total_budgeted = round_money(total_budgeted + budgeted)
             total_actual = round_money(total_actual + actual)
+            line_utilization = compute_utilization_pct(actual, budgeted)
             lines.append(
                 BudgetVsActualLine(
                     account_code=line.account_code,
@@ -112,10 +173,17 @@ class BudgetActualsService:
                     actual=actual,
                     variance=variance,
                     variance_pct=_variance_pct(variance, budgeted),
+                    utilization_pct=line_utilization,
+                    alert_level=alert_level_for(line_utilization),
                 )
             )
 
         total_variance = round_money(total_actual - total_budgeted)
+        total_utilization = compute_utilization_pct(total_actual, total_budgeted)
+        alert_level_total = alert_level_for(total_utilization)
+        has_alerts = alert_level_total in ALERTING_LEVELS or any(
+            line.alert_level in ALERTING_LEVELS for line in lines
+        )
         return BudgetVsActualResponse(
             budget_id=budget.id,
             cost_center=CostCenterRead.model_validate(budget.cost_center),
@@ -123,11 +191,14 @@ class BudgetActualsService:
             period_month=budget.period_month,
             status=budget.status.value,
             lines=lines,
+            has_alerts=has_alerts,
             totals=BudgetVsActualTotals(
                 budgeted=total_budgeted,
                 actual=total_actual,
                 variance=total_variance,
                 variance_pct=_variance_pct(total_variance, total_budgeted),
+                utilization_pct_total=total_utilization,
+                alert_level_total=alert_level_total,
             ),
         )
 

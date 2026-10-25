@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, status
@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import get_current_user, require_role
 from app.application.budget_actuals_service import BudgetActualsService
 from app.application.budget_schemas import (
+    BudgetAlertItem,
     BudgetCreate,
     BudgetLineCreate,
     BudgetLineRead,
@@ -78,6 +79,29 @@ def list_budgets(
         offset=offset,
     )
     return [BudgetRead.model_validate(budget) for budget in budgets]
+
+
+@router.get(
+    "/alerts",
+    response_model=list[BudgetAlertItem],
+    dependencies=[Depends(require_role(READ_ROLES))],
+)
+def get_budget_alerts(
+    actuals: BudgetActualsServiceDep,
+    period_year: Annotated[int, Query(ge=2000, le=2100)],
+    period_month: Annotated[int, Query(ge=1, le=12)],
+    level: Annotated[Literal["WARNING", "CRITICAL", "OVER"] | None, Query()] = None,
+) -> list[BudgetAlertItem]:
+    """Presupuestos del periodo con su nivel de alerta de sobregiro.
+
+    Solo incluye presupuestos APPROVED o CLOSED, ordenados por utilización
+    descendente. ``level`` filtra por WARNING, CRITICAL u OVER.
+    """
+    return actuals.alerts(
+        period_year=period_year,
+        period_month=period_month,
+        level=level,
+    )
 
 
 @router.post(

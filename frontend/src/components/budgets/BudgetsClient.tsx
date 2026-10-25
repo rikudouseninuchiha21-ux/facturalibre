@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { BudgetAlertBadge } from "@/components/budgets/BudgetAlertBadge";
 import {
   Card,
   CardContent,
@@ -22,7 +23,9 @@ import {
 import {
   ApiError,
   createBudget,
+  getBudgetAlerts,
   type Budget,
+  type BudgetAlertItem,
   type BudgetStatus,
   type CostCenter,
 } from "@/lib/api";
@@ -60,9 +63,34 @@ export function BudgetsClient({ initialBudgets, costCenters }: BudgetsClientProp
   const [newYear, setNewYear] = useState(today.getFullYear());
   const [newMonth, setNewMonth] = useState(today.getMonth() + 1);
   const [newName, setNewName] = useState("");
+  const [alerts, setAlerts] = useState<BudgetAlertItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Nivel de alerta por presupuesto del periodo filtrado (calculado por el
+  // backend; el frontend nunca recalcula umbrales).
+  useEffect(() => {
+    let cancelled = false;
+    getBudgetAlerts(filterYear, filterMonth)
+      .then((data) => {
+        if (!cancelled) setAlerts(data);
+      })
+      .catch(() => {
+        if (!cancelled) setAlerts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [filterYear, filterMonth, initialBudgets]);
+
+  const alertByBudget = useMemo(
+    () =>
+      new Map(
+        alerts.map((item) => [item.budget_id, item] as const),
+      ),
+    [alerts],
+  );
 
   const filtered = useMemo(
     () =>
@@ -357,47 +385,61 @@ export function BudgetsClient({ initialBudgets, costCenters }: BudgetsClientProp
                   <TableHead>Centro de costo</TableHead>
                   <TableHead>Nombre</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Alerta</TableHead>
                   <TableHead className="text-right">Líneas</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Acción</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((budget) => (
-                  <TableRow key={budget.id}>
-                    <TableCell className="font-medium tabular-nums text-slate-950">
-                      {String(budget.period_month).padStart(2, "0")}/
-                      {budget.period_year}
-                    </TableCell>
-                    <TableCell className="text-slate-900">
-                      {budget.cost_center.name}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate text-slate-600">
-                      {budget.name ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${STATUS_STYLES[budget.status]}`}
-                      >
-                        {STATUS_LABELS[budget.status]}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-slate-900">
-                      {budget.lines.length}
-                    </TableCell>
-                    <TableCell className="text-right font-semibold tabular-nums text-slate-950">
-                      {formatCurrency(budget.total, "COP")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Link
-                        href={`/budgets/${budget.id}`}
-                        className="inline-flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition-colors hover:border-amber-500 hover:text-amber-700"
-                      >
-                        Ver detalle
-                      </Link>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filtered.map((budget) => {
+                  const alert = alertByBudget.get(budget.id);
+                  return (
+                    <TableRow key={budget.id}>
+                      <TableCell className="font-medium tabular-nums text-slate-950">
+                        {String(budget.period_month).padStart(2, "0")}/
+                        {budget.period_year}
+                      </TableCell>
+                      <TableCell className="text-slate-900">
+                        {budget.cost_center.name}
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate text-slate-600">
+                        {budget.name ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${STATUS_STYLES[budget.status]}`}
+                        >
+                          {STATUS_LABELS[budget.status]}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        {alert ? (
+                          <BudgetAlertBadge
+                            level={alert.alert_level}
+                            utilizationPct={alert.utilization_pct}
+                          />
+                        ) : (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-slate-900">
+                        {budget.lines.length}
+                      </TableCell>
+                      <TableCell className="text-right font-semibold tabular-nums text-slate-950">
+                        {formatCurrency(budget.total, "COP")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Link
+                          href={`/budgets/${budget.id}`}
+                          className="inline-flex items-center rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition-colors hover:border-amber-500 hover:text-amber-700"
+                        >
+                          Ver detalle
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}

@@ -4,7 +4,18 @@ import Link from "next/link";
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { StatusChart } from "@/components/dashboard/StatusChart";
 import { ExportCsvButton } from "@/components/reports/ExportCsvButton";
-import { Wallet, TrendingUp, Clock, ShoppingCart, FilePlus, UserPlus, BarChart3 } from "lucide-react";
+import { BudgetAlertBadge } from "@/components/budgets/BudgetAlertBadge";
+import {
+  Wallet,
+  TrendingUp,
+  Clock,
+  ShoppingCart,
+  FilePlus,
+  UserPlus,
+  BarChart3,
+  AlertTriangle,
+  ShieldCheck,
+} from "lucide-react";
 
 import {
   Card,
@@ -13,7 +24,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getDashboardSummary, type DashboardSummary } from "@/lib/api";
+import {
+  getBudgetAlerts,
+  getDashboardSummary,
+  type BudgetAlertItem,
+  type DashboardSummary,
+} from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 import { getSessionCookieHeader } from "@/lib/server-auth";
 
@@ -64,11 +80,77 @@ function KpiCard({
   );
 }
 
+function BudgetsAtRiskWidget({ alerts }: { alerts: BudgetAlertItem[] }) {
+  const atRisk = alerts
+    .filter((item) => item.alert_level !== "OK" && item.alert_level !== "N/A")
+    .slice(0, 5);
+
+  return (
+    <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-white">
+      <CardHeader className="flex items-center justify-between">
+        <div>
+          <CardTitle>Presupuestos en riesgo</CardTitle>
+          <CardDescription>
+            Utilización presupuestal del mes en curso por centro de costo.
+          </CardDescription>
+        </div>
+        <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+          <AlertTriangle className="size-5" aria-hidden="true" />
+        </div>
+      </CardHeader>
+      <CardContent>
+        {atRisk.length === 0 ? (
+          <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <ShieldCheck
+              className="size-6 shrink-0 text-amber-500"
+              aria-hidden="true"
+            />
+            <p className="text-sm font-medium text-emerald-800">
+              Todos los presupuestos del mes están bajo control.
+            </p>
+          </div>
+        ) : (
+          <ul className="divide-y divide-amber-100">
+            {atRisk.map((item) => (
+              <li key={item.budget_id}>
+                <Link
+                  href={`/budgets/${item.budget_id}`}
+                  className="flex items-center justify-between gap-3 py-3 transition-colors hover:bg-amber-50/60"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-zinc-900">
+                      {item.cost_center.name}
+                    </p>
+                    <p className="text-xs tabular-nums text-zinc-500">
+                      {formatCurrency(item.total_actual, "COP")} de{" "}
+                      {formatCurrency(item.total_budgeted, "COP")}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="text-sm font-bold tabular-nums text-zinc-900">
+                      {item.utilization_pct}%
+                    </span>
+                    <BudgetAlertBadge
+                      level={item.alert_level}
+                      utilizationPct={item.utilization_pct}
+                    />
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default async function HomePage() {
   const cookieHeader = await getSessionCookieHeader();
 
   let summary: DashboardSummary | null = null;
   let error: string | null = null;
+  let budgetAlerts: BudgetAlertItem[] | null = null;
 
   try {
     summary = await getDashboardSummary(cookieHeader);
@@ -77,6 +159,20 @@ export default async function HomePage() {
       cause instanceof Error
         ? cause.message
         : "No se pudo consultar el resumen del negocio.";
+  }
+
+  // El widget de presupuestos requiere rol ADMIN o ACCOUNTANT; si el usuario
+  // no tiene permiso simplemente no se muestra.
+  const today = new Date();
+  try {
+    budgetAlerts = await getBudgetAlerts(
+      today.getFullYear(),
+      today.getMonth() + 1,
+      undefined,
+      cookieHeader,
+    );
+  } catch {
+    budgetAlerts = null;
   }
 
   return (
@@ -172,6 +268,8 @@ export default async function HomePage() {
           </div>
         </>
       ) : null}
+
+      {budgetAlerts !== null ? <BudgetsAtRiskWidget alerts={budgetAlerts} /> : null}
 
       <section className="mt-8">
         <h2 className="text-xl font-bold tracking-tight text-zinc-950 mb-4">

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AlertTriangle } from "lucide-react";
 
+import { BudgetAlertBadge } from "@/components/budgets/BudgetAlertBadge";
 import {
   Card,
   CardContent,
@@ -155,6 +157,27 @@ export function BudgetDetailClient({
 
   return (
     <div className="space-y-6">
+      {actuals &&
+      (actuals.totals.alert_level_total === "CRITICAL" ||
+        actuals.totals.alert_level_total === "OVER") ? (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <AlertTriangle className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+          <p>
+            <span className="font-semibold">
+              {actuals.totals.alert_level_total === "OVER"
+                ? "Sobregiro presupuestal:"
+                : "Presupuesto en nivel crítico:"}
+            </span>{" "}
+            la utilización va en {actuals.totals.utilization_pct_total}% (
+            {formatCurrency(actuals.totals.actual, "COP")} de{" "}
+            {formatCurrency(actuals.totals.budgeted, "COP")} presupuestados).
+          </p>
+        </div>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Cabecera</CardTitle>
@@ -453,7 +476,7 @@ export function BudgetDetailClient({
             etiquetados con este centro de costo (compras, gastos y nómina).
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           {!actuals ? (
             <p className="text-sm text-slate-500">
               No se pudo calcular la comparación contra el gasto real.
@@ -464,69 +487,152 @@ export function BudgetDetailClient({
               real.
             </p>
           ) : (
-            <Table>
-              <caption className="sr-only">
-                Comparación presupuestado contra real por cuenta
-              </caption>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cuenta</TableHead>
-                  <TableHead className="text-right">Presupuestado</TableHead>
-                  <TableHead className="text-right">Real</TableHead>
-                  <TableHead className="text-right">Desviación</TableHead>
-                  <TableHead className="text-right">%</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {actuals.lines.map((line) => (
-                  <TableRow key={line.account_code}>
-                    <TableCell className="text-slate-900">
-                      <span className="font-mono text-xs font-semibold">
-                        {line.account_code}
-                      </span>{" "}
-                      {line.account_name}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-slate-900">
-                      {formatCurrency(line.budgeted, "COP")}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-slate-900">
-                      {formatCurrency(line.actual, "COP")}
-                    </TableCell>
-                    <TableCell
-                      className={`text-right font-semibold tabular-nums ${
-                        Number(line.variance) > 0
-                          ? "text-red-700"
-                          : "text-emerald-700"
-                      }`}
-                    >
-                      {formatCurrency(line.variance, "COP")}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums text-slate-600">
-                      {line.variance_pct === null ? "—" : `${line.variance_pct}%`}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-              <tfoot className="bg-slate-50 font-semibold text-slate-950">
-                <tr>
-                  <td className="px-4 py-3">Totales</td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+            <>
+              <div className="rounded-xl border border-zinc-200 bg-gradient-to-br from-amber-50 to-white p-4">
+                <p className="text-sm text-zinc-600">
+                  Presupuesto{" "}
+                  <span className="font-semibold text-zinc-950">
                     {formatCurrency(actuals.totals.budgeted, "COP")}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  </span>{" "}
+                  · Ejecutado{" "}
+                  <span className="font-semibold text-zinc-950">
                     {formatCurrency(actuals.totals.actual, "COP")}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
+                  </span>{" "}
+                  · Utilización{" "}
+                  <span
+                    className={`font-bold ${
+                      actuals.totals.alert_level_total === "OVER"
+                        ? "text-red-700"
+                        : actuals.totals.alert_level_total === "CRITICAL"
+                          ? "text-orange-700"
+                          : "text-amber-700"
+                    }`}
+                  >
+                    {actuals.totals.utilization_pct_total === null
+                      ? "N/A"
+                      : `${actuals.totals.utilization_pct_total}%`}
+                  </span>
+                </p>
+                <div
+                  className="mt-3 h-3 w-full overflow-hidden rounded-full bg-zinc-200"
+                  role="progressbar"
+                  aria-valuenow={
+                    actuals.totals.utilization_pct_total
+                      ? Number(actuals.totals.utilization_pct_total)
+                      : undefined
+                  }
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Utilización del presupuesto"
+                >
+                  <div
+                    className={`h-full rounded-full ${
+                      actuals.totals.alert_level_total === "OVER"
+                        ? "bg-red-500"
+                        : actuals.totals.alert_level_total === "CRITICAL"
+                          ? "bg-orange-500"
+                          : "bg-gradient-to-r from-amber-300 to-amber-600"
+                    }`}
+                    style={{
+                      width: `${Math.min(
+                        Number(actuals.totals.utilization_pct_total ?? 0),
+                        100,
+                      )}%`,
+                    }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs text-zinc-500">
+                    Desviación:{" "}
                     {formatCurrency(actuals.totals.variance, "COP")}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">
-                    {actuals.totals.variance_pct === null
-                      ? "—"
-                      : `${actuals.totals.variance_pct}%`}
-                  </td>
-                </tr>
-              </tfoot>
-            </Table>
+                    {actuals.totals.variance_pct !== null
+                      ? ` (${actuals.totals.variance_pct}%)`
+                      : ""}
+                  </span>
+                  <BudgetAlertBadge
+                    level={actuals.totals.alert_level_total}
+                    utilizationPct={actuals.totals.utilization_pct_total}
+                  />
+                </div>
+              </div>
+
+              <Table>
+                <caption className="sr-only">
+                  Comparación presupuestado contra real por cuenta
+                </caption>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cuenta</TableHead>
+                    <TableHead className="text-right">Presupuestado</TableHead>
+                    <TableHead className="text-right">Real</TableHead>
+                    <TableHead className="text-right">Desviación</TableHead>
+                    <TableHead className="text-right">%</TableHead>
+                    <TableHead>Alerta</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {actuals.lines.map((line) => (
+                    <TableRow key={line.account_code}>
+                      <TableCell className="text-slate-900">
+                        <span className="font-mono text-xs font-semibold">
+                          {line.account_code}
+                        </span>{" "}
+                        {line.account_name}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-slate-900">
+                        {formatCurrency(line.budgeted, "COP")}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-slate-900">
+                        {formatCurrency(line.actual, "COP")}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right font-semibold tabular-nums ${
+                          Number(line.variance) > 0
+                            ? "text-red-700"
+                            : "text-emerald-700"
+                        }`}
+                      >
+                        {formatCurrency(line.variance, "COP")}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums text-slate-600">
+                        {line.variance_pct === null ? "—" : `${line.variance_pct}%`}
+                      </TableCell>
+                      <TableCell>
+                        <BudgetAlertBadge
+                          level={line.alert_level}
+                          utilizationPct={line.utilization_pct}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+                <tfoot className="bg-slate-50 font-semibold text-slate-950">
+                  <tr>
+                    <td className="px-4 py-3">Totales</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {formatCurrency(actuals.totals.budgeted, "COP")}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {formatCurrency(actuals.totals.actual, "COP")}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {formatCurrency(actuals.totals.variance, "COP")}
+                    </td>
+                    <td className="px-4 py-3 text-right tabular-nums">
+                      {actuals.totals.variance_pct === null
+                        ? "—"
+                        : `${actuals.totals.variance_pct}%`}
+                    </td>
+                    <td className="px-4 py-3">
+                      <BudgetAlertBadge
+                        level={actuals.totals.alert_level_total}
+                        utilizationPct={actuals.totals.utilization_pct_total}
+                      />
+                    </td>
+                  </tr>
+                </tfoot>
+              </Table>
+            </>
           )}
         </CardContent>
       </Card>

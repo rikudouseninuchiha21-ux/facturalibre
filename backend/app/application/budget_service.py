@@ -183,6 +183,31 @@ class BudgetService:
             raise BudgetStateError("Solo se pueden cerrar presupuestos aprobados")
         return self.budgets.update(budget, {"status": BudgetStatus.CLOSED})
 
+    def close_by_period(self, *, period_year: int, period_month: int) -> int:
+        """Cierra automáticamente los presupuestos APPROVED de un periodo.
+
+        Se invoca dentro del cierre del periodo fiscal contable, en la MISMA
+        transacción, de modo que el periodo y los presupuestos se confirman o
+        revierten juntos. Solo cierra presupuestos APPROVED: los DRAFT quedan
+        intactos porque quien no aprobó no tiene compromiso real de gasto.
+
+        Idempotente: si no hay presupuestos APPROVED retorna 0 sin error.
+        No abre transacciones nuevas; reutiliza la sesión existente.
+
+        La reapertura del periodo fiscal NO reabre presupuestos: debe ser
+        manual por un ADMIN con auditoría, porque reabrir el control
+        presupuestal de un mes cerrado es una decisión de negocio.
+        """
+        budgets = self.budgets.list(
+            period_year=period_year,
+            period_month=period_month,
+            status=BudgetStatus.APPROVED,
+        )
+        for budget in budgets:
+            budget.status = BudgetStatus.CLOSED
+        self.db.flush()
+        return len(budgets)
+
     def _require_draft(self, budget: Budget) -> None:
         if budget.status is not BudgetStatus.DRAFT:
             raise BudgetStateError("El presupuesto no se puede editar porque no está en borrador")

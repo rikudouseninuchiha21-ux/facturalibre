@@ -1748,6 +1748,8 @@ export interface BudgetVsActualLine {
   actual: string;
   variance: string;
   variance_pct: string | null;
+  utilization_pct: string | null;
+  alert_level: BudgetAlertLevel;
 }
 
 export interface BudgetVsActualTotals {
@@ -1755,6 +1757,8 @@ export interface BudgetVsActualTotals {
   actual: string;
   variance: string;
   variance_pct: string | null;
+  utilization_pct_total: string | null;
+  alert_level_total: BudgetAlertLevel;
 }
 
 export interface BudgetVsActualResponse {
@@ -1765,6 +1769,20 @@ export interface BudgetVsActualResponse {
   status: BudgetStatus;
   lines: BudgetVsActualLine[];
   totals: BudgetVsActualTotals;
+  has_alerts: boolean;
+}
+
+export type BudgetAlertLevel = "OK" | "WARNING" | "CRITICAL" | "OVER" | "N/A";
+
+export interface BudgetAlertItem {
+  budget_id: string;
+  cost_center: { id: string; code: string; name: string };
+  period_year: number;
+  period_month: number;
+  total_budgeted: string;
+  total_actual: string;
+  utilization_pct: string | null;
+  alert_level: BudgetAlertLevel;
 }
 
 export interface BudgetVsActualReport {
@@ -1849,6 +1867,23 @@ export function getBudgetActuals(
 ): Promise<BudgetVsActualResponse> {
   return apiGet<BudgetVsActualResponse>(
     `/budgets/${encodeURIComponent(budgetId)}/actuals`,
+  );
+}
+
+export function getBudgetAlerts(
+  periodYear: number,
+  periodMonth: number,
+  level?: "WARNING" | "CRITICAL" | "OVER",
+  cookieHeader?: string,
+): Promise<BudgetAlertItem[]> {
+  const params = new URLSearchParams({
+    period_year: String(periodYear),
+    period_month: String(periodMonth),
+  });
+  if (level) params.set("level", level);
+  return apiGet<BudgetAlertItem[]>(
+    `/budgets/alerts?${params.toString()}`,
+    cookieHeader,
   );
 }
 

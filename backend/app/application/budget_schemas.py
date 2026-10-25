@@ -9,6 +9,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
+from app.application.budget_alerts import BudgetAlertLevel
 from app.application.cost_center_schemas import CostCenterRead
 
 # Los montos presupuestados pueden ser cero (cuenta reservada sin asignación).
@@ -99,6 +100,8 @@ class BudgetVsActualLine(BaseModel):
     actual: Decimal
     variance: Decimal
     variance_pct: Decimal | None
+    utilization_pct: Decimal | None
+    alert_level: BudgetAlertLevel
 
 
 class BudgetVsActualTotals(BaseModel):
@@ -108,6 +111,8 @@ class BudgetVsActualTotals(BaseModel):
     actual: Decimal
     variance: Decimal
     variance_pct: Decimal | None
+    utilization_pct_total: Decimal | None
+    alert_level_total: BudgetAlertLevel
 
 
 class BudgetVsActualResponse(BaseModel):
@@ -120,6 +125,28 @@ class BudgetVsActualResponse(BaseModel):
     status: str
     lines: list[BudgetVsActualLine]
     totals: BudgetVsActualTotals
+    has_alerts: bool
+
+
+class CostCenterRef(BaseModel):
+    """Referencia mínima de un centro de costo (id, código y nombre)."""
+
+    id: UUID
+    code: str
+    name: str
+
+
+class BudgetAlertItem(BaseModel):
+    """Presupuesto con su utilización y nivel de alerta de sobregiro."""
+
+    budget_id: UUID
+    cost_center: CostCenterRef
+    period_year: int
+    period_month: int
+    total_budgeted: Decimal
+    total_actual: Decimal
+    utilization_pct: Decimal | None
+    alert_level: BudgetAlertLevel
 
 
 class BudgetVsActualReportResponse(BaseModel):
@@ -132,6 +159,7 @@ class BudgetVsActualReportResponse(BaseModel):
 
 
 __all__ = [
+    "BudgetAlertItem",
     "BudgetCreate",
     "BudgetLineCreate",
     "BudgetLineRead",
@@ -142,4 +170,5 @@ __all__ = [
     "BudgetVsActualReportResponse",
     "BudgetVsActualResponse",
     "BudgetVsActualTotals",
+    "CostCenterRef",
 ]

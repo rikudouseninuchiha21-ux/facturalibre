@@ -14,6 +14,7 @@ import {
   YAxis,
 } from "recharts";
 
+import { BudgetAlertBadge } from "@/components/budgets/BudgetAlertBadge";
 import {
   Card,
   CardContent,
@@ -54,6 +55,7 @@ export function BudgetVsActualClient({
   const [year, setYear] = useState(periodYear);
   const [month, setMonth] = useState(periodMonth);
   const [center, setCenter] = useState(costCenterId);
+  const [levelFilter, setLevelFilter] = useState("");
 
   function handleFilter(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -65,7 +67,16 @@ export function BudgetVsActualClient({
     router.push(`/budget-vs-actual?${params.toString()}`);
   }
 
-  const blocks = report?.blocks ?? [];
+  const allBlocks = report?.blocks ?? [];
+  const blocks = allBlocks
+    .map((block) => ({
+      ...block,
+      lines:
+        levelFilter === ""
+          ? block.lines
+          : block.lines.filter((line) => line.alert_level === levelFilter),
+    }))
+    .filter((block) => block.lines.length > 0);
 
   return (
     <>
@@ -149,10 +160,30 @@ export function BudgetVsActualClient({
               </div>
             </div>
           </form>
+
+          <div className="flex items-center gap-3 border-t border-zinc-100 pt-4">
+            <label
+              htmlFor="report-level"
+              className="text-xs font-medium text-slate-500"
+            >
+              Nivel de alerta
+            </label>
+            <select
+              id="report-level"
+              value={levelFilter}
+              onChange={(event) => setLevelFilter(event.target.value)}
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10"
+            >
+              <option value="">Todos</option>
+              <option value="WARNING">Atención (80–90%)</option>
+              <option value="CRITICAL">Crítico (90–100%)</option>
+              <option value="OVER">Sobregiro (≥100%)</option>
+            </select>
+          </div>
         </CardContent>
       </Card>
 
-      {blocks.length === 0 ? (
+      {allBlocks.length === 0 ? (
         <Card>
           <CardContent>
             <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-10 text-center">
@@ -166,6 +197,19 @@ export function BudgetVsActualClient({
             </div>
           </CardContent>
         </Card>
+      ) : blocks.length === 0 ? (
+        <Card>
+          <CardContent>
+            <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-6 py-10 text-center">
+              <p className="font-medium text-amber-800">
+                Ninguna cuenta tiene el nivel de alerta seleccionado
+              </p>
+              <p className="mt-1 text-sm text-amber-700">
+                Cambia el filtro de nivel de alerta para ver más líneas.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         blocks.map((block) => {
           const chartData = block.lines.map((line) => ({
@@ -173,7 +217,6 @@ export function BudgetVsActualClient({
             Presupuestado: Number(line.budgeted),
             Real: Number(line.actual),
           }));
-
           return (
             <Card key={block.budget_id}>
               <CardHeader>
@@ -290,6 +333,7 @@ export function BudgetVsActualClient({
                       <TableHead className="text-right">Real</TableHead>
                       <TableHead className="text-right">Desviación</TableHead>
                       <TableHead className="text-right">%</TableHead>
+                      <TableHead>Alerta</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -320,6 +364,12 @@ export function BudgetVsActualClient({
                           {line.variance_pct === null
                             ? "—"
                             : `${line.variance_pct}%`}
+                        </TableCell>
+                        <TableCell>
+                          <BudgetAlertBadge
+                            level={line.alert_level}
+                            utilizationPct={line.utilization_pct}
+                          />
                         </TableCell>
                       </TableRow>
                     ))}
