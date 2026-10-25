@@ -1200,6 +1200,64 @@ export interface BalanceSheetResponse {
   balanced: boolean;
 }
 
+export interface AgingBucketSummary {
+  key: string;
+  label: string;
+  total: string;
+  invoice_count: number;
+}
+
+export interface AgingClientRow {
+  contact_id: string;
+  contact_name: string;
+  total_balance: string;
+  max_days_overdue: number;
+  oldest_due_date: string | null;
+  invoice_count: number;
+  buckets: Record<string, string>;
+}
+
+export interface AgingReport {
+  as_of: string;
+  total_receivable: string;
+  buckets: AgingBucketSummary[];
+  clients: AgingClientRow[];
+}
+
+export interface CashFlowIncomeSources {
+  customer_payments: string;
+  bank_deposits: string;
+}
+
+export interface CashFlowExpenseSources {
+  supplier_payments: string;
+  expenses: string;
+  bank_withdrawals: string;
+}
+
+export interface CashFlowMonth {
+  month: string;
+  income: string;
+  expenses: string;
+  net: string;
+  income_sources: CashFlowIncomeSources;
+  expense_sources: CashFlowExpenseSources;
+}
+
+export interface CashFlowProjection {
+  horizon_days: number;
+  due_within_30_days: string;
+  overdue_balance: string;
+  expected_collections: string;
+  invoice_count: number;
+}
+
+export interface CashFlowReport {
+  as_of: string;
+  months: CashFlowMonth[];
+  projection: CashFlowProjection;
+}
+
 export function getIncomeStatement(
   startDate?: string,
   endDate?: string,
@@ -1226,6 +1284,16 @@ export function getBalanceSheet(
     `/reports/balance-sheet${query ? "?" + query : ""}`,
     cookieHeader,
   );
+}
+
+export function getAgingReport(cookieHeader?: string): Promise<AgingReport> {
+  return apiGet<AgingReport>("/reports/aging", cookieHeader);
+}
+
+export function getCashFlowReport(
+  cookieHeader?: string,
+): Promise<CashFlowReport> {
+  return apiGet<CashFlowReport>("/reports/cash-flow", cookieHeader);
 }
 
 export interface CompanySetting {

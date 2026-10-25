@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { CashFlowSection } from "@/components/reports/CashFlowSection";
 import { FinancialsClient } from "@/components/reports/FinancialsClient";
 import {
   Card,
@@ -9,7 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  getAgingReport,
   getBalanceSheet,
+  getCashFlowReport,
   getIncomeStatement,
 } from "@/lib/api";
 import { getSessionCookieHeader } from "@/lib/server-auth";
@@ -34,7 +37,10 @@ export default async function FinancialsPage() {
     ReturnType<typeof getIncomeStatement>
   > | null = null;
   let balanceSheet: Awaited<ReturnType<typeof getBalanceSheet>> | null = null;
+  let aging: Awaited<ReturnType<typeof getAgingReport>> | null = null;
+  let cashFlow: Awaited<ReturnType<typeof getCashFlowReport>> | null = null;
   let error: string | null = null;
+  let liquidityError: string | null = null;
 
   try {
     [incomeStatement, balanceSheet] = await Promise.all([
@@ -52,6 +58,18 @@ export default async function FinancialsPage() {
         : "No se pudieron cargar los estados financieros.";
   }
 
+  try {
+    [aging, cashFlow] = await Promise.all([
+      getAgingReport(cookieHeader),
+      getCashFlowReport(cookieHeader),
+    ]);
+  } catch (cause) {
+    liquidityError =
+      cause instanceof Error
+        ? cause.message
+        : "No se pudieron cargar los reportes de cartera y liquidez.";
+  }
+
   return (
     <div className="space-y-6">
       <header>
@@ -59,9 +77,31 @@ export default async function FinancialsPage() {
           Estados Financieros
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Consulta el estado de resultados y el balance general de la empresa.
+          Consulta la cartera, la liquidez, el estado de resultados y el balance
+          general de la empresa.
         </p>
       </header>
+
+      {liquidityError ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>No se pudo cargar Cartera y Liquidez</CardTitle>
+            <CardDescription>
+              Revisa la conexión con el backend e inténtalo de nuevo.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            >
+              {liquidityError}
+            </div>
+          </CardContent>
+        </Card>
+      ) : aging && cashFlow ? (
+        <CashFlowSection aging={aging} cashFlow={cashFlow} />
+      ) : null}
 
       {error ? (
         <Card>

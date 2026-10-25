@@ -5,9 +5,11 @@ from __future__ import annotations
 import csv
 import io
 from collections.abc import Iterable
-from datetime import date
+from dataclasses import dataclass, field
+from datetime import date, timedelta
 from decimal import Decimal
 from typing import Annotated, Any, cast
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
@@ -17,10 +19,19 @@ from sqlalchemy.orm import Session
 from app.api.dependencies.auth import get_current_user, require_role
 from app.application.report_schemas import (
     AccountReportRow,
+    AgingBucketSummary,
+    AgingClientRow,
+    AgingReportResponse,
     BalanceSheetResponse,
+    CashFlowExpenseSources,
+    CashFlowIncomeSources,
+    CashFlowMonth,
+    CashFlowProjection,
+    CashFlowReportResponse,
     IncomeStatementResponse,
 )
 from app.domain.accounting_repository import AccountingRepository
+from app.domain.calculations import ZERO_MONEY, round_money
 from app.domain.models.accounting import (
     AccountingAccount,
     AccountingEntry,
@@ -30,7 +41,9 @@ from app.domain.models.accounting import (
 from app.domain.models.auth import UserRole
 from app.domain.models.invoice import LifecycleStatus
 from app.domain.reports_repository import (
+    AgingInvoiceRow,
     InvoiceExportRow,
+    MonthlyCashFlowRow,
     PaymentExportRow,
     ReportsRepository,
 )
@@ -55,6 +68,62 @@ INVOICE_STATUS_LABELS: dict[LifecycleStatus, str] = {
     LifecycleStatus.ISSUED: "Emitida",
     LifecycleStatus.VOID: "Anulada",
 }
+
+AGING_BUCKETS: tuple[tuple[str, str], ...] = (
+    ("0_30", "0-30 días"),
+    ("31_60", "31-60 días"),
+    ("61_90", "61-90 días"),
+    ("over_90", "> 90 días"),
+)
+CASH_FLOW_MONTHS = 6
+PROJECTION_HORIZON_DAYS = 30
+
+
+@dataclass
+class ClientAgingAccumulator:
+    """Acumulador mutable para consolidar la cartera de un cliente."""
+
+    contact_id: UUID
+    contact_name: str
+    total_balance: Decimal = ZERO_MONEY
+    max_days_overdue: int = 0
+    oldest_due_date: date | None = None
+    invoice_count: int = 0
+    buckets: dict[str, Decimal] = field(
+        default_factory=lambda: {key: ZERO_MONEY for key, _ in AGING_BUCKETS}
+    )
+
+
+def _shift_month(year: int, month: int, offset: int) -> tuple[int, int]:
+    """Desplaza un mes de calendario preservando el año."""
+    month_index = (year * 12) + (month - 1) + offset
+    return month_index // 12, (month_index % 12) + 1
+
+
+def _aging_bucket(days_overdue: int) -> str:
+    """Clasifica los días de mora en uno de los cuatro rangos del aging."""
+    if days_overdue <= 30:
+        return "0_30"
+    if days_overdue <= 60:
+        return "31_60"
+    if days_overdue <= 90:
+        return "61_90"
+    return "over_90"
+
+
+def _effective_due_date(row: AgingInvoiceRow, as_of: date) -> date:
+    """Usa el vencimiento; si falta, cae a emisión y finalmente a la fecha de corte."""
+    return row.due_date or row.issue_date or as_of
+
+
+def _days_overdue(due_date: date, as_of: date) -> int:
+    """Calcula días de mora; las facturas vigentes quedan en cero."""
+    return max((as_of - due_date).days, 0)
+
+
+def _monthly_totals(rows: list[MonthlyCashFlowRow]) -> dict[tuple[int, int], Decimal]:
+    """Convierte filas mensuales en un mapa (año, mes) -> total."""
+    return {(row.year, row.month): row.total for row in rows}
 
 
 def get_reports_repository(db: DbSession) -> ReportsRepository:
@@ -88,6 +157,184 @@ def _parse_date(value: str | None) -> date | None:
 def _format_money(value: Decimal) -> str:
     """Formatea un importe decimal con dos decimales para los reportes."""
     return f"{value:.2f}"
+
+
+def _client_sort_key(
+    client: ClientAgingAccumulator,
+) -> tuple[int, Decimal, str]:
+    """Ordena primero la mora más antigua y luego el saldo más alto."""
+    return (-client.max_days_overdue, -client.total_balance, client.contact_name.lower())
+
+
+@router.get("/aging", response_model=AgingReportResponse)
+def get_aging_report(
+    repository: ReportsRepositoryDep,
+) -> AgingReportResponse:
+    """Reporte de cartera: CxC pendientes agrupadas por días de mora.
+
+    Se consideran únicamente facturas emitidas, no eliminadas y con saldo
+    pendiente. La fecha de vencimiento efectiva es `due_date`; si no existe se
+    usa `issue_date` y, como último recurso, la fecha de corte. Las facturas
+    aún no vencidas se incluyen en el rango 0-30 con cero días de mora.
+    """
+    as_of = date.today()
+    rows = repository.list_aging_invoices()
+
+    bucket_totals: dict[str, Decimal] = {key: ZERO_MONEY for key, _ in AGING_BUCKETS}
+    bucket_counts: dict[str, int] = {key: 0 for key, _ in AGING_BUCKETS}
+    total_receivable = ZERO_MONEY
+    clients: dict[UUID, ClientAgingAccumulator] = {}
+
+    for row in rows:
+        due_date = _effective_due_date(row, as_of)
+        days_overdue = _days_overdue(due_date, as_of)
+        bucket = _aging_bucket(days_overdue)
+
+        client = clients.get(row.contact_id)
+        if client is None:
+            client = ClientAgingAccumulator(
+                contact_id=row.contact_id,
+                contact_name=row.contact_name,
+            )
+            clients[row.contact_id] = client
+
+        client.total_balance = round_money(client.total_balance + row.balance)
+        client.invoice_count += 1
+        client.max_days_overdue = max(client.max_days_overdue, days_overdue)
+        if client.oldest_due_date is None or due_date < client.oldest_due_date:
+            client.oldest_due_date = due_date
+        client.buckets[bucket] = round_money(client.buckets[bucket] + row.balance)
+
+        bucket_totals[bucket] = round_money(bucket_totals[bucket] + row.balance)
+        bucket_counts[bucket] += 1
+        total_receivable = round_money(total_receivable + row.balance)
+
+    client_rows = [
+        AgingClientRow(
+            contact_id=client.contact_id,
+            contact_name=client.contact_name,
+            total_balance=client.total_balance,
+            max_days_overdue=client.max_days_overdue,
+            oldest_due_date=client.oldest_due_date,
+            invoice_count=client.invoice_count,
+            buckets=client.buckets,
+        )
+        for client in sorted(clients.values(), key=_client_sort_key)
+    ]
+
+    bucket_rows = [
+        AgingBucketSummary(
+            key=key,
+            label=label,
+            total=bucket_totals[key],
+            invoice_count=bucket_counts[key],
+        )
+        for key, label in AGING_BUCKETS
+    ]
+
+    return AgingReportResponse(
+        as_of=as_of,
+        total_receivable=total_receivable,
+        buckets=bucket_rows,
+        clients=client_rows,
+    )
+
+
+@router.get("/cash-flow", response_model=CashFlowReportResponse)
+def get_cash_flow_report(
+    repository: ReportsRepositoryDep,
+) -> CashFlowReportResponse:
+    """Flujo de caja real de los últimos seis meses y proyección a 30 días.
+
+    Los ingresos combinan pagos de clientes y depósitos bancarios. Los egresos
+    combinan pagos a proveedores, gastos y retiros bancarios. Las
+    transferencias bancarias se excluyen porque son movimientos internos.
+
+    La proyección incluye el saldo vencido más el saldo que vence dentro de los
+    próximos 30 días; ambos componentes se devuelven por separado para que el
+    consumidor pueda interpretar el dato.
+    """
+    as_of = date.today()
+    first_year, first_month = _shift_month(
+        as_of.year,
+        as_of.month,
+        -(CASH_FLOW_MONTHS - 1),
+    )
+    next_year, next_month = _shift_month(as_of.year, as_of.month, 1)
+    start_date = date(first_year, first_month, 1)
+    end_date = date(next_year, next_month, 1)
+
+    sources = repository.get_cash_flow_sources(
+        start_date=start_date,
+        end_date=end_date,
+    )
+    customer_payments = _monthly_totals(sources.customer_payments)
+    supplier_payments = _monthly_totals(sources.supplier_payments)
+    expenses = _monthly_totals(sources.expenses)
+    bank_deposits = _monthly_totals(sources.bank_deposits)
+    bank_withdrawals = _monthly_totals(sources.bank_withdrawals)
+
+    months: list[CashFlowMonth] = []
+    for offset in range(-(CASH_FLOW_MONTHS - 1), 1):
+        year, month = _shift_month(as_of.year, as_of.month, offset)
+        month_key = (year, month)
+
+        month_customer_payments = customer_payments.get(month_key, ZERO_MONEY)
+        month_supplier_payments = supplier_payments.get(month_key, ZERO_MONEY)
+        month_expenses = expenses.get(month_key, ZERO_MONEY)
+        month_bank_deposits = bank_deposits.get(month_key, ZERO_MONEY)
+        month_bank_withdrawals = bank_withdrawals.get(month_key, ZERO_MONEY)
+
+        income = round_money(month_customer_payments + month_bank_deposits)
+        month_expenses_total = round_money(
+            month_supplier_payments + month_expenses + month_bank_withdrawals
+        )
+
+        months.append(
+            CashFlowMonth(
+                month=f"{year:04d}-{month:02d}",
+                income=income,
+                expenses=month_expenses_total,
+                net=round_money(income - month_expenses_total),
+                income_sources=CashFlowIncomeSources(
+                    customer_payments=month_customer_payments,
+                    bank_deposits=month_bank_deposits,
+                ),
+                expense_sources=CashFlowExpenseSources(
+                    supplier_payments=month_supplier_payments,
+                    expenses=month_expenses,
+                    bank_withdrawals=month_bank_withdrawals,
+                ),
+            )
+        )
+
+    horizon = as_of + timedelta(days=PROJECTION_HORIZON_DAYS)
+    due_within_30_days = ZERO_MONEY
+    overdue_balance = ZERO_MONEY
+    projection_invoice_count = 0
+
+    for row in repository.list_aging_invoices():
+        due_date = _effective_due_date(row, as_of)
+        if due_date < as_of:
+            overdue_balance = round_money(overdue_balance + row.balance)
+            projection_invoice_count += 1
+        elif due_date <= horizon:
+            due_within_30_days = round_money(due_within_30_days + row.balance)
+            projection_invoice_count += 1
+
+    projection = CashFlowProjection(
+        horizon_days=PROJECTION_HORIZON_DAYS,
+        due_within_30_days=due_within_30_days,
+        overdue_balance=overdue_balance,
+        expected_collections=round_money(due_within_30_days + overdue_balance),
+        invoice_count=projection_invoice_count,
+    )
+
+    return CashFlowReportResponse(
+        as_of=as_of,
+        months=months,
+        projection=projection,
+    )
 
 
 @router.get("/income-statement", response_model=IncomeStatementResponse)

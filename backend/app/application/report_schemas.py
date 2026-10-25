@@ -1,6 +1,10 @@
-"""Schemas Pydantic para reportes financieros."""
+"""Schemas Pydantic para reportes financieros y de liquidez."""
 
 from __future__ import annotations
+
+from datetime import date
+from decimal import Decimal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict
 
@@ -35,3 +39,77 @@ class BalanceSheetResponse(BaseModel):
     total_liabilities: str
     total_equity: str
     balanced: bool
+
+
+class AgingBucketSummary(BaseModel):
+    """Total y cantidad de facturas de un rango de mora."""
+
+    key: str
+    label: str
+    total: Decimal
+    invoice_count: int
+
+
+class AgingClientRow(BaseModel):
+    """Saldo pendiente de un cliente agrupado por rango de mora."""
+
+    contact_id: UUID
+    contact_name: str
+    total_balance: Decimal
+    max_days_overdue: int
+    oldest_due_date: date | None
+    invoice_count: int
+    buckets: dict[str, Decimal]
+
+
+class AgingReportResponse(BaseModel):
+    """Reporte de cartera por antigüedad de saldos."""
+
+    as_of: date
+    total_receivable: Decimal
+    buckets: list[AgingBucketSummary]
+    clients: list[AgingClientRow]
+
+
+class CashFlowIncomeSources(BaseModel):
+    """Desglose de los ingresos reales de caja."""
+
+    customer_payments: Decimal
+    bank_deposits: Decimal
+
+
+class CashFlowExpenseSources(BaseModel):
+    """Desglose de los egresos reales de caja."""
+
+    supplier_payments: Decimal
+    expenses: Decimal
+    bank_withdrawals: Decimal
+
+
+class CashFlowMonth(BaseModel):
+    """Flujo de caja real de un mes calendario."""
+
+    month: str
+    income: Decimal
+    expenses: Decimal
+    net: Decimal
+    income_sources: CashFlowIncomeSources
+    expense_sources: CashFlowExpenseSources
+
+
+class CashFlowProjection(BaseModel):
+    """Proyección simple de cobros con la cartera pendiente."""
+
+    horizon_days: int
+    due_within_30_days: Decimal
+    overdue_balance: Decimal
+    expected_collections: Decimal
+    invoice_count: int
+
+
+class CashFlowReportResponse(BaseModel):
+    """Flujo de caja histórico y proyección de cobros."""
+
+    as_of: date
+    months: list[CashFlowMonth]
+    projection: CashFlowProjection
