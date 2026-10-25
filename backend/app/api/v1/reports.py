@@ -362,12 +362,14 @@ def get_income_statement(
     start_date: Annotated[str | None, Query()] = None,
     end_date: Annotated[str | None, Query()] = None,
 ) -> IncomeStatementResponse:
-    """Estado de Resultados: ingresos, gastos y utilidad neta en un rango."""
+    """Estado de Resultados: ingresos, costos, gastos y utilidad neta en un rango."""
     start = _parse_date(start_date)
     end = _parse_date(end_date)
 
     # Para el estado de resultados usamos el rango de fechas del asiento.
-    # Calculamos saldos de cuentas INGRESO y GASTO entre start_date y end_date.
+    # Calculamos saldos de cuentas INGRESO, GASTO y COSTO entre start_date y
+    # end_date. Sin el costo de ventas (PUC 61) la utilidad neta queda inflada
+    # y el Balance General deja de cuadrar por ese monto.
     line_subquery = (
         select(
             AccountingEntryLine.account_code,
@@ -402,7 +404,7 @@ def get_income_statement(
             line_subquery,
             line_subquery.c.account_code == AccountingAccount.code,
         )
-        .where(AccountingAccount.account_type.in_(["INGRESO", "GASTO"]))
+        .where(AccountingAccount.account_type.in_(["INGRESO", "GASTO", "COSTO"]))
         .order_by(AccountingAccount.code)
     )
 
@@ -430,7 +432,12 @@ def get_income_statement(
         if row.account_type == "INGRESO":
             income_accounts.append(row_data)
             total_income += balance
-        elif row.account_type == "GASTO":
+        elif row.account_type in ("GASTO", "COSTO"):
+            # El PUC distingue el costo de ventas (61) de los gastos
+            # operativos (5), pero ambos se descuentan de los ingresos para
+            # llegar a la utilidad neta. El esquema de respuesta solo tiene
+            # dos secciones, así que los costos se presentan junto a los
+            # gastos y quedan incluidos en total_expenses.
             expense_accounts.append(row_data)
             total_expenses += balance
 

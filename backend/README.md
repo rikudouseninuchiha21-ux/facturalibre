@@ -59,7 +59,8 @@ El repositorio incluye `docker-compose.override.yml` en la raíz. Docker Compose
 lo fusiona automáticamente cuando se ejecuta `docker compose` sin `-f`, así que
 el backend de desarrollo:
 
-- Monta `./backend/app` en `/app/app` y `./backend/tests` en `/app/tests`.
+- Monta `./backend/app` en `/app/app`, `./backend/tests` en `/app/tests` y
+  `./backend/scripts` en `/app/scripts`.
 - Ejecuta Uvicorn con `--reload` y `--reload-dir /app/app`.
 - Conserva el entrypoint: PostgreSQL se espera y Alembic migra antes de arrancar.
 
@@ -101,8 +102,36 @@ Para verificar la configuración fusionada:
 docker compose config
 ```
 
-El bloque `backend` debe mostrar el comando con `--reload` y los dos volúmenes
-`bind` hacia `backend/app` y `backend/tests`.
+El bloque `backend` debe mostrar el comando con `--reload` y los tres volúmenes
+`bind` hacia `backend/app`, `backend/tests` y `backend/scripts`.
+
+## Datos de demostración
+
+El script `backend/scripts/seed_demo_data.py` puebla la base con usuarios,
+catálogos, compras, ventas, pagos, gastos, movimientos bancarios y un activo fijo
+depreciado. Reutiliza los servicios de la aplicación, por lo que también genera
+inventario y asientos contables reales.
+
+```bash
+# Solo en desarrollo. --reset borra los datos de negocio y conserva el PUC.
+docker compose exec backend python scripts/seed_demo_data.py --reset
+```
+
+Sin `--reset`, el script aborta si ya existen datos para evitar duplicados. Las
+credenciales de demostración son:
+
+| Usuario | Contraseña | Rol |
+| --- | --- | --- |
+| `admin@nexus.com` | `password123` | ADMIN |
+| `contador@nexus.com` | `password123` | ACCOUNTANT |
+| `cajero@nexus.com` | `password123` | CASHIER |
+
+Si ejecutas el backend fuera de Docker con una base PostgreSQL accesible, el
+comando equivalente desde `backend/` es:
+
+```bash
+uv run python scripts/seed_demo_data.py --reset
+```
 
 ## Autenticación
 

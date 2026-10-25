@@ -9,6 +9,7 @@ services:
     volumes:
       - ./backend/app:/app/app:rw
       - ./backend/tests:/app/tests:rw
+      - ./backend/scripts:/app/scripts:rw
     command:
       - uvicorn
       - app.main:app
