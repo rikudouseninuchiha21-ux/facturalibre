@@ -9,7 +9,7 @@ interface TopbarProps {
 
 export function Topbar({ currentUser }: TopbarProps) {
   return (
-    <header className="z-30 flex h-16 items-center justify-between px-6 py-2.5 bg-white border-b border-zinc-200 shadow-sm shrink-0">
+    <header className="z-30 flex h-16 items-center justify-between px-6 py-2.5 bg-white border-b border-zinc-200 shadow-sm shrink-0 print:hidden">
       <div className="flex items-center gap-4">
         <div className="hidden md:flex-1 max-w-md">
           <div className="relative">

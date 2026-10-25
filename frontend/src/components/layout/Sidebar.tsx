@@ -80,7 +80,7 @@ export function Sidebar({ currentUser }: SidebarProps) {
 
   return (
     <aside
-      className="w-64 bg-zinc-950 border-r border-zinc-800 text-white z-50 shrink-0 flex flex-col h-screen"
+      className="w-64 bg-zinc-950 border-r border-zinc-800 text-white z-50 shrink-0 flex flex-col h-screen print:hidden"
     >
       {/* Sidebar header with logo */}
       <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-800 bg-zinc-950 shrink-0">

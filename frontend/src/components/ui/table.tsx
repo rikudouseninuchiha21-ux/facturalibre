@@ -1,11 +1,16 @@
 import type { ComponentProps } from "react";
 
+interface TableProps extends ComponentProps<"table"> {
+  wrapperClassName?: string;
+}
+
 export function Table({
   className = "",
+  wrapperClassName = "overflow-x-auto",
   ...props
-}: ComponentProps<"table">) {
+}: TableProps) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200">
+    <div className={`rounded-xl border border-slate-200 ${wrapperClassName}`}>
       <table
         className={`min-w-full divide-y divide-slate-200 text-left ${className}`}
         {...props}
@@ -45,14 +50,24 @@ export function TableRow({
   );
 }
 
+interface DenseTableHeadProps extends ComponentProps<"th"> {
+  dense?: boolean;
+}
+
+interface DenseTableCellProps extends ComponentProps<"td"> {
+  dense?: boolean;
+}
+
 export function TableHead({
   className = "",
+  dense = false,
   ...props
-}: ComponentProps<"th">) {
+}: DenseTableHeadProps) {
+  const padding = dense ? "px-2 py-2" : "px-4 py-3";
   return (
     <th
       scope="col"
-      className={`whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 ${className}`}
+      className={`whitespace-nowrap ${padding} text-xs font-semibold uppercase tracking-wide text-slate-500 ${className}`}
       {...props}
     />
   );
@@ -60,12 +75,13 @@ export function TableHead({
 
 export function TableCell({
   className = "",
+  dense = false,
   ...props
-}: ComponentProps<"td">) {
+}: DenseTableCellProps) {
+  const cellStyles = dense
+    ? "whitespace-normal break-words px-2 py-2 text-xs"
+    : "whitespace-nowrap px-4 py-3 text-sm";
   return (
-    <td
-      className={`whitespace-nowrap px-4 py-3 text-sm text-slate-700 ${className}`}
-      {...props}
-    />
+    <td className={`${cellStyles} text-slate-700 ${className}`} {...props} />
   );
 }

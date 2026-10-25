@@ -33,24 +33,24 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-zinc-50">
+    <div className="flex h-screen w-full overflow-hidden bg-zinc-50 print:h-auto print:overflow-visible print:bg-white">
       {/* Sidebar */}
       <Sidebar currentUser={currentUser} />
 
       {/* Contenedor Derecho */}
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden print:block print:overflow-visible">
         {/* Topbar (Fijo arriba, no se mueve con el scroll) */}
-        <div className="shrink-0 z-50">
+        <div className="shrink-0 z-50 print:hidden">
           <Topbar currentUser={currentUser} />
         </div>
 
         {/* Main (Hace scroll independiente por debajo del topbar) */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12">
+        <main className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12 print:flex-none print:overflow-visible print:p-0">
           {children}
         </main>
 
         {/* Footer (Fijo abajo) */}
-        <footer className="shrink-0 border-t border-zinc-200 bg-white px-8 py-4 text-sm text-zinc-500">
+        <footer className="shrink-0 border-t border-zinc-200 bg-white px-8 py-4 text-sm text-zinc-500 print:hidden">
           Nexus ERP · Fase 22
         </footer>
       </div>
