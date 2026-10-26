@@ -13,8 +13,9 @@ from app.application.company_settings_schemas import (
     CompanySettingUpdate,
 )
 from app.domain.company_setting_repository import CompanySettingRepository
-from app.domain.models.auth import User, UserRole
+from app.domain.models.auth import UserRole
 from app.infrastructure.database import get_db
+from app.infrastructure.transactions import operation_transaction
 
 router = APIRouter(
     prefix="/settings",
@@ -49,17 +50,23 @@ def get_company_settings(
     return CompanySettingRead.model_validate(company)
 
 
-@router.put("/company", response_model=CompanySettingRead)
+@router.put(
+    "/company",
+    response_model=CompanySettingRead,
+    dependencies=[Depends(require_role([UserRole.ADMIN]))],
+)
 def update_company_settings(
     payload: CompanySettingUpdate,
+    db: DbSession,
     repository: CompanySettingRepositoryDep,
-    current_user: User = Depends(require_role([UserRole.ADMIN])),  # noqa: B008
 ) -> CompanySettingRead:
-    """Actualiza la configuración de la empresa (solo ADMIN)."""
-    if current_user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No tiene permisos para acceder a este recurso",
-        )
-    company = repository.update(values=payload.model_dump(exclude_unset=True))
+    """Actualiza la configuración de la empresa (solo ADMIN).
+
+    La escritura vive dentro de ``operation_transaction``: ``get_db`` no
+    commitea al cerrar la sesión, así que sin este bloque el PUT flush-eaba
+    pero el cambio se perdía con el ``close()`` (regla de oro de
+    transacciones del proyecto).
+    """
+    with operation_transaction(db):
+        company = repository.update(values=payload.model_dump(exclude_unset=True))
     return CompanySettingRead.model_validate(company)

@@ -539,6 +539,34 @@ async function apiPatch<T>(
 
   return (await response.json()) as T;
 }
+async function apiPut<T>(
+  path: string,
+  body?: unknown,
+  cookieHeader?: string,
+): Promise<T> {
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (cookieHeader) {
+    headers.Cookie = cookieHeader;
+  }
+  headers["Content-Type"] = "application/json";
+
+  const response = await fetch(`${getBaseUrl()}${API_PREFIX}${path}`, {
+    method: "PUT",
+    headers,
+    body: JSON.stringify(body),
+    credentials: "include",
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    const detail = await getErrorDetail(response, fallback);
+    throw new ApiError(`Error al actualizar ${path}: ${detail}`, response.status);
+  }
+
+  return (await response.json()) as T;
+}
+
 async function apiPost<T>(
   path: string,
   body?: unknown,
@@ -1627,9 +1655,8 @@ export function getCompanySettings(
 export function updateCompanySettings(
   payload: CompanySettingUpdateInput,
 ): Promise<CompanySetting> {
-  return apiPost<CompanySetting>("/settings/company", payload, {
-    headers: { "Idempotency-Key": crypto.randomUUID() },
-  });
+  // El backend expone PUT /settings/company; usar POST devolvía 405.
+  return apiPut<CompanySetting>("/settings/company", payload);
 }
 
 export interface UserItem {
