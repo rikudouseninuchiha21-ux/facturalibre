@@ -23,6 +23,7 @@ from app.api.v1 import (
     pos,
     purchases,
     quotes,
+    receivables,
     reports,
     settings,
     taxes,
@@ -32,6 +33,8 @@ from app.api.v1 import (
 from app.application.accounting.period_service import FiscalPeriodError
 from app.application.accounting.service import AccountingPeriodClosedError
 from app.domain.exceptions import (
+    AgreementError,
+    AgreementValidationError,
     BudgetError,
     BudgetStateError,
     BudgetValidationError,
@@ -43,6 +46,9 @@ from app.domain.exceptions import (
     InvoiceValidationError,
     PayrollError,
     QuoteStateError,
+    ReceivablesError,
+    ReceivablesValidationError,
+    ReminderError,
     ResourceNotFoundError,
     TreasuryError,
     TreasuryValidationError,
@@ -75,6 +81,7 @@ app.include_router(banks.router, prefix="/api/v1")
 app.include_router(cost_centers.router, prefix="/api/v1")
 app.include_router(budgets.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
+app.include_router(receivables.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)
@@ -275,6 +282,66 @@ async def budget_error_handler(
     exc: BudgetError,
 ) -> JSONResponse:
     """Traduce un conflicto de presupuesto (periodo duplicado) a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(ReceivablesValidationError)
+async def receivables_validation_handler(
+    _request: Request,
+    exc: ReceivablesValidationError,
+) -> JSONResponse:
+    """Traduce datos de cartera inválidos a un 422."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(AgreementValidationError)
+async def agreement_validation_handler(
+    _request: Request,
+    exc: AgreementValidationError,
+) -> JSONResponse:
+    """Traduce un acuerdo inconsistente con sus cuotas o saldo a un 422."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(ReminderError)
+async def reminder_error_handler(
+    _request: Request,
+    exc: ReminderError,
+) -> JSONResponse:
+    """Traduce un recordatorio no permitido a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(AgreementError)
+async def agreement_error_handler(
+    _request: Request,
+    exc: AgreementError,
+) -> JSONResponse:
+    """Traduce una transición inválida de acuerdo de pago a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(ReceivablesError)
+async def receivables_error_handler(
+    _request: Request,
+    exc: ReceivablesError,
+) -> JSONResponse:
+    """Traduce un conflicto genérico de cartera a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},

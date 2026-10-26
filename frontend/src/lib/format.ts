@@ -99,3 +99,19 @@ export function formatRelativeTime(iso: string): string {
   }
   return relativeTimeFormatter.format(Math.round(seconds / 31557600), "year");
 }
+
+const dateFormatter = new Intl.DateTimeFormat("es-CO", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/** Fecha de calendario en es-CO (sin desplazar por zona horaria). */
+export function formatDate(value: string): string {
+  const parsed = new Date(`${value}T00:00:00Z`);
+  if (!Number.isFinite(parsed.getTime())) {
+    return value;
+  }
+  return dateFormatter.format(parsed);
+}

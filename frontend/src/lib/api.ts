@@ -1952,3 +1952,261 @@ export function getBudgetVsActualReport(
     cookieHeader,
   );
 }
+
+// -- Cartera y cobranza ----------------------------------------------------
+
+export interface AgingBuckets {
+  current: string;
+  d0_30: string;
+  d31_60: string;
+  d61_90: string;
+  d91_120: string;
+  d120_plus: string;
+  total: string;
+}
+
+export interface CustomerAging {
+  contact_id: string;
+  contact_name: string;
+  current: string;
+  d0_30: string;
+  d31_60: string;
+  d61_90: string;
+  d91_120: string;
+  d120_plus: string;
+  total: string;
+  total_overdue: string;
+  invoice_count: number;
+}
+
+export interface AgingReport {
+  as_of_date: string;
+  buckets_totals: AgingBuckets;
+  by_customer: CustomerAging[];
+  total_overdue: string;
+}
+
+export interface ReceivablesSummary {
+  as_of_date: string;
+  buckets_totals: AgingBuckets;
+  total_overdue: string;
+  top_customers: CustomerAging[];
+  customer_count: number;
+}
+
+export type StatementLineType = "INVOICE" | "PAYMENT" | "CREDIT_NOTE";
+
+export interface StatementLine {
+  date: string;
+  type: StatementLineType;
+  reference: string;
+  description: string;
+  debit: string;
+  credit: string;
+  running_balance: string;
+}
+
+export interface CustomerStatement {
+  contact_id: string;
+  contact_name: string;
+  from_date: string;
+  to_date: string;
+  opening_balance: string;
+  lines: StatementLine[];
+  closing_balance: string;
+}
+
+export type ReminderChannel = "IN_APP" | "EMAIL" | "SMS" | "CALL";
+
+export interface PaymentReminder {
+  id: string;
+  invoice_id: string;
+  contact_id: string;
+  level: number;
+  channel: ReminderChannel;
+  sent_at: string;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+}
+
+export interface ReminderCreateInput {
+  invoice_id: string;
+  level: number;
+  channel?: ReminderChannel;
+  notes?: string;
+}
+
+export interface AutoRemindResult {
+  created: number;
+  skipped: number;
+  errors: number;
+}
+
+export type AgreementStatus =
+  | "ACTIVE"
+  | "COMPLETED"
+  | "BROKEN"
+  | "CANCELLED";
+
+export interface AgreementInstallment {
+  id: string;
+  due_date: string;
+  amount: string;
+  paid_amount: string;
+  paid_at: string | null;
+  balance: string;
+}
+
+export interface PaymentAgreement {
+  id: string;
+  contact_id: string;
+  invoice_id: string | null;
+  total_amount: string;
+  installments: number;
+  start_date: string;
+  status: AgreementStatus;
+  notes: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  installment_items: AgreementInstallment[];
+  paid_total: string;
+  balance: string;
+}
+
+export interface AgreementCreateInput {
+  contact_id: string;
+  invoice_id?: string;
+  total_amount: string;
+  installments: number;
+  start_date: string;
+  frequency_days?: number;
+  notes?: string;
+}
+
+export function getReceivablesAging(
+  asOfDate?: string,
+  cookieHeader?: string,
+): Promise<AgingReport> {
+  const query = asOfDate
+    ? `?as_of_date=${encodeURIComponent(asOfDate)}`
+    : "";
+  return apiGet<AgingReport>(`/receivables/aging${query}`, cookieHeader);
+}
+
+export function getCustomerAging(
+  contactId: string,
+  asOfDate?: string,
+  cookieHeader?: string,
+): Promise<CustomerAging> {
+  const query = asOfDate
+    ? `?as_of_date=${encodeURIComponent(asOfDate)}`
+    : "";
+  return apiGet<CustomerAging>(
+    `/receivables/aging/${encodeURIComponent(contactId)}${query}`,
+    cookieHeader,
+  );
+}
+
+export function getCustomerStatement(
+  contactId: string,
+  fromDate: string,
+  toDate: string,
+  cookieHeader?: string,
+): Promise<CustomerStatement> {
+  const params = new URLSearchParams({
+    from_date: fromDate,
+    to_date: toDate,
+  });
+  return apiGet<CustomerStatement>(
+    `/receivables/customers/${encodeURIComponent(contactId)}/statement?${params.toString()}`,
+    cookieHeader,
+  );
+}
+
+export function getReceivablesSummary(
+  asOfDate?: string,
+  cookieHeader?: string,
+): Promise<ReceivablesSummary> {
+  const query = asOfDate
+    ? `?as_of_date=${encodeURIComponent(asOfDate)}`
+    : "";
+  return apiGet<ReceivablesSummary>(
+    `/receivables/summary${query}`,
+    cookieHeader,
+  );
+}
+
+export function createReminder(
+  payload: ReminderCreateInput,
+): Promise<PaymentReminder> {
+  return apiPost<PaymentReminder>("/receivables/reminders", payload);
+}
+
+export function getReminders(
+  query?: string,
+  cookieHeader?: string,
+): Promise<PaymentReminder[]> {
+  return apiGet<PaymentReminder[]>(
+    `/receivables/reminders${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
+
+export function runAutoReminders(
+  asOfDate?: string,
+): Promise<AutoRemindResult> {
+  return apiPost<AutoRemindResult>("/receivables/reminders/auto", {
+    as_of_date: asOfDate ?? null,
+  });
+}
+
+export function getAgreements(
+  query?: string,
+  cookieHeader?: string,
+): Promise<PaymentAgreement[]> {
+  return apiGet<PaymentAgreement[]>(
+    `/receivables/agreements${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
+
+export function getAgreement(
+  id: string,
+  cookieHeader?: string,
+): Promise<PaymentAgreement> {
+  return apiGet<PaymentAgreement>(
+    `/receivables/agreements/${encodeURIComponent(id)}`,
+    cookieHeader,
+  );
+}
+
+export function createAgreement(
+  payload: AgreementCreateInput,
+): Promise<PaymentAgreement> {
+  return apiPost<PaymentAgreement>("/receivables/agreements", payload);
+}
+
+export function payInstallment(
+  agreementId: string,
+  installmentId: string,
+  amount: string,
+): Promise<PaymentAgreement> {
+  return apiPost<PaymentAgreement>(
+    `/receivables/agreements/${encodeURIComponent(agreementId)}/installments/${encodeURIComponent(installmentId)}/pay`,
+    { amount },
+  );
+}
+
+export function cancelAgreement(id: string): Promise<PaymentAgreement> {
+  return apiPost<PaymentAgreement>(
+    `/receivables/agreements/${encodeURIComponent(id)}/cancel`,
+  );
+}
+
+export function markAgreementBroken(id: string): Promise<PaymentAgreement> {
+  return apiPost<PaymentAgreement>(
+    `/receivables/agreements/${encodeURIComponent(id)}/mark-broken`,
+  );
+}

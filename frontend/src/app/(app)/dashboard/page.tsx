@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { SalesChart } from "@/components/dashboard/SalesChart";
 import { StatusChart } from "@/components/dashboard/StatusChart";
+import { ReceivablesWidget } from "@/components/dashboard/ReceivablesWidget";
 import { ExportCsvButton } from "@/components/reports/ExportCsvButton";
 import { BudgetAlertBadge } from "@/components/budgets/BudgetAlertBadge";
 import {
@@ -27,8 +28,10 @@ import {
 import {
   getBudgetAlerts,
   getDashboardSummary,
+  getReceivablesSummary,
   type BudgetAlertItem,
   type DashboardSummary,
+  type ReceivablesSummary,
 } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 import { getSessionCookieHeader } from "@/lib/server-auth";
@@ -151,6 +154,7 @@ export default async function HomePage() {
   let summary: DashboardSummary | null = null;
   let error: string | null = null;
   let budgetAlerts: BudgetAlertItem[] | null = null;
+  let receivablesSummary: ReceivablesSummary | null = null;
 
   try {
     summary = await getDashboardSummary(cookieHeader);
@@ -173,6 +177,13 @@ export default async function HomePage() {
     );
   } catch {
     budgetAlerts = null;
+  }
+
+  // El widget de cartera es visible para los tres roles (lectura).
+  try {
+    receivablesSummary = await getReceivablesSummary(undefined, cookieHeader);
+  } catch {
+    receivablesSummary = null;
   }
 
   return (
@@ -270,6 +281,10 @@ export default async function HomePage() {
       ) : null}
 
       {budgetAlerts !== null ? <BudgetsAtRiskWidget alerts={budgetAlerts} /> : null}
+
+      {receivablesSummary !== null ? (
+        <ReceivablesWidget summary={receivablesSummary} />
+      ) : null}
 
       <section className="mt-8">
         <h2 className="text-xl font-bold tracking-tight text-zinc-950 mb-4">

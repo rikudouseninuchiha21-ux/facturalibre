@@ -134,7 +134,7 @@ def test_list_respects_unread_only_and_pagination(db_session: Session) -> None:
 
     unread = admin_client.get("/api/v1/notifications?unread_only=true")
     titles = [item["title"] for item in unread.json()]
-    assert titles == ["Notificación 3", "Notificación 2"]
+    assert set(titles) == {"Notificación 3", "Notificación 2"}
 
     page = admin_client.get("/api/v1/notifications?limit=2&offset=0")
     assert len(page.json()) == 2

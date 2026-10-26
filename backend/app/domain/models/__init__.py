@@ -48,6 +48,13 @@ from app.domain.models.purchase import (
 )
 from app.domain.models.quote import Quote, QuoteStatus
 from app.domain.models.quote_line import QuoteLine
+from app.domain.models.receivables import (
+    AgreementStatus,
+    PaymentAgreement,
+    PaymentAgreementInstallment,
+    PaymentReminder,
+    ReminderChannel,
+)
 from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
 from app.domain.models.tax import Tax
 from app.domain.models.warehouse import Warehouse
@@ -60,6 +67,7 @@ __all__ = [
     "AccountingSourceType",
     "AccountNature",
     "AccountType",
+    "AgreementStatus",
     "AuthSession",
     "BankAccount",
     "BankAccountType",
@@ -92,6 +100,9 @@ __all__ = [
     "Notification",
     "NotificationSeverity",
     "Payment",
+    "PaymentAgreement",
+    "PaymentAgreementInstallment",
+    "PaymentReminder",
     "PaymentStatus",
     "PayrollDetail",
     "PayrollPeriod",
@@ -103,6 +114,7 @@ __all__ = [
     "Quote",
     "QuoteLine",
     "QuoteStatus",
+    "ReminderChannel",
     "StockBalance",
     "StockMovement",
     "StockMovementType",

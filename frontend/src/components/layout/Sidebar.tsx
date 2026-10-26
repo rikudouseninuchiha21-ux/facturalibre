@@ -9,6 +9,7 @@ import {
   BarChart3,
   Building2,
   Calculator,
+  CircleDollarSign,
   FilePlus,
   FileText,
   GraduationCap,
@@ -48,6 +49,7 @@ const NAVIGATION = [
       { href: "/invoices", label: "Ventas", icon: FileText, roles: ["ADMIN", "ACCOUNTANT"] },
       { href: "/quotes", label: "Cotizaciones", icon: FilePlus, roles: ["ADMIN", "ACCOUNTANT"] },
       { href: "/purchases", label: "Compras", icon: Package, roles: ["ADMIN", "ACCOUNTANT"] },
+      { href: "/receivables", label: "Cartera", icon: CircleDollarSign, roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
     ],
   },
   {

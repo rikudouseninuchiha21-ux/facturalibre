@@ -65,6 +65,26 @@ class BudgetValidationError(BudgetError):
     """Datos de presupuesto inconsistentes con el catálogo o el periodo."""
 
 
+class ReceivablesError(Exception):
+    """Operación inválida sobre cartera, recordatorios o acuerdos."""
+
+
+class ReceivablesValidationError(ReceivablesError):
+    """Datos de cartera inconsistentes con facturas, pagos o contacto."""
+
+
+class ReminderError(ReceivablesError):
+    """Recordatorio de cobranza no permitido para el estado actual."""
+
+
+class AgreementError(ReceivablesError):
+    """Acuerdo de pago no permitido en su estado actual."""
+
+
+class AgreementValidationError(AgreementError):
+    """Datos del acuerdo incompatibles con las cuotas o el saldo de la factura."""
+
+
 class AuthError(Exception):
     """Error de autenticación o registro."""
 
