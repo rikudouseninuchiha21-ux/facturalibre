@@ -45,8 +45,17 @@ class CompanySettingRepository:
         self.db = db
 
     def get(self) -> CompanySetting | None:
-        """Devuelve la configuración de la empresa (solo una fila)."""
-        return self.db.scalar(select(CompanySetting))
+        """Devuelve la configuración de la empresa (solo una fila).
+
+        La tabla es single-row: la siembra la hace la migración 0012. El
+        ``ORDER BY created_at`` con ``LIMIT 1`` hace la consulta
+        determinista: si existiera alguna fila duplicada accidental
+        siempre gana la original (la más antigua), tanto en producción
+        como en bases de test con histórico.
+        """
+        return self.db.scalar(
+            select(CompanySetting).order_by(CompanySetting.created_at, CompanySetting.id).limit(1)
+        )
 
     def create(
         self,

@@ -12,6 +12,7 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 from uuid import UUID, uuid4
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.domain.models.company_setting import CompanySetting
@@ -29,30 +30,41 @@ def make_company(
     *,
     software_pin: str | None = "",
 ) -> CompanySetting:
-    company = CompanySetting(
-        name="Nexus ERP S.A.S.",
-        tax_id="900123456",
-        address="Carrera 15 # 88 - 21",
-        phone="+57 300 000 0000",
-        email="facturacion@nexus.co",
-        dv="8",
-        tax_regime="RESPONSABLE_IVA",
-        person_type="JURIDICA",
-        fiscal_responsibility="O-13",
-        dian_municipality_code="11001",
-        dian_department_code="11",
-        country_code="CO",
-        dian_resolution_number="18764000123456",
-        dian_resolution_prefix="FE",
-        dian_resolution_range_from=1,
-        dian_resolution_range_to=1000,
-        dian_resolution_valid_from=date(2026, 1, 1),
-        dian_resolution_valid_to=date(2027, 12, 31),
-        dian_software_id="NEXUS-ERP-38A",
-        dian_software_pin=software_pin,
-        dian_environment="HABILITACION",
-    )
-    db.add(company)
+    """Empresa con datos DIAN completos, reutilizando la fila del sistema.
+
+    ``company_settings`` es single-row: la migración 0012 siembra una fila
+    por defecto ('Mi Empresa S.A.S.', todo NULL). Crear una SEGUNDA fila
+    aquí rompía el aislamiento en bases limpias (CI): el repositorio
+    ``get()`` veía la fila sembrada vacía y los tests fallaban con 422
+    "Datos DIAN incompletos". Como en producción, el factory actualiza la
+    fila existente; solo crea una si la base no la tiene.
+    """
+    company = db.scalar(select(CompanySetting))
+    if company is None:
+        company = CompanySetting(name="Nexus ERP S.A.S.")
+        db.add(company)
+
+    company.name = "Nexus ERP S.A.S."
+    company.tax_id = "900123456"
+    company.address = "Carrera 15 # 88 - 21"
+    company.phone = "+57 300 000 0000"
+    company.email = "facturacion@nexus.co"
+    company.dv = "8"
+    company.tax_regime = "RESPONSABLE_IVA"
+    company.person_type = "JURIDICA"
+    company.fiscal_responsibility = "O-13"
+    company.dian_municipality_code = "11001"
+    company.dian_department_code = "11"
+    company.country_code = "CO"
+    company.dian_resolution_number = "18764000123456"
+    company.dian_resolution_prefix = "FE"
+    company.dian_resolution_range_from = 1
+    company.dian_resolution_range_to = 1000
+    company.dian_resolution_valid_from = date(2026, 1, 1)
+    company.dian_resolution_valid_to = date(2027, 12, 31)
+    company.dian_software_id = "NEXUS-ERP-38A"
+    company.dian_software_pin = software_pin
+    company.dian_environment = "HABILITACION"
     db.flush()
     return company
 
