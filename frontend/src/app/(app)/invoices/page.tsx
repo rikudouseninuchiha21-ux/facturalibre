@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { InvoiceActions } from "@/components/invoices/InvoiceActions";
+import { InvoiceDianBadge } from "@/components/invoices/InvoiceDianBadge";
 import { ExportCsvButton } from "@/components/reports/ExportCsvButton";
 import {
   Card,
@@ -154,6 +155,8 @@ export default async function InvoicesPage() {
                   <TableHead>Número</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Pago</TableHead>
+                  <TableHead>CUFE</TableHead>
+                  <TableHead>Estado DIAN</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="text-right">Balance</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
@@ -175,6 +178,12 @@ export default async function InvoicesPage() {
                     </TableCell>
                     <TableCell>
                       <PaymentBadge status={invoice.payment_status} />
+                    </TableCell>
+                    <TableCell className="font-mono text-xs tabular-nums text-slate-500">
+                      {invoice.cufe ? `${invoice.cufe.slice(0, 8)}…` : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <InvoiceDianBadge dianStatus={invoice.dian_status} />
                     </TableCell>
                     <TableCell className="text-right font-medium tabular-nums text-slate-950">
                       {formatCurrency(invoice.total, invoice.currency)}

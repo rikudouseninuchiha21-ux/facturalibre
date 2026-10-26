@@ -38,6 +38,10 @@ class Tax(Base):
             "Tarifa 0-100 con 4 decimales y catálogo de impuestos."
         ),
     )
+    # -- Fase 38A: código y nombre del impuesto según el catálogo DIAN.
+    # 01=IVA, 03=ICA, 04=INC, 05=ReteFuente, 06=ReteIVA, 07=ReteICA, 22=bolsas.
+    dian_tax_code: Mapped[str | None] = mapped_column(String(2))
+    dian_tax_name: Mapped[str | None] = mapped_column(String(50))
 
     # DECISIONES.md: bloqueo optimista y soft delete en datos maestros.
     version: Mapped[int] = mapped_column(

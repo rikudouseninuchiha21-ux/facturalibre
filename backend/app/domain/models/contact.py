@@ -79,6 +79,19 @@ class Contact(Base):
         ),
     )
 
+    # -- Fase 38A: datos fiscales DIAN del adquiriente/proveedor.
+    dv: Mapped[str | None] = mapped_column(String(2))
+    tax_regime: Mapped[str | None] = mapped_column(String(20))
+    person_type: Mapped[str | None] = mapped_column(String(20))
+    fiscal_responsibility: Mapped[str | None] = mapped_column(String(50))
+    dian_municipality_code: Mapped[str | None] = mapped_column(String(5))
+    dian_department_code: Mapped[str | None] = mapped_column(String(2))
+    country_code: Mapped[str] = mapped_column(
+        String(3), nullable=False, server_default=text("'CO'")
+    )
+    # Dirección física para el XML/PDF DIAN (no existía en el catálogo).
+    address: Mapped[str | None] = mapped_column(String(300))
+
     # DECISIONES.md: bloqueo optimista y soft delete en datos maestros.
     version: Mapped[int] = mapped_column(
         Integer, nullable=False, default=1, server_default=text("1")

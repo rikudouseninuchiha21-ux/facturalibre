@@ -20,6 +20,16 @@ class ContactCreate(BaseModel):
     type: ContactType = ContactType.CUSTOMER
     status: ContactStatus = ContactStatus.CUSTOMER
 
+    # -- Fase 38A: datos fiscales DIAN del adquiriente.
+    dv: str | None = Field(default=None, max_length=2)
+    tax_regime: str | None = Field(default=None, max_length=20)
+    person_type: str | None = Field(default=None, max_length=20)
+    fiscal_responsibility: str | None = Field(default=None, max_length=50)
+    dian_municipality_code: str | None = Field(default=None, max_length=5)
+    dian_department_code: str | None = Field(default=None, max_length=2)
+    country_code: str | None = Field(default=None, max_length=3)
+    address: str | None = Field(default=None, max_length=300)
+
 
 class ContactUpdate(BaseModel):
     """Actualización parcial; version es obligatoria para el bloqueo optimista."""
@@ -31,6 +41,16 @@ class ContactUpdate(BaseModel):
     tax_id: str | None = Field(default=None, max_length=30)
     type: ContactType | None = None
     status: ContactStatus | None = None
+
+    # -- Fase 38A: datos fiscales DIAN del adquiriente.
+    dv: str | None = Field(default=None, max_length=2)
+    tax_regime: str | None = Field(default=None, max_length=20)
+    person_type: str | None = Field(default=None, max_length=20)
+    fiscal_responsibility: str | None = Field(default=None, max_length=50)
+    dian_municipality_code: str | None = Field(default=None, max_length=5)
+    dian_department_code: str | None = Field(default=None, max_length=2)
+    country_code: str | None = Field(default=None, max_length=3)
+    address: str | None = Field(default=None, max_length=300)
     version: int = Field(ge=1)
 
     @model_validator(mode="after")
@@ -54,6 +74,14 @@ class ContactRead(BaseModel):
     tax_id: str | None
     type: ContactType
     status: ContactStatus
+    dv: str | None = None
+    tax_regime: str | None = None
+    person_type: str | None = None
+    fiscal_responsibility: str | None = None
+    dian_municipality_code: str | None = None
+    dian_department_code: str | None = None
+    country_code: str = "CO"
+    address: str | None = None
     version: int
     created_at: datetime
     updated_at: datetime

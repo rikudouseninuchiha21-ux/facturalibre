@@ -61,17 +61,5 @@ def update_company_settings(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="No tiene permisos para acceder a este recurso",
         )
-    company = repository.update(
-        name=payload.name,
-        tax_id=payload.tax_id,
-        address=payload.address,
-        phone=payload.phone,
-        email=payload.email,
-        logo_url=payload.logo_url,
-    )
-    if company is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Configuración de la empresa no encontrada",
-        )
+    company = repository.update(values=payload.model_dump(exclude_unset=True))
     return CompanySettingRead.model_validate(company)

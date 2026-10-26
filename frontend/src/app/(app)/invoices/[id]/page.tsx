@@ -8,6 +8,7 @@ import {
   getCompanySettings,
   getContact,
   getCreditNotes,
+  getCurrentUser,
   getInvoice,
   getInvoicePayments,
   type Contact,
@@ -87,6 +88,13 @@ export default async function InvoicePage({
     );
   }
 
+  let currentUserRole: string | null = null;
+  try {
+    currentUserRole = (await getCurrentUser(cookieHeader)).role;
+  } catch {
+    currentUserRole = null;
+  }
+
   return (
     <div className="space-y-6">
       <InvoiceDetail
@@ -95,6 +103,7 @@ export default async function InvoicePage({
         creditNotes={creditNotes}
         contact={contact}
         companySettings={companySettings}
+        canRegenerateCufe={currentUserRole === "ADMIN"}
       />
     </div>
   );

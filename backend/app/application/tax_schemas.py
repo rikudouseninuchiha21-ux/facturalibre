@@ -17,6 +17,9 @@ class TaxCreate(BaseModel):
 
     name: str = Field(min_length=1, max_length=100)
     rate: Rate
+    # -- Fase 38A: código DIAN (01=IVA, 03=ICA, 04=INC, 05=ReteFuente...).
+    dian_tax_code: str | None = Field(default=None, max_length=2)
+    dian_tax_name: str | None = Field(default=None, max_length=50)
 
 
 class TaxUpdate(BaseModel):
@@ -26,6 +29,8 @@ class TaxUpdate(BaseModel):
 
     name: str | None = Field(default=None, min_length=1, max_length=100)
     rate: Rate | None = None
+    dian_tax_code: str | None = Field(default=None, max_length=2)
+    dian_tax_name: str | None = Field(default=None, max_length=50)
     version: int = Field(ge=1)
 
     @model_validator(mode="after")
@@ -48,6 +53,8 @@ class TaxRead(BaseModel):
     id: UUID
     name: str
     rate: Decimal
+    dian_tax_code: str | None = None
+    dian_tax_name: str | None = None
     version: int
     created_at: datetime
     updated_at: datetime

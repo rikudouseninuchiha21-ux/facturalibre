@@ -28,7 +28,12 @@ from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNote
 from app.domain.models.expense import Expense
 from app.domain.models.fixed_asset import DepreciationEntry, FixedAsset, FixedAssetStatus
 from app.domain.models.idempotency_key import IdempotencyKey
-from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
+from app.domain.models.invoice import (
+    DianDocumentStatus,
+    Invoice,
+    LifecycleStatus,
+    PaymentStatus,
+)
 from app.domain.models.invoice_line import InvoiceLine
 from app.domain.models.item import Item
 from app.domain.models.notification import Notification, NotificationSeverity
@@ -77,6 +82,7 @@ __all__ = [
     "BudgetLine",
     "BudgetStatus",
     "CompanySetting",
+    "DianDocumentStatus",
     "Contact",
     "ContactStatus",
     "ContactType",

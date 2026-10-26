@@ -12,7 +12,11 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from app.domain.models.invoice import LifecycleStatus, PaymentStatus
+from app.domain.models.invoice import (
+    DianDocumentStatus,
+    LifecycleStatus,
+    PaymentStatus,
+)
 
 Money = Annotated[Decimal, Field(max_digits=18, decimal_places=2, ge=0)]
 Quantity = Annotated[Decimal, Field(max_digits=18, decimal_places=4, gt=0)]
@@ -99,6 +103,8 @@ class InvoiceRead(BaseModel):
     tax_total: Decimal
     total: Decimal
     balance: Decimal
+    cufe: str | None = None
+    dian_status: DianDocumentStatus | None = None
     version: int
     created_at: datetime
     updated_at: datetime

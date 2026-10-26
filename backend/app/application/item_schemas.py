@@ -21,6 +21,11 @@ class ItemCreate(BaseModel):
     tax_id: UUID | None = None
     price_includes_tax: bool = False
 
+    # -- Fase 38A: datos DIAN del ítem.
+    dian_code: str | None = Field(default=None, max_length=50)
+    unspsc_code: str | None = Field(default=None, max_length=10)
+    unit_code: str | None = Field(default=None, max_length=10)
+
 
 class ItemUpdate(BaseModel):
     """Actualización parcial; version es obligatoria para el bloqueo optimista."""
@@ -32,6 +37,11 @@ class ItemUpdate(BaseModel):
     unit_price: Money | None = None
     tax_id: UUID | None = None
     price_includes_tax: bool | None = None
+
+    # -- Fase 38A: datos DIAN del ítem.
+    dian_code: str | None = Field(default=None, max_length=50)
+    unspsc_code: str | None = Field(default=None, max_length=10)
+    unit_code: str | None = Field(default=None, max_length=10)
     version: int = Field(ge=1)
 
     @model_validator(mode="after")
@@ -57,6 +67,9 @@ class ItemRead(BaseModel):
     unit_price: Decimal
     tax_id: UUID | None
     price_includes_tax: bool
+    dian_code: str | None = None
+    unspsc_code: str | None = None
+    unit_code: str | None = None
     version: int
     created_at: datetime
     updated_at: datetime

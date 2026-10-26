@@ -33,6 +33,14 @@ export type LifecycleStatus = "draft" | "issued" | "void";
 
 export type PaymentStatus = "unpaid" | "partially_paid" | "paid" | "overpaid";
 
+export type DianDocumentStatus =
+  | "BORRADOR"
+  | "GENERADO"
+  | "GENERADO_SIN_PIN"
+  | "ENVIADO"
+  | "ACEPTADO"
+  | "RECHAZADO";
+
 export interface Contact {
   id: string;
   name: string;
@@ -182,6 +190,8 @@ export interface Invoice {
   tax_total: string;
   total: string;
   balance: string;
+  cufe: string | null;
+  dian_status: DianDocumentStatus | null;
   version: number;
   created_at: string;
   updated_at: string;
@@ -1555,6 +1565,22 @@ export interface CompanySetting {
   phone: string | null;
   email: string | null;
   logo_url: string | null;
+  dv: string | null;
+  tax_regime: string | null;
+  person_type: string | null;
+  fiscal_responsibility: string | null;
+  dian_municipality_code: string | null;
+  dian_department_code: string | null;
+  country_code: string;
+  dian_resolution_number: string | null;
+  dian_resolution_prefix: string | null;
+  dian_resolution_range_from: number | null;
+  dian_resolution_range_to: number | null;
+  dian_resolution_valid_from: string | null;
+  dian_resolution_valid_to: string | null;
+  dian_software_id: string | null;
+  dian_software_pin: string | null;
+  dian_environment: "HABILITACION" | "PRODUCCION";
   created_at: string;
   updated_at: string;
 }
@@ -1575,6 +1601,21 @@ export interface CompanySettingUpdateInput {
   phone?: string;
   email?: string;
   logo_url?: string;
+  dv?: string;
+  tax_regime?: string;
+  person_type?: string;
+  fiscal_responsibility?: string;
+  dian_municipality_code?: string;
+  dian_department_code?: string;
+  dian_resolution_number?: string;
+  dian_resolution_prefix?: string;
+  dian_resolution_range_from?: number;
+  dian_resolution_range_to?: number;
+  dian_resolution_valid_from?: string;
+  dian_resolution_valid_to?: string;
+  dian_software_id?: string;
+  dian_software_pin?: string;
+  dian_environment?: "HABILITACION" | "PRODUCCION";
 }
 
 export function getCompanySettings(
@@ -2208,5 +2249,84 @@ export function cancelAgreement(id: string): Promise<PaymentAgreement> {
 export function markAgreementBroken(id: string): Promise<PaymentAgreement> {
   return apiPost<PaymentAgreement>(
     `/receivables/agreements/${encodeURIComponent(id)}/mark-broken`,
+  );
+}
+
+// -- Documentos DIAN (XML/PDF/CUFE, generación local Fase 38A) ---------------
+
+export interface DianPreview {
+  invoice_id: string;
+  number: string | null;
+  cufe: string;
+  dian_status: DianDocumentStatus;
+  environment: string;
+  software_pin_active: boolean;
+  xml: string;
+}
+
+export interface RegeneratedCufe {
+  invoice_id: string;
+  number: string | null;
+  cufe: string;
+  dian_status: DianDocumentStatus | null;
+}
+
+/**
+ * Descarga el XML/PDF DIAN de una factura como blob y dispara la descarga
+ * del navegador. Solo para facturas emitidas; el backend responde 422 si
+ * faltan datos DIAN del emisor o del adquiriente.
+ */
+async function downloadInvoiceDocument(
+  invoiceId: string,
+  extension: "xml" | "pdf",
+): Promise<void> {
+  const response = await fetch(
+    `/api/v1/invoices/${encodeURIComponent(invoiceId)}/${extension}`,
+    { credentials: "include", cache: "no-store" },
+  );
+
+  if (!response.ok) {
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    let detail = fallback;
+    try {
+      const body = (await response.json()) as { detail?: unknown };
+      if (typeof body.detail === "string") {
+        detail = body.detail;
+      }
+    } catch {
+      // La respuesta de error no era JSON; se conserva el mensaje HTTP.
+    }
+    throw new ApiError(
+      `No se pudo descargar el documento DIAN: ${detail}`,
+      response.status,
+    );
+  }
+
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = match?.[1] ?? `FV-documento.${extension}`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function downloadInvoiceXml(invoiceId: string): Promise<void> {
+  return downloadInvoiceDocument(invoiceId, "xml");
+}
+
+export function downloadInvoicePdf(invoiceId: string): Promise<void> {
+  return downloadInvoiceDocument(invoiceId, "pdf");
+}
+
+export function regenerateInvoiceCufe(
+  invoiceId: string,
+): Promise<RegeneratedCufe> {
+  return apiPost<RegeneratedCufe>(
+    `/invoices/${encodeURIComponent(invoiceId)}/regenerate-cufe`,
   );
 }

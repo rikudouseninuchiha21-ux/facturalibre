@@ -52,6 +52,11 @@ class Item(Base):
         nullable=False,
         server_default=text("false"),
     )
+    # -- Fase 38A: datos DIAN del ítem para el XML/PDF.
+    dian_code: Mapped[str | None] = mapped_column(String(50))
+    unspsc_code: Mapped[str | None] = mapped_column(String(10))
+    # Código de unidad DIAN/UNECE para cbc:InvoicedQuantity@unitCode.
+    unit_code: Mapped[str | None] = mapped_column(String(10), server_default=text("'UND'"))
 
     # DECISIONES.md: bloqueo optimista y soft delete en datos maestros.
     version: Mapped[int] = mapped_column(

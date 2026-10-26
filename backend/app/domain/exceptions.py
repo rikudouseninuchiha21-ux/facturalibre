@@ -99,3 +99,15 @@ class RegistrationClosedError(AuthError):
 
 class InvalidCredentialsError(AuthError):
     """Email, contraseña o usuario inactivo."""
+
+
+class DianError(Exception):
+    """Operación inválida sobre un documento electrónico DIAN."""
+
+
+class DianValidationError(DianError):
+    """Datos insuficientes o inválidos para generar el documento DIAN."""
+
+
+class DianStateError(DianError):
+    """El documento electrónico no aplica al estado actual de la factura."""

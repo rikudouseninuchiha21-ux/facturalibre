@@ -18,6 +18,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Text,
     UniqueConstraint,
     Uuid,
     func,
@@ -45,6 +46,22 @@ class PaymentStatus(enum.StrEnum):
     PARTIALLY_PAID = "partially_paid"
     PAID = "paid"
     OVERPAID = "overpaid"
+
+
+class DianDocumentStatus(enum.StrEnum):
+    """Estado del documento electrónico frente a la DIAN (Fase 38B lo completa).
+
+    ``GENERADO_SIN_PIN`` marca el XML/CUFE generado con el placeholder de
+    ClTec: el CUFE NO es válido para la DIAN hasta que se recalcula con el
+    PIN real del software proveedor.
+    """
+
+    BORRADOR = "BORRADOR"
+    GENERADO = "GENERADO"
+    GENERADO_SIN_PIN = "GENERADO_SIN_PIN"
+    ENVIADO = "ENVIADO"
+    ACEPTADO = "ACEPTADO"
+    RECHAZADO = "RECHAZADO"
 
 
 class Invoice(Base):
@@ -143,6 +160,25 @@ class Invoice(Base):
     version: Mapped[int] = mapped_column(
         Integer, nullable=False, default=1, server_default=text("1")
     )
+    # -- Fase 38A: datos del documento electrónico DIAN (sin firma ni envío).
+    cufe: Mapped[str | None] = mapped_column(String(96))
+    dian_status: Mapped[DianDocumentStatus | None] = mapped_column(
+        Enum(
+            DianDocumentStatus,
+            name="dian_document_status",
+            native_enum=True,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+        ),
+        nullable=True,
+        index=True,
+    )
+    xml_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Catálogo de medios de pago DIAN: 10=efectivo, 20=cheque, 42=transferencia,
+    # 48=tarjeta crédito, 49=tarjeta débito, ZZZ=otros.
+    payment_mean_code: Mapped[str | None] = mapped_column(String(2))
+    payment_terms_days: Mapped[int | None] = mapped_column(Integer)
+    notes_dian: Mapped[str | None] = mapped_column(Text)
+    order_reference: Mapped[str | None] = mapped_column(String(30))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

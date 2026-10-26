@@ -15,6 +15,7 @@ from app.api.v1 import (
     employees,
     expenses,
     inventory,
+    invoice_documents,
     invoices,
     items,
     notifications,
@@ -39,6 +40,9 @@ from app.domain.exceptions import (
     BudgetStateError,
     BudgetValidationError,
     CostCenterError,
+    DianError,
+    DianStateError,
+    DianValidationError,
     FixedAssetError,
     FixedAssetValidationError,
     InventoryError,
@@ -82,6 +86,7 @@ app.include_router(cost_centers.router, prefix="/api/v1")
 app.include_router(budgets.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
 app.include_router(receivables.router, prefix="/api/v1")
+app.include_router(invoice_documents.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)
@@ -342,6 +347,42 @@ async def receivables_error_handler(
     exc: ReceivablesError,
 ) -> JSONResponse:
     """Traduce un conflicto genérico de cartera a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(DianValidationError)
+async def dian_validation_handler(
+    _request: Request,
+    exc: DianValidationError,
+) -> JSONResponse:
+    """Traduce datos DIAN incompletos o inválidos a un 422."""
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(DianStateError)
+async def dian_state_handler(
+    _request: Request,
+    exc: DianStateError,
+) -> JSONResponse:
+    """Traduce un documento DIAN sobre factura no emitida a un 409."""
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
+        content={"detail": str(exc)},
+    )
+
+
+@app.exception_handler(DianError)
+async def dian_error_handler(
+    _request: Request,
+    exc: DianError,
+) -> JSONResponse:
+    """Traduce un conflicto genérico del documento DIAN a un 409."""
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content={"detail": str(exc)},

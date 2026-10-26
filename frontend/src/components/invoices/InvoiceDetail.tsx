@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { FileCode, FileText, RefreshCw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,13 +21,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { CreditNoteForm } from "@/components/invoices/CreditNoteForm";
+import { InvoiceDianBadge } from "@/components/invoices/InvoiceDianBadge";
 import { PaymentForm } from "@/components/invoices/PaymentForm";
 import {
+  ApiError,
   CompanySetting,
   Contact,
   CreditNote,
   Invoice,
   Payment,
+  downloadInvoicePdf,
+  downloadInvoiceXml,
+  regenerateInvoiceCufe,
 } from "@/lib/api";
 import {
   formatCurrency,
@@ -46,6 +52,7 @@ interface InvoiceDetailProps {
   creditNotes: CreditNote[];
   contact: Contact;
   companySettings: CompanySetting | null;
+  canRegenerateCufe?: boolean;
 }
 
 export function InvoiceDetail({
@@ -54,10 +61,17 @@ export function InvoiceDetail({
   creditNotes,
   contact,
   companySettings,
+  canRegenerateCufe = false,
 }: InvoiceDetailProps) {
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isCreditNoteOpen, setIsCreditNoteOpen] = useState(false);
+  const [dianBusy, setDianBusy] = useState<"xml" | "pdf" | "cufe" | null>(
+    null,
+  );
+  const [dianError, setDianError] = useState<string | null>(null);
+  const [dianSuccess, setDianSuccess] = useState<string | null>(null);
 
+  const isIssued = invoice.lifecycle_status === "issued";
   const canRegisterPayment =
     invoice.lifecycle_status === "issued" && Number(invoice.balance) > 0;
   const canCreateCreditNote =
@@ -305,6 +319,136 @@ export function InvoiceDetail({
             </CardContent>
           </Card>
         )}
+
+        {/* Documentos DIAN (generación local, no se imprimen) */}
+        <Card className="mt-8 print:hidden">
+          <CardHeader>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <CardTitle>Documento electrónico DIAN</CardTitle>
+                <CardDescription>
+                  XML UBL 2.1 y PDF con QR generados localmente (Fase 38A, sin
+                  envío a la DIAN).
+                </CardDescription>
+              </div>
+              <InvoiceDianBadge dianStatus={invoice.dian_status} />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {dianError ? (
+              <p
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              >
+                {dianError}
+              </p>
+            ) : null}
+            {dianSuccess ? (
+              <p
+                role="status"
+                className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700"
+              >
+                {dianSuccess}
+              </p>
+            ) : null}
+
+            {invoice.cufe ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+                  CUFE
+                </p>
+                <p className="mt-1 break-all font-mono text-xs text-zinc-700">
+                  {invoice.cufe}
+                </p>
+              </div>
+            ) : null}
+
+            {isIssued ? (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={async () => {
+                    setDianError(null);
+                    setDianSuccess(null);
+                    setDianBusy("xml");
+                    try {
+                      await downloadInvoiceXml(invoice.id);
+                      setDianSuccess("XML DIAN descargado.");
+                    } catch (cause) {
+                      setDianError(
+                        cause instanceof ApiError
+                          ? cause.message
+                          : "No se pudo descargar el XML.",
+                      );
+                    } finally {
+                      setDianBusy(null);
+                    }
+                  }}
+                  disabled={dianBusy !== null}
+                  className="border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
+                >
+                  <FileCode className="mr-2 size-4" aria-hidden="true" />
+                  Descargar XML
+                </Button>
+                <Button
+                  onClick={async () => {
+                    setDianError(null);
+                    setDianSuccess(null);
+                    setDianBusy("pdf");
+                    try {
+                      await downloadInvoicePdf(invoice.id);
+                      setDianSuccess("PDF DIAN descargado.");
+                    } catch (cause) {
+                      setDianError(
+                        cause instanceof ApiError
+                          ? cause.message
+                          : "No se pudo descargar el PDF.",
+                      );
+                    } finally {
+                      setDianBusy(null);
+                    }
+                  }}
+                  disabled={dianBusy !== null}
+                  className="border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
+                >
+                  <FileText className="mr-2 size-4" aria-hidden="true" />
+                  Descargar PDF
+                </Button>
+                {canRegenerateCufe ? (
+                  <Button
+                    onClick={async () => {
+                      setDianError(null);
+                      setDianSuccess(null);
+                      setDianBusy("cufe");
+                      try {
+                        const result = await regenerateInvoiceCufe(invoice.id);
+                        setDianSuccess(
+                          `CUFE recalculado (${result.dian_status ?? "—"}).`,
+                        );
+                      } catch (cause) {
+                        setDianError(
+                          cause instanceof ApiError
+                            ? cause.message
+                            : "No se pudo regenerar el CUFE.",
+                        );
+                      } finally {
+                        setDianBusy(null);
+                      }
+                    }}
+                    disabled={dianBusy !== null}
+                    className="bg-zinc-900 text-white hover:bg-zinc-800"
+                  >
+                    <RefreshCw className="mr-2 size-4" aria-hidden="true" />
+                    Regenerar CUFE
+                  </Button>
+                ) : null}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-500">
+                Los documentos DIAN se generan cuando la factura está emitida.
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Acciones (no se imprimen) */}
         <div className="mt-10 flex flex-wrap justify-end gap-2 print:hidden">

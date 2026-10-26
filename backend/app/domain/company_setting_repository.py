@@ -2,11 +2,40 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.models.company_setting import CompanySetting
+
+EDITABLE_FIELDS: frozenset[str] = frozenset(
+    {
+        "name",
+        "tax_id",
+        "address",
+        "phone",
+        "email",
+        "logo_url",
+        "dv",
+        "tax_regime",
+        "person_type",
+        "fiscal_responsibility",
+        "dian_municipality_code",
+        "dian_department_code",
+        "country_code",
+        "dian_resolution_number",
+        "dian_resolution_prefix",
+        "dian_resolution_range_from",
+        "dian_resolution_range_to",
+        "dian_resolution_valid_from",
+        "dian_resolution_valid_to",
+        "dian_software_id",
+        "dian_software_pin",
+        "dian_environment",
+    }
+)
 
 
 class CompanySettingRepository:
@@ -43,34 +72,22 @@ class CompanySettingRepository:
         self.db.refresh(company)
         return company
 
-    def update(
-        self,
-        *,
-        name: str | None = None,
-        tax_id: str | None = None,
-        address: str | None = None,
-        phone: str | None = None,
-        email: str | None = None,
-        logo_url: str | None = None,
-    ) -> CompanySetting:
-        """Actualiza la configuración de la empresa."""
+    def update(self, *, values: dict[str, Any]) -> CompanySetting:
+        """Aplica solo los campos presentes y no nulos.
+
+        Semántica histórica conservada: un campo omitido o ``None`` no se
+        limpia (los PUT del frontend envían el formulario completo).
+        """
         company = self.get()
         if company is None:
             raise ResourceNotFoundError("Configuración de empresa no encontrada")
 
-        if name is not None:
-            company.name = name
-        if tax_id is not None:
-            company.tax_id = tax_id
-        if address is not None:
-            company.address = address
-        if phone is not None:
-            company.phone = phone
-        if email is not None:
-            company.email = email
-        if logo_url is not None:
-            company.logo_url = logo_url
-
+        for key, value in values.items():
+            if key in EDITABLE_FIELDS and value is not None:
+                setattr(company, key, value)
         self.db.flush()
         self.db.refresh(company)
         return company
+
+
+__all__ = ["CompanySettingRepository"]

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Subconjunto LOCAL de "dian:gov:co:facturaelectronica:Structures-2-1"
+  (Anexo Técnico Factura Electrónica v1.9).
+
+  El XSD oficial de la DIAN no se publica en una URL estable: se distribuye
+  dentro del ZIP del Anexo Técnico. Este subconjunto declara exactamente los
+  bloques que emite Nexus ERP para poder validar el contenido de
+  sts:DianExtensions en tests (el XSD oficial de OASIS ignora las
+  extensiones por diseño: ExtensionContent procesa ##other con
+  processContents="lax" y el namespace DIAN no está declarado en su árbol).
+
+  Para Fase 38B (transmisión) este archivo se reemplaza por el
+  Structures-2-1.xsd oficial del ZIP del Anexo Técnico, sin tocar el builder.
+
+  Estructura modelada (misma que el anexo):
+    DianExtensions:
+      InvoiceControl: InvoiceAuthorization,
+                      AuthorizationPeriod(cbc:StartDate, cbc:EndDate),
+                      AuthorizedInvoices(Prefix?, From, To)
+      InvoiceSource:  cbc:IdentificationCode (CO)
+      SoftwareProvider: ProviderID(@schemeName), SoftwareID
+      SoftwareSecurityCode
+      AuthorizationProvider: AuthorizationProviderID(@schemeName)
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           targetNamespace="dian:gov:co:facturaelectronica:Structures-2-1"
+           xmlns:sts="dian:gov:co:facturaelectronica:Structures-2-1"
+           xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+           elementFormDefault="qualified"
+           attributeFormDefault="unqualified">
+
+  <xs:import namespace="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+             schemaLocation="ubl21/common/UBL-CommonBasicComponents-2.1.xsd"/>
+
+  <xs:complexType name="IdentifierWithSchemeType">
+    <xs:simpleContent>
+      <xs:extension base="xs:string">
+        <xs:attribute name="schemeID" type="xs:string"/>
+        <xs:attribute name="schemeName" type="xs:string"/>
+      </xs:extension>
+    </xs:simpleContent>
+  </xs:complexType>
+
+  <xs:complexType name="AuthorizationPeriodType">
+    <xs:sequence>
+      <xs:element ref="cbc:StartDate"/>
+      <xs:element ref="cbc:EndDate"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AuthorizedInvoicesType">
+    <xs:sequence>
+      <xs:element name="Prefix" type="xs:string" minOccurs="0"/>
+      <xs:element name="From" type="xs:integer"/>
+      <xs:element name="To" type="xs:integer"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="InvoiceControlType">
+    <xs:sequence>
+      <xs:element name="InvoiceAuthorization" type="xs:string"/>
+      <xs:element name="AuthorizationPeriod" type="sts:AuthorizationPeriodType"/>
+      <xs:element name="AuthorizedInvoices" type="sts:AuthorizedInvoicesType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="InvoiceSourceType">
+    <xs:sequence>
+      <xs:element ref="cbc:IdentificationCode"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="SoftwareProviderType">
+    <xs:sequence>
+      <xs:element name="ProviderID" type="sts:IdentifierWithSchemeType"/>
+      <xs:element name="SoftwareID" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="AuthorizationProviderType">
+    <xs:sequence>
+      <xs:element name="AuthorizationProviderID" type="sts:IdentifierWithSchemeType"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="DianExtensionsType">
+    <xs:sequence>
+      <xs:element name="InvoiceControl" type="sts:InvoiceControlType" minOccurs="0"/>
+      <xs:element name="InvoiceSource" type="sts:InvoiceSourceType" minOccurs="0"/>
+      <xs:element name="SoftwareProvider" type="sts:SoftwareProviderType" minOccurs="0"/>
+      <xs:element name="SoftwareSecurityCode" type="xs:string" minOccurs="0"/>
+      <xs:element name="AuthorizationProvider" type="sts:AuthorizationProviderType" minOccurs="0"/>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:element name="DianExtensions" type="sts:DianExtensionsType"/>
+
+</xs:schema>
