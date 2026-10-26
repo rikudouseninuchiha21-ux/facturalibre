@@ -1,12 +1,11 @@
 """Tests del servicio de recordatorios de cobranza."""
 
 from __future__ import annotations
-from uuid import UUID
 
 from datetime import date, timedelta
 from decimal import Decimal
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
