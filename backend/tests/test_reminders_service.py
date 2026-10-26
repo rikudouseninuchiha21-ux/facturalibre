@@ -1,6 +1,7 @@
 """Tests del servicio de recordatorios de cobranza."""
 
 from __future__ import annotations
+from uuid import UUID
 
 from datetime import date, timedelta
 from decimal import Decimal
@@ -37,7 +38,7 @@ def _make_user(db_session: Session, *, role: UserRole) -> User:
     return user
 
 
-def _setup_catalog(client: TestClient) -> tuple[str, str]:
+def _setup_catalog(client: TestClient) -> tuple[UUID, str]:
     suffix = uuid4().hex[:8].upper()
     contact = client.post(
         "/api/v1/contacts",
@@ -69,13 +70,13 @@ def _setup_catalog(client: TestClient) -> tuple[str, str]:
         },
     )
     assert movement.status_code == 201, movement.text
-    return str(contact.json()["id"]), str(item.json()["id"])
+    return UUID(contact.json()["id"]), str(item.json()["id"])
 
 
 def _create_issued_invoice(
     client: TestClient,
     *,
-    contact_id: str,
+    contact_id: UUID,
     item_id: str,
     total: str,
     issue_date: date,
@@ -84,7 +85,7 @@ def _create_issued_invoice(
     response = client.post(
         "/api/v1/invoices",
         json={
-            "contact_id": contact_id,
+            "contact_id": str(contact_id),
             "issue_date": issue_date.isoformat(),
             "due_date": due_date.isoformat(),
             "currency": "COP",
@@ -144,7 +145,7 @@ def test_send_reminder_persists_and_notifies(
     )
     assert reminder is not None
     assert reminder.level == 2
-    assert str(reminder.contact_id) == contact_id
+    assert reminder.contact_id == contact_id
     assert reminder.notes == "Llamada de cortesía"
 
     notifications = NotificationService(db_session)

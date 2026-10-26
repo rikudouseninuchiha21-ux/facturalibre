@@ -1,6 +1,7 @@
 """Tests de acuerdos de pago y reparto exacto de cuotas."""
 
 from __future__ import annotations
+from uuid import UUID
 
 from datetime import date, timedelta
 from decimal import Decimal
@@ -36,17 +37,17 @@ def _make_user(db_session: Session, *, role: UserRole = UserRole.ADMIN) -> User:
     return user
 
 
-def _create_contact(client: TestClient) -> str:
+def _create_contact(client: TestClient) -> UUID:
     suffix = uuid4().hex[:8].upper()
     response = client.post(
         "/api/v1/contacts",
         json={"name": f"Cliente Acuerdo {suffix}", "email": f"acuerdo-{suffix}@example.com"},
     )
     assert response.status_code == 201, response.text
-    return str(response.json()["id"])
+    return UUID(response.json()["id"])
 
 
-def _setup_catalog(client: TestClient) -> tuple[str, str]:
+def _setup_catalog(client: TestClient) -> tuple[UUID, str]:
     contact_id = _create_contact(client)
     suffix = uuid4().hex[:8].upper()
     item = client.post(
@@ -80,7 +81,7 @@ def _setup_catalog(client: TestClient) -> tuple[str, str]:
 def _create_issued_invoice(
     client: TestClient,
     *,
-    contact_id: str,
+    contact_id: UUID,
     item_id: str,
     total: str,
 ) -> dict[str, Any]:
@@ -88,7 +89,7 @@ def _create_issued_invoice(
     response = client.post(
         "/api/v1/invoices",
         json={
-            "contact_id": contact_id,
+            "contact_id": str(contact_id),
             "issue_date": (today - timedelta(days=40)).isoformat(),
             "due_date": (today - timedelta(days=10)).isoformat(),
             "currency": "COP",
