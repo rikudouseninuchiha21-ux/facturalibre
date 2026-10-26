@@ -8,12 +8,17 @@ empleador quedan fuera de esta fase y deben implementarse antes de producción.
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from app.application.accounting.service import AccountingService
+from app.application.budget_notifications import (
+    capture_alert_levels,
+    notify_threshold_crossings,
+)
 from app.domain.calculations import round_money
 from app.domain.employee_repository import EmployeeRepository
 from app.domain.exceptions import PayrollError, ResourceNotFoundError
@@ -81,8 +86,27 @@ class PayrollService:
         period.status = PayrollPeriodStatus.CLOSED
         self.db.flush()
 
+        # Snapshot de niveles de alerta antes del asiento: si la nómina cruza
+        # un umbral presupuestal del centro en el mes, se notifica in-app en
+        # la misma transacción.
+        previous_levels = None
+        if period.cost_center_id is not None:
+            previous_levels = capture_alert_levels(
+                self.db,
+                cost_center_id=period.cost_center_id,
+                entry_date=date(period.year, period.month, 1),
+            )
+
         entry = AccountingService(self.db).record_payroll(period)
         if entry is None:
             raise PayrollError("No se generó el asiento contable de la nómina")
+
+        if previous_levels is not None and period.cost_center_id is not None:
+            notify_threshold_crossings(
+                self.db,
+                previous=previous_levels,
+                cost_center_id=period.cost_center_id,
+                entry_date=date(period.year, period.month, 1),
+            )
 
         return period

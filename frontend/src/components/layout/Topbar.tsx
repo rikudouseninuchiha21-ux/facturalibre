@@ -2,6 +2,7 @@
 
 import { Search } from "lucide-react";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { NotificationsBell } from "@/components/notifications/NotificationsBell";
 
 interface TopbarProps {
   currentUser: { full_name: string; role: string } | null;
@@ -26,6 +27,7 @@ export function Topbar({ currentUser }: TopbarProps) {
       <div className="flex items-center gap-3">
         {currentUser && (
           <div className="flex items-center gap-3 pl-4 border-l border-zinc-200 shrink-0">
+            <NotificationsBell />
             <div className="flex flex-col min-w-0">
               <span
                 title={currentUser.full_name}
@@ -33,9 +35,7 @@ export function Topbar({ currentUser }: TopbarProps) {
               >
                 {currentUser.full_name}
               </span>
-              <span
-                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-100 text-zinc-600"
-              >
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-zinc-100 text-zinc-600">
                 {currentUser.role}
               </span>
             </div>

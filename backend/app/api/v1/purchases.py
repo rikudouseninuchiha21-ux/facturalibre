@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from decimal import Decimal
 from typing import Annotated, Any
 from uuid import UUID
@@ -13,6 +14,10 @@ from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user, require_role
 from app.application.accounting.service import AccountingService
+from app.application.budget_notifications import (
+    capture_alert_levels,
+    notify_threshold_crossings,
+)
 from app.application.inventory.service import InventoryService
 from app.application.purchase_schemas import (
     PurchaseCreate,
@@ -230,8 +235,24 @@ def issue_purchase(
                 reference=purchase.number or str(purchase.id),
             )
 
-        # Contabilidad: asiento de compra.
+        # Contabilidad: asiento de compra. El snapshot de niveles de alerta se
+        # toma antes del asiento y se notifica después, todo en la misma
+        # transacción, para detectar cruces de umbral presupuestal.
+        previous_levels = None
+        if purchase.cost_center_id is not None:
+            previous_levels = capture_alert_levels(
+                db,
+                cost_center_id=purchase.cost_center_id,
+                entry_date=purchase.issue_date or date.today(),
+            )
         AccountingService(db).record_purchase_issued(purchase)
+        if previous_levels is not None and purchase.cost_center_id is not None:
+            notify_threshold_crossings(
+                db,
+                previous=previous_levels,
+                cost_center_id=purchase.cost_center_id,
+                entry_date=purchase.issue_date or date.today(),
+            )
 
     issued = repository.get_by_id(purchase_id)
     if issued is None:

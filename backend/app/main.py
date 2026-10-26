@@ -17,6 +17,7 @@ from app.api.v1 import (
     inventory,
     invoices,
     items,
+    notifications,
     payments,
     payroll,
     pos,
@@ -73,6 +74,7 @@ app.include_router(treasury.router, prefix="/api/v1")
 app.include_router(banks.router, prefix="/api/v1")
 app.include_router(cost_centers.router, prefix="/api/v1")
 app.include_router(budgets.router, prefix="/api/v1")
+app.include_router(notifications.router, prefix="/api/v1")
 
 
 @app.exception_handler(ResourceNotFoundError)

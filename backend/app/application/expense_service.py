@@ -14,6 +14,10 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.application.accounting.service import AccountingService
+from app.application.budget_notifications import (
+    capture_alert_levels,
+    notify_threshold_crossings,
+)
 from app.domain.cost_center_repository import CostCenterRepository
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.expense_repository import ExpenseRepository
@@ -47,12 +51,26 @@ class ExpenseService:
           en cualquier otro caso.
 
         Si se indica un centro de costo, se propaga a todas las líneas del
-        asiento para que el reporte Presupuesto vs Real lo capture.
+        asiento para que el reporte Presupuesto vs Real lo capture. Cuando el
+        gasto cruza un umbral presupuestal del centro en el mes, se notifica
+        in-app a ADMIN y ACCOUNTANT dentro de la misma transacción.
         """
         if cost_center_id is not None:
             center = self.cost_centers.get_by_id(cost_center_id)
             if center is None or not center.is_active:
                 raise ResourceNotFoundError("Centro de costo no existe o está inactivo")
+
+        # Niveles de alerta ANTES del asiento, para detectar el cruce de
+        # umbral sin persistir nada derivado.
+        previous_levels = (
+            capture_alert_levels(
+                self.db,
+                cost_center_id=cost_center_id,
+                entry_date=date,
+            )
+            if cost_center_id is not None
+            else None
+        )
         expense = self.expenses.create(
             {
                 "date": date,
@@ -65,6 +83,14 @@ class ExpenseService:
         )
 
         self.accounting.record_expense(expense)
+
+        if previous_levels is not None and cost_center_id is not None:
+            notify_threshold_crossings(
+                self.db,
+                previous=previous_levels,
+                cost_center_id=cost_center_id,
+                entry_date=expense.date,
+            )
 
         self.db.flush()
         return expense

@@ -67,6 +67,14 @@ class BudgetActualsService:
             raise ResourceNotFoundError("Presupuesto no encontrado")
         return self._build_report(budget)
 
+    def totals_for(self, budget: Budget) -> BudgetVsActualTotals:
+        """Totales Presupuesto vs Real de un presupuesto ya cargado.
+
+        Punto de entrada público para los disparadores de notificaciones:
+        reutiliza la misma consulta de agregación que el reporte.
+        """
+        return self._build_report(budget).totals
+
     def report_by_period(
         self,
         *,

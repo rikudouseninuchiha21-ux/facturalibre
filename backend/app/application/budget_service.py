@@ -17,6 +17,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.application.notification_service import NotificationService
 from app.domain.accounting_repository import AccountingRepository
 from app.domain.budget_repository import BudgetRepository
 from app.domain.cost_center_repository import CostCenterRepository
@@ -25,7 +26,9 @@ from app.domain.exceptions import (
     BudgetValidationError,
     ResourceNotFoundError,
 )
+from app.domain.models.auth import UserRole
 from app.domain.models.budgeting import Budget, BudgetLine, BudgetStatus
+from app.domain.models.notification import NotificationSeverity
 
 ZERO = Decimal("0.00")
 
@@ -174,7 +177,23 @@ class BudgetService:
             raise BudgetValidationError(
                 "El presupuesto debe tener un total mayor que cero para aprobarse"
             )
-        return self.budgets.update(budget, {"status": BudgetStatus.APPROVED})
+        approved = self.budgets.update(budget, {"status": BudgetStatus.APPROVED})
+
+        # Notificación in-app dentro de la misma transacción: si la aprobación
+        # falla, tampoco queda notificación huérfana.
+        NotificationService(self.db).create_for_roles(
+            roles=[UserRole.ADMIN, UserRole.ACCOUNTANT],
+            category="BUDGET_APPROVED",
+            severity=NotificationSeverity.INFO,
+            title=f"Presupuesto aprobado: {approved.cost_center.name}",
+            body=(
+                f"El presupuesto de {approved.cost_center.name} para "
+                f"{approved.period_month:02d}/{approved.period_year} fue "
+                f"aprobado por un total de ${total}."
+            ),
+            link=f"/budgets/{approved.id}",
+        )
+        return approved
 
     def close(self, budget_id: UUID) -> Budget:
         """APPROVED → CLOSED; el presupuesto queda inmutable."""
@@ -203,9 +222,26 @@ class BudgetService:
             period_month=period_month,
             status=BudgetStatus.APPROVED,
         )
+        notifier = NotificationService(self.db)
         for budget in budgets:
             budget.status = BudgetStatus.CLOSED
         self.db.flush()
+
+        # Notificación in-app por presupuesto cerrado, en la misma transacción
+        # del cierre del periodo fiscal (o de la llamada directa).
+        for budget in budgets:
+            notifier.create_for_roles(
+                roles=[UserRole.ADMIN],
+                category="BUDGET_CLOSED",
+                severity=NotificationSeverity.INFO,
+                title=f"Presupuesto cerrado: {budget.cost_center.name}",
+                body=(
+                    f"El presupuesto de {budget.cost_center.name} de "
+                    f"{budget.period_month:02d}/{budget.period_year} pasó a "
+                    "CLOSED por el cierre del periodo contable."
+                ),
+                link=f"/budgets/{budget.id}",
+            )
         return len(budgets)
 
     def _require_draft(self, budget: Budget) -> None:

@@ -1644,6 +1644,55 @@ export function updateUser(
 }
 
 // ---------------------------------------------------------------------------
+// Notificaciones in-app
+// ---------------------------------------------------------------------------
+
+export type NotificationSeverity = "INFO" | "WARNING" | "CRITICAL";
+
+export interface Notification {
+  id: string;
+  category: string;
+  severity: NotificationSeverity;
+  title: string;
+  body: string | null;
+  link: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
+export interface UnreadCount {
+  count: number;
+}
+
+export interface MarkAllReadResult {
+  marked: number;
+}
+
+export function getNotifications(
+  query?: string,
+  cookieHeader?: string,
+): Promise<Notification[]> {
+  return apiGet<Notification[]>(
+    `/notifications${query ? "?" + query : ""}`,
+    cookieHeader,
+  );
+}
+
+export function getUnreadNotificationCount(): Promise<UnreadCount> {
+  return apiGet<UnreadCount>("/notifications/unread-count");
+}
+
+export function markNotificationRead(id: string): Promise<void> {
+  return apiPost<void>(
+    `/notifications/${encodeURIComponent(id)}/mark-read`,
+  );
+}
+
+export function markAllNotificationsRead(): Promise<MarkAllReadResult> {
+  return apiPost<MarkAllReadResult>("/notifications/mark-all-read");
+}
+
+// ---------------------------------------------------------------------------
 // Centros de costo y presupuestos
 // ---------------------------------------------------------------------------
 
