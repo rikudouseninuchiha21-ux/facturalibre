@@ -134,8 +134,9 @@ class DianDocumentService:
             missing.append("factura.issue_date")
         if invoice.due_date is None:
             missing.append("factura.due_date")
-        if not invoice.payment_mean_code:
-            missing.append("factura.payment_mean_code")
+        # ``payment_mean_code`` ya no es requisito: si falta, el generador
+        # emite "ZZZ" (Otros) del catálogo DIAN para no bloquear facturas
+        # históricas (ver xml_builder.DEFAULT_PAYMENT_MEAN_CODE).
         return missing
 
     # -- CUFE -----------------------------------------------------------------

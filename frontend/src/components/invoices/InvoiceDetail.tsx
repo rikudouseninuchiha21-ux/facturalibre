@@ -46,6 +46,15 @@ const lifecycleLabels: Record<Invoice["lifecycle_status"], string> = {
   void: "Anulada",
 };
 
+const paymentMeanLabels: Record<string, string> = {
+  "10": "Efectivo",
+  "20": "Cheque",
+  "42": "Transferencia",
+  "48": "Tarjeta crédito",
+  "49": "Tarjeta débito",
+  ZZZ: "Otros",
+};
+
 interface InvoiceDetailProps {
   invoice: Invoice;
   payments: Payment[];
@@ -140,6 +149,16 @@ export function InvoiceDetail({
               NIT / Tax ID
             </p>
             <p className="text-zinc-900">{contact.tax_id ?? "—"}</p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              Medio de pago
+            </p>
+            <p className="text-zinc-900">
+              {invoice.payment_mean_code
+                ? `${paymentMeanLabels[invoice.payment_mean_code] ?? "Otros"} (${invoice.payment_mean_code})`
+                : "—"}
+            </p>
           </div>
         </div>
 

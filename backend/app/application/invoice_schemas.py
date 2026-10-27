@@ -49,6 +49,10 @@ class InvoiceCreate(BaseModel):
     issue_date: date
     due_date: date
     currency: Currency = "COP"
+    # Catálogo de medios de pago DIAN: 10=efectivo, 20=cheque,
+    # 42=transferencia, 48=tarjeta crédito, 49=tarjeta débito, ZZZ=otros.
+    # Opcional: si no se indica, el generador DIAN usa ZZZ.
+    payment_mean_code: str | None = Field(default=None, max_length=2)
     lines: list[InvoiceLineCreate] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -103,6 +107,7 @@ class InvoiceRead(BaseModel):
     tax_total: Decimal
     total: Decimal
     balance: Decimal
+    payment_mean_code: str | None = None
     cufe: str | None = None
     dian_status: DianDocumentStatus | None = None
     version: int

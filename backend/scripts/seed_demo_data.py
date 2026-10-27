@@ -36,8 +36,8 @@ from sqlalchemy.orm import Session
 
 from app.application.accounting.service import AccountingService
 from app.application.auth.service import AuthService
-from app.application.company_settings_schemas import CompanySettingCreate
 from app.application.contact_schemas import ContactCreate
+from app.application.dian.nit import compute_dv
 from app.application.expense_schemas import ExpenseCreate
 from app.application.expense_service import ExpenseService
 from app.application.fixed_asset_schemas import FixedAssetCreate
@@ -280,20 +280,38 @@ def _has_existing_data(db: Session) -> bool:
 
 
 def _seed_company(db: Session) -> CompanySetting:
-    """Crea la configuración de la empresa si todavía no existe."""
+    """Crea la configuración de la empresa si todavía no existe.
+
+    Incluye los datos DIAN de demo (NIT sin puntos, DV, resolución de
+    facturación y códigos DANE) para que las facturas del seeder puedan
+    generar XML/PDF sin 422. El ``dian_software_pin`` queda vacío: los
+    CUFE generados son de prueba (dian_status=GENERADO_SIN_PIN).
+    """
     repository = CompanySettingRepository(db)
-    payload = CompanySettingCreate(
-        name="Nexus ERP S.A.S.",
-        tax_id="901.555.123-4",
-        address="Calle 100 # 15-20, Bogotá D.C., Colombia",
-        phone="+57 601 555 0123",
-        email="contacto@nexus.com",
-        logo_url=None,
-    )
     with operation_transaction(db):
         company = repository.get()
         if company is None:
-            company = repository.create(**payload.model_dump())
+            company = repository.create(
+                name="Nexus ERP S.A.S.",
+                tax_id="901555123",
+                address="Calle 100 # 15-20, Bogotá D.C., Colombia",
+                phone="+57 601 555 0123",
+                email="contacto@nexus.com",
+                logo_url=None,
+            )
+            company.dv = "4"
+            company.person_type = "JURIDICA"
+            company.tax_regime = "RESPONSABLE_IVA"
+            company.fiscal_responsibility = "O-13"
+            company.dian_municipality_code = "11001"
+            company.dian_department_code = "11"
+            company.dian_resolution_number = "18764000000001"
+            company.dian_resolution_prefix = "FE"
+            company.dian_resolution_range_from = 1
+            company.dian_resolution_range_to = 50_000
+            company.dian_resolution_valid_from = date(2026, 1, 1)
+            company.dian_resolution_valid_to = date(2027, 12, 31)
+            company.dian_software_id = "NEXUS-ERP-DEMO"
     return company
 
 
@@ -332,32 +350,34 @@ def _seed_taxes(db: Session) -> dict[str, Tax]:
 
 
 def _seed_contacts(db: Session) -> tuple[list[Contact], list[Contact]]:
-    """Crea tres clientes y dos proveedores."""
+    """Crea tres clientes y dos proveedores con datos fiscales DIAN.
+
+    El NIT se separa del DV cuando viene como "900123456-7"; si no trae DV
+    se calcula con el algoritmo módulo 11. Así las facturas del seeder
+    pasan la validación de datos del generador DIAN.
+    """
+
+    def _create(data: dict[str, str], contact_type: ContactType) -> Contact:
+        nit, _, dv = data["tax_id"].partition("-")
+        return repository.create(
+            ContactCreate(
+                name=data["name"],
+                email=data["email"],
+                tax_id=nit,
+                type=contact_type,
+                status=ContactStatus.CUSTOMER,
+                address=f"Calle 100 # 8-{(int(nit[-2:]) % 90) + 10}, Bogotá D.C.",
+                dv=dv or compute_dv(nit),
+                person_type="JURIDICA",
+                tax_regime="RESPONSABLE_IVA",
+                dian_municipality_code="11001",
+                dian_department_code="11",
+            ).model_dump()
+        )
+
     repository = ContactRepository(db)
-    customers = [
-        repository.create(
-            ContactCreate(
-                name=data["name"],
-                email=data["email"],
-                tax_id=data["tax_id"],
-                type=ContactType.CUSTOMER,
-                status=ContactStatus.CUSTOMER,
-            ).model_dump()
-        )
-        for data in CUSTOMERS
-    ]
-    suppliers = [
-        repository.create(
-            ContactCreate(
-                name=data["name"],
-                email=data["email"],
-                tax_id=data["tax_id"],
-                type=ContactType.SUPPLIER,
-                status=ContactStatus.CUSTOMER,
-            ).model_dump()
-        )
-        for data in SUPPLIERS
-    ]
+    customers = [_create(data, ContactType.CUSTOMER) for data in CUSTOMERS]
+    suppliers = [_create(data, ContactType.SUPPLIER) for data in SUPPLIERS]
     return customers, suppliers
 
 
@@ -550,6 +570,7 @@ def _seed_sales(
                 contact_id=customers[invoice_index % len(customers)].id,
                 issue_date=issue_date,
                 due_date=issue_date + timedelta(days=30),
+                payment_mean_code="10",
                 lines=[
                     InvoiceLineCreate(
                         item_id=items[item_index].id,

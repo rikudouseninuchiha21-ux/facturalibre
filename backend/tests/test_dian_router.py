@@ -202,3 +202,23 @@ def test_regenerate_cufe_with_real_pin_changes_status(db_session: Session) -> No
         assert second.json()["cufe"] != first.json()["cufe"]
     finally:
         _clear_overrides()
+
+
+def test_legacy_invoice_without_payment_mean_code_downloads_xml(
+    db_session: Session,
+) -> None:
+    """Facturas creadas antes de la Fase 38A (sin medio de pago) generan XML.
+
+    El generador aplica el default ZZZ en lugar de fallar con 422.
+    """
+    admin = _make_client_with_role(db_session, UserRole.ADMIN)
+    try:
+        invoice, _company, _contact, _taxes = make_full_package(db_session)
+        invoice.payment_mean_code = None
+        db_session.flush()
+
+        response = _download(admin, str(invoice.id), "xml")
+        assert response.status_code == 200, response.text
+        assert b"<cbc:PaymentMeansCode>ZZZ</cbc:PaymentMeansCode>" in response.content
+    finally:
+        _clear_overrides()

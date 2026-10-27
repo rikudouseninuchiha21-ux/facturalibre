@@ -585,3 +585,19 @@ def test_void_missing_invoice_returns_404(client: TestClient) -> None:
 
     assert response.status_code == 404
     assert response.json() == {"detail": "Factura no encontrada"}
+
+
+def test_create_invoice_persists_payment_mean_code(client: TestClient) -> None:
+    """El medio de pago DIAN opcional viaja en la creación (Fase 38A)."""
+    contact_id, item_id = _setup_invoice_data(client)
+    created = _post_invoice(
+        client,
+        _three_line_payload(contact_id, item_id) | {"payment_mean_code": "42"},
+    )
+    assert created.status_code == 201, created.text
+    assert created.json()["payment_mean_code"] == "42"
+
+    # Sin el campo, la factura queda en NULL (el generador DIAN usará ZZZ).
+    defaulted = _post_invoice(client, _three_line_payload(contact_id, item_id))
+    assert defaulted.status_code == 201, defaulted.text
+    assert defaulted.json()["payment_mean_code"] is None

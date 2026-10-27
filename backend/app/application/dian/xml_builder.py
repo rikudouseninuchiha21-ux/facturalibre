@@ -73,6 +73,9 @@ NAMESPACES: dict[str | None, str] = {
 CURRENCY = "COP"
 COUNTRY_CODE = "CO"
 COUNTRY_NAME = "Colombia"
+# Medio de pago por defecto cuando la factura no lo declara (históricas).
+# "ZZZ" = "Otros" en el catálogo DIAN: no se afirma un medio que no se conoce.
+DEFAULT_PAYMENT_MEAN_CODE = "ZZZ"
 
 UBL_VERSION_ID = "UBL 2.1"
 CUSTOMIZATION_ID = "10"
@@ -412,7 +415,11 @@ def build_invoice_xml(
     _build_customer_party(root, contact=contact)
 
     payment_means = _cac(root, "PaymentMeans")
-    _cbc(payment_means, "PaymentMeansCode", invoice.payment_mean_code)
+    _cbc(
+        payment_means,
+        "PaymentMeansCode",
+        invoice.payment_mean_code or DEFAULT_PAYMENT_MEAN_CODE,
+    )
     if invoice.due_date is not None:
         _cbc(payment_means, "PaymentDueDate", invoice.due_date.isoformat())
 

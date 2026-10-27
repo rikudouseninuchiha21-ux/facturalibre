@@ -55,6 +55,7 @@ class InvoiceRepository:
         subtotal: Decimal,
         tax_total: Decimal,
         total: Decimal,
+        payment_mean_code: str | None = None,
     ) -> Invoice:
         """Crea una factura DRAFT/UNPAID con sus líneas, sin número."""
         invoice = Invoice(
@@ -63,6 +64,7 @@ class InvoiceRepository:
             issue_date=issue_date,
             due_date=due_date,
             currency=currency,
+            payment_mean_code=payment_mean_code,
             lifecycle_status=LifecycleStatus.DRAFT,
             payment_status=PaymentStatus.UNPAID,
             subtotal=subtotal,

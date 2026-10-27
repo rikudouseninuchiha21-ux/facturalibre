@@ -157,6 +157,8 @@ export interface InvoiceCreateInput {
   issue_date: string;
   due_date: string;
   currency: "COP";
+  /** Catálogo DIAN: 10, 20, 42, 48, 49 o ZZZ. */
+  payment_mean_code?: string;
   lines: InvoiceLineInput[];
 }
 
@@ -222,6 +224,7 @@ export interface Invoice {
   tax_total: string;
   total: string;
   balance: string;
+  payment_mean_code: string | null;
   cufe: string | null;
   dian_status: DianDocumentStatus | null;
   version: number;

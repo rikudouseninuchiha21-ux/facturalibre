@@ -183,3 +183,31 @@ def test_line_with_discount_emits_allowance_charge(
     assert allowances[0].findtext(f"{{{CBC_NS}}}ChargeIndicator") == "false"
     assert allowances[0].findtext(f"{{{CBC_NS}}}Amount") == "100.00"
     assert ubl_schema.validate(root), str(ubl_schema.error_log)
+
+
+def test_missing_payment_mean_code_defaults_to_zzz(
+    db_session: Session,
+    ubl_schema: etree.XMLSchema,
+) -> None:
+    """Facturas históricas sin medio de pago usan ZZZ (Otros), no 422."""
+    invoice, company, contact, taxes = make_full_package(db_session)
+    invoice.payment_mean_code = None
+    db_session.flush()
+
+    cufe = "e" * 96
+    security_code = compute_software_security_code(
+        software_id=company.dian_software_id or "",
+        software_pin=company.dian_software_pin,
+        invoice_number=invoice.number or "",
+    )
+    xml = build_invoice_xml(
+        invoice=invoice,
+        company=company,
+        contact=contact,
+        taxes=taxes,
+        cufe=cufe,
+        software_security_code=security_code,
+    )
+    root = etree.fromstring(xml)
+    assert root.findtext(f"{{{CAC_NS}}}PaymentMeans/{{{CBC_NS}}}PaymentMeansCode") == "ZZZ"
+    assert ubl_schema.validate(root), str(ubl_schema.error_log)

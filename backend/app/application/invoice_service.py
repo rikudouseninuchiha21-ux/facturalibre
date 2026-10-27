@@ -93,6 +93,7 @@ def create_invoice_draft(db: Session, payload: InvoiceCreate) -> Invoice:
         subtotal=totals.subtotal,
         tax_total=totals.tax_total,
         total=totals.total,
+        payment_mean_code=payload.payment_mean_code,
     )
 
 

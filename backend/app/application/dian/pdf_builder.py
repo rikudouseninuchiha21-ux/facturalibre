@@ -36,6 +36,7 @@ from app.application.dian.cufe import format_issue_time, format_money
 from app.application.dian.qr import build_qr_payload, build_qr_png
 from app.application.dian.tax_groups import TaxGroup, ordered_lines, tax_amounts_by_code
 from app.application.dian.words import number_to_words_es_co
+from app.application.dian.xml_builder import DEFAULT_PAYMENT_MEAN_CODE
 
 if TYPE_CHECKING:
     from app.domain.models.company_setting import CompanySetting
@@ -217,6 +218,7 @@ def build_invoice_pdf(
     terms_days = invoice.payment_terms_days
     if terms_days is None and invoice.due_date is not None:
         terms_days = (invoice.due_date - issue_date).days
+    payment_mean_code = invoice.payment_mean_code or DEFAULT_PAYMENT_MEAN_CODE
     buyer_block = [
         Paragraph("ADQUIRENTE", LABEL_STYLE),
         _kv("Nombre / Razón social", contact.name),
@@ -236,7 +238,7 @@ def build_invoice_pdf(
             f"{issue_date.isoformat()} {format_issue_time(issue_time)}",
         ),
         _kv("Vencimiento", invoice.due_date.isoformat() if invoice.due_date else None),
-        _kv("Forma de pago", _payment_label(invoice.payment_mean_code)),
+        _kv("Forma de pago", _payment_label(payment_mean_code)),
         _kv("Plazo", f"{terms_days} días" if terms_days is not None else None),
     ]
     parties = Table([[buyer_block, document_block]], colWidths=[9.4 * cm, 8.4 * cm])

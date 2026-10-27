@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, X } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 
 import { ContactForm } from "@/components/contacts/ContactForm";
+import { Modal } from "@/components/ui/modal";
 import {
   Card,
   CardContent,
@@ -34,31 +35,29 @@ interface ContactsClientProps {
 }
 
 export function ContactsClient({ contacts }: ContactsClientProps) {
+  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Contact | null>(null);
 
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Nuevo Contacto</CardTitle>
-          <CardDescription>
-            Registra un cliente o proveedor con sus datos fiscales DIAN. El
-            nombre es obligatorio.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ContactForm />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Listado</CardTitle>
-          <CardDescription>
-            {contacts.length} contacto
-            {contacts.length === 1 ? "" : "s"} encontrado
-            {contacts.length === 1 ? "" : "s"}.
-          </CardDescription>
+        <CardHeader className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <CardTitle>Listado</CardTitle>
+            <CardDescription>
+              {contacts.length} contacto
+              {contacts.length === 1 ? "" : "s"} encontrado
+              {contacts.length === 1 ? "" : "s"}.
+            </CardDescription>
+          </div>
+          <button
+            type="button"
+            onClick={() => setCreating(true)}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700"
+          >
+            <Plus className="size-4" aria-hidden="true" />
+            Nuevo Contacto
+          </button>
         </CardHeader>
         <CardContent>
           {contacts.length === 0 ? (
@@ -67,7 +66,7 @@ export function ContactsClient({ contacts }: ContactsClientProps) {
                 Todavía no hay contactos
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Usa el formulario de arriba para crear el primer contacto.
+                Usa el botón “Nuevo Contacto” para crear el primero.
               </p>
             </div>
           ) : (
@@ -124,41 +123,30 @@ export function ContactsClient({ contacts }: ContactsClientProps) {
         </CardContent>
       </Card>
 
+      {creating ? (
+        <Modal
+          title="Nuevo contacto"
+          description="Registra un cliente o proveedor con sus datos fiscales DIAN."
+          onClose={() => setCreating(false)}
+          maxWidthClassName="max-w-2xl"
+        >
+          <ContactForm onSaved={() => setCreating(false)} />
+        </Modal>
+      ) : null}
+
       {editing ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/50 p-4">
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Editar contacto ${editing.name}`}
-            className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-2xl"
-          >
-            <div className="flex items-start justify-between gap-4 border-b border-zinc-100 px-6 py-4">
-              <div>
-                <h2 className="text-lg font-semibold text-zinc-950">
-                  Editar contacto
-                </h2>
-                <p className="mt-1 text-sm text-zinc-500">
-                  Actualiza los datos fiscales DIAN de {editing.name}.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditing(null)}
-                aria-label="Cerrar"
-                className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-              >
-                <X className="size-5" aria-hidden="true" />
-              </button>
-            </div>
-            <div className="px-6 py-5">
-              <ContactForm
-                contact={editing}
-                onSaved={() => setEditing(null)}
-                onCancel={() => setEditing(null)}
-              />
-            </div>
-          </div>
-        </div>
+        <Modal
+          title="Editar contacto"
+          description={`Actualiza los datos fiscales DIAN de ${editing.name}.`}
+          onClose={() => setEditing(null)}
+          maxWidthClassName="max-w-2xl"
+        >
+          <ContactForm
+            contact={editing}
+            onSaved={() => setEditing(null)}
+            onCancel={() => setEditing(null)}
+          />
+        </Modal>
       ) : null}
     </>
   );

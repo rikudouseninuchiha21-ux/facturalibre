@@ -174,6 +174,7 @@ export function InvoiceCreateForm({
   const [contactId, setContactId] = useState("");
   const [issueDate, setIssueDate] = useState(initialIssueDate);
   const [dueDate, setDueDate] = useState(initialDueDate);
+  const [paymentMeanCode, setPaymentMeanCode] = useState("10");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const idempotencyKeyRef = useRef<string | null>(null);
@@ -333,6 +334,7 @@ export function InvoiceCreateForm({
         issue_date: issueDate,
         due_date: dueDate,
         currency: "COP",
+        payment_mean_code: paymentMeanCode,
         lines: lines.map((line) => ({
           item_id: line.itemId,
           ...(line.description.trim()
@@ -445,6 +447,33 @@ export function InvoiceCreateForm({
                 disabled={isSubmitting}
                 className={fieldClassName}
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="invoice-payment-mean"
+                className="block text-sm font-medium text-slate-700"
+              >
+                Medio de pago{" "}
+                <span className="text-xs font-normal text-slate-400">
+                  (catálogo DIAN)
+                </span>
+              </label>
+              <select
+                id="invoice-payment-mean"
+                name="payment_mean_code"
+                value={paymentMeanCode}
+                onChange={(event) => setPaymentMeanCode(event.target.value)}
+                disabled={isSubmitting}
+                className={fieldClassName}
+              >
+                <option value="10">10 · Efectivo</option>
+                <option value="20">20 · Cheque</option>
+                <option value="42">42 · Transferencia</option>
+                <option value="48">48 · Tarjeta crédito</option>
+                <option value="49">49 · Tarjeta débito</option>
+                <option value="ZZZ">ZZZ · Otros</option>
+              </select>
             </div>
           </div>
         </CardContent>
