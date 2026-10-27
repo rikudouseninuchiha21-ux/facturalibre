@@ -141,7 +141,7 @@ def test_dian_fields_create_and_update(client: TestClient) -> None:
     )
     assert updated.status_code == 200, updated.text
     assert updated.json()["dv"] == "8"
-    assert updated.json()["version"] == created["version"] + 1
+    assert updated.json()["version"] == created["version"] + 1  # type: ignore[operator]
 
     fetched = client.get(f"/api/v1/contacts/{created['id']}").json()
     assert fetched["address"] == "Cra 15 # 88 - 21"
