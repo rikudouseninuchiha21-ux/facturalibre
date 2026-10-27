@@ -49,6 +49,15 @@ export interface Contact {
   type: string;
   status: string;
   version: number;
+  // Datos fiscales DIAN (Fase 38A).
+  dv: string | null;
+  tax_regime: string | null;
+  person_type: string | null;
+  fiscal_responsibility: string | null;
+  dian_municipality_code: string | null;
+  dian_department_code: string | null;
+  country_code: string;
+  address: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -59,6 +68,29 @@ export interface ContactCreateInput {
   tax_id?: string;
   type?: string;
   status?: string;
+  address?: string;
+  dv?: string;
+  tax_regime?: string;
+  person_type?: string;
+  fiscal_responsibility?: string;
+  dian_municipality_code?: string;
+  dian_department_code?: string;
+}
+
+export interface ContactUpdateInput {
+  name?: string;
+  email?: string;
+  tax_id?: string;
+  type?: string;
+  status?: string;
+  address?: string;
+  dv?: string;
+  tax_regime?: string;
+  person_type?: string;
+  fiscal_responsibility?: string;
+  dian_municipality_code?: string;
+  dian_department_code?: string;
+  version: number;
 }
 
 export interface VoidInvoiceInput {
@@ -610,6 +642,16 @@ export function getContacts(cookieHeader?: string): Promise<Contact[]> {
 
 export function createContact(payload: ContactCreateInput): Promise<Contact> {
   return apiPost<Contact>("/contacts", payload);
+}
+
+export function updateContact(
+  id: string,
+  payload: ContactUpdateInput,
+): Promise<Contact> {
+  return apiPatch<Contact>(
+    `/contacts/${encodeURIComponent(id)}`,
+    payload,
+  );
 }
 
 export function getItems(cookieHeader?: string): Promise<Item[]> {

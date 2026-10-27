@@ -98,3 +98,61 @@ def test_soft_delete_excludes_contact(client: TestClient) -> None:
     listed_ids = {str(contact["id"]) for contact in listed}
     assert second_id in listed_ids
     assert first_id not in listed_ids
+
+
+def test_dian_fields_create_and_update(client: TestClient) -> None:
+    """Flujo del formulario de contactos con datos fiscales DIAN (Fase 38A).
+
+    El generador XML rechaza con 422 a los contactos sin estos campos:
+    el frontend los envía al crear y al editar (PATCH con versión).
+    """
+    created = _create_contact(
+        client,
+        address="Calle 100 # 8-50",
+        dv="5",
+        person_type="JURIDICA",
+        tax_regime="RESPONSABLE_IVA",
+        fiscal_responsibility="O-13",
+        dian_municipality_code="05001",
+        dian_department_code="05",
+    )
+
+    assert created["dv"] == "5"
+    assert created["person_type"] == "JURIDICA"
+    assert created["tax_regime"] == "RESPONSABLE_IVA"
+    assert created["fiscal_responsibility"] == "O-13"
+    assert created["dian_municipality_code"] == "05001"
+    assert created["dian_department_code"] == "05"
+    assert created["address"] == "Calle 100 # 8-50"
+    assert created["country_code"] == "CO"
+
+    # Edición del resto de datos DIAN sobre el mismo contacto.
+    updated = client.patch(
+        f"/api/v1/contacts/{created['id']}",
+        json={
+            "name": "Cliente Uno S.A.S.",
+            "address": "Cra 15 # 88 - 21",
+            "dv": "8",
+            "dian_municipality_code": "11001",
+            "dian_department_code": "11",
+            "fiscal_responsibility": "R-99-PN",
+            "version": created["version"],
+        },
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["dv"] == "8"
+    assert updated.json()["version"] == created["version"] + 1
+
+    fetched = client.get(f"/api/v1/contacts/{created['id']}").json()
+    assert fetched["address"] == "Cra 15 # 88 - 21"
+    assert fetched["dian_municipality_code"] == "11001"
+    assert fetched["dian_department_code"] == "11"
+    assert fetched["fiscal_responsibility"] == "R-99-PN"
+    assert fetched["tax_regime"] == "RESPONSABLE_IVA"
+
+    # DV inválido rechazado por el backend (max 2 dígitos definidos en el schema).
+    invalid = client.patch(
+        f"/api/v1/contacts/{created['id']}",
+        json={"dv": "123", "version": fetched["version"]},
+    )
+    assert invalid.status_code == 422
