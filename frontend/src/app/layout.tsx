@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 
+import { CookieBanner } from "@/components/layout/CookieBanner";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -18,6 +20,7 @@ export default function RootLayout({
     <html lang="es" className="h-full">
       <body className="min-h-screen bg-white text-zinc-900 antialiased">
         {children}
+    <CookieBanner />
       </body>
     </html>
   );

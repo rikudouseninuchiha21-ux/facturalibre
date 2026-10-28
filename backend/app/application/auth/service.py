@@ -81,6 +81,10 @@ class AuthService:
             if user is None or not password_matches or not user.is_active:
                 raise InvalidCredentialsError("Credenciales inválidas")
 
+            # Rotación de sesión (Fase 39B): el login invalida las sesiones
+            # anteriores del usuario para impedir Tokens Replayer/robados.
+            self.repository.revoke_user_sessions(user.id)
+
             token = generate_session_token()
             expires_at = now + SESSION_TTL
             self.repository.add_session(

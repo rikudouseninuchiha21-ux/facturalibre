@@ -63,6 +63,10 @@ jobs:
           ENVIRONMENT: test
           LOG_LEVEL: INFO
 
+      - name: Auditoría de dependencias (pip-audit)
+        run: uv run pip-audit
+        working-directory: backend
+
       - name: Ejecutar pytest
         run: uv run pytest
         working-directory: backend
@@ -97,6 +101,9 @@ jobs:
 
       - name: Instalar dependencias (frozen lockfile)
         run: pnpm install --frozen-lockfile
+
+      - name: Auditoría de dependencias (pnpm audit)
+        run: pnpm audit --audit-level=critical
         working-directory: frontend
 
       - name: Ejecutar lint

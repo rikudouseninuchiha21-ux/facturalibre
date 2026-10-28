@@ -12,7 +12,12 @@ SESSION_COOKIE_NAME = "facturalibre_session"
 SESSION_TTL = timedelta(hours=24)
 SESSION_TTL_SECONDS = int(SESSION_TTL.total_seconds())
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Coste 12: mínimo recomendado (OWASP) para bcrypt.
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=12,
+)
 
 # Hash de un valor aleatorio conocido. Se usa para ejecutar bcrypt aunque el
 # email no exista y reducir diferencias de tiempo entre ambos casos.

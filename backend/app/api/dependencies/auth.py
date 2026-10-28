@@ -38,6 +38,17 @@ def get_current_user(request: Request, db: DbSession) -> User:
 CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
+def get_current_user_optional(request: Request, db: DbSession) -> User | None:
+    """Usuario autenticado o ``None``: para endpoints públicos que
+    enriquecen el registro cuando hay sesión (p. ej. consentimientos)."""
+    token = request.cookies.get(SESSION_COOKIE_NAME)
+    if token is None:
+        return None
+    user = AuthService(db).get_user_by_token(token)
+    db.commit()
+    return user
+
+
 def require_role(allowed_roles: list[UserRole]) -> Callable[[User], User]:
     """Devuelve una dependencia que verifica que el usuario tenga uno de los roles permitidos.
 

@@ -22,6 +22,9 @@ TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 # antes de importar app.main, sin recurrir al .env de desarrollo.
 if TEST_DATABASE_URL:
     os.environ["DATABASE_URL"] = TEST_DATABASE_URL
+    # La suite corre en un solo proceso: desactiva el rate limit de login
+    # salvo en los tests que lo prueban (lo activan con monkeypatch).
+    os.environ.setdefault("ENVIRONMENT", "test")
 
 
 @pytest.fixture(scope="session")

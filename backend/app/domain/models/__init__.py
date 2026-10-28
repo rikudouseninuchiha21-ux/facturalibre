@@ -23,6 +23,7 @@ from app.domain.models.bank import (
 )
 from app.domain.models.budgeting import Budget, BudgetLine, BudgetStatus, CostCenter
 from app.domain.models.company_setting import CompanySetting
+from app.domain.models.consent import UserConsent
 from app.domain.models.contact import Contact, ContactStatus, ContactType
 from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNoteStatus
 from app.domain.models.expense import Expense
@@ -83,6 +84,7 @@ __all__ = [
     "BudgetLine",
     "BudgetStatus",
     "CompanySetting",
+    "UserConsent",
     "DianDocumentStatus",
     "Contact",
     "ContactStatus",

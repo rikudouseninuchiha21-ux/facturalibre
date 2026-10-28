@@ -112,7 +112,7 @@ def test_login_sets_secure_http_only_cookie(
 
     assert "httponly" in set_cookie
     assert "secure" in set_cookie
-    assert "samesite=lax" in set_cookie
+    assert "samesite=strict" in set_cookie
     assert "max-age=86400" in set_cookie
 
     raw_token = anonymous_client.cookies.get(SESSION_COOKIE_NAME)

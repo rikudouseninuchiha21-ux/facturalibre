@@ -130,3 +130,11 @@ class AuthRepository:
         self.db.flush()
         self.db.refresh(user)
         return user
+
+    def revoke_user_sessions(self, user_id: UUID) -> int:
+        """Revoca todas las sesiones vigentes del usuario (rotación en login)."""
+        sessions = self.db.scalars(select(AuthSession).where(AuthSession.user_id == user_id)).all()
+        for session in sessions:
+            self.db.delete(session)
+        self.db.flush()
+        return len(sessions)

@@ -1,5 +1,7 @@
 """Punto de entrada del backend de FacturaLibre."""
 
+from typing import Any
+
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
@@ -9,6 +11,7 @@ from app.api.v1 import (
     auth,
     banks,
     budgets,
+    consent,
     contacts,
     cost_centers,
     dashboard,
@@ -62,7 +65,48 @@ from app.domain.exceptions import (
 
 app = FastAPI(title="FacturaLibre API", version="0.1.0")
 
+# -- Hardening (Fase 39B): cabeceras de seguridad en toda respuesta. -------
+SECURITY_HEADERS: dict[str, str] = {
+    "Content-Security-Policy": (
+        "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; "
+        "form-action 'self'; object-src 'none'"
+    ),
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+}
+
+
+@app.middleware("http")
+async def security_headers_middleware(request: Request, call_next: Any) -> Any:
+    """Aplica las cabeceras OWASP de cabecera a cada respuesta."""
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    return response
+
+
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+
+from app.core.config import get_settings  # noqa: E402
+
+_settings = get_settings()
+# CORS restringido a orígenes exactos (nunca ``*``): el frontend usa rewrites
+# same-origin, por lo que por defecto solo se habilita el origen de desarrollo.
+_allowed_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+if _settings.environment.strip().lower() in {"production", "prod"}:
+    _allowed_origins = ["https://app.nexuserp.co"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_allowed_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth.router, prefix="/api/v1")
+app.include_router(consent.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(contacts.router, prefix="/api/v1")
 app.include_router(items.router, prefix="/api/v1")
