@@ -12,7 +12,17 @@ const backendInternalUrl = (
 
 /** Cabeceras de seguridad (Fase 39B), espejo de las del backend. */
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: "default-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'" },
+  // Next.js necesita scripts inline para la hidratacion (self.__next_r) y
+  // en desarrollo HMR usa eval: sin 'unsafe-inline'/'unsafe-eval' la CSP
+  // bloquea el arranque de React y los formularios quedan inertes.
+  {
+    key: "Content-Security-Policy",
+    value:
+      "default-src 'self'; script-src 'self' 'unsafe-inline'" +
+      (process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'") +
+      "; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; " +
+      "object-src 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; connect-src 'self'",
+  },
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
