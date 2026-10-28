@@ -101,6 +101,7 @@ jobs:
 
       - name: Instalar dependencias (frozen lockfile)
         run: pnpm install --frozen-lockfile
+        working-directory: frontend
 
       - name: Auditoría de dependencias (pnpm audit)
         run: pnpm audit --audit-level=critical
