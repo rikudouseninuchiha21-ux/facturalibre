@@ -1,14 +1,29 @@
 version: 2
 updates:
+  # Actualizaciones de seguridad y parches/menores (patch/minor) solamente.
+  # Las versiones mayores (major) se ignoran en todos los ecosistemas para no
+  # abrir PRs que rompan la compatibilidad (p. ej. Next 16 → 17, React 19 → 20):
+  # esas se evalúan manualmente por fase del proyecto.
   - package-ecosystem: "pip"
     directory: "/backend"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
