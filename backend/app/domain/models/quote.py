@@ -151,5 +151,12 @@ class Quote(Base):
         order_by="QuoteLine.id",
     )
 
+    @property
+    def converted_invoice_number(self) -> str | None:
+        """Número legible de la factura generada al convertir la cotización."""
+        if self.converted_invoice is None:
+            return None
+        return self.converted_invoice.number
+
 
 __all__ = ["Quote", "QuoteStatus"]

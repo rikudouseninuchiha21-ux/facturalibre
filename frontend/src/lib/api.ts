@@ -1,5 +1,5 @@
 /**
- * Cliente HTTP tipado para la API v1 de Nexus ERP.
+ * Cliente HTTP tipado para la API v1 de VANTAGE.
  *
  * En el navegador se usa una ruta relativa (`/api/v1/...`) para pasar por el
  * rewrite same-origin de Next.js y evitar CORS.
@@ -130,6 +130,7 @@ export interface Purchase {
   id: string;
   number: string | null;
   supplier_id: string;
+  supplier: Contact;
   issue_date: string;
   due_date: string;
   status: PurchaseStatus;
@@ -213,6 +214,7 @@ export interface Invoice {
   id: string;
   number: string | null;
   contact_id: string;
+  contact: Contact;
   issue_date: string;
   due_date: string;
   currency: string;
@@ -802,6 +804,7 @@ export interface Quote {
   currency: string;
   status: QuoteStatus;
   converted_invoice_id: string | null;
+  converted_invoice_number: string | null;
   subtotal: string;
   tax_total: string;
   total: string;

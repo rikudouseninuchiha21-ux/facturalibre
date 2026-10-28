@@ -18,9 +18,16 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  return {
-    title: `Presupuesto ${id}`,
-  };
+  const cookieHeader = await getSessionCookieHeader();
+  try {
+    const budget = await getBudget(id, cookieHeader);
+    const label =
+      budget.name ??
+      `${String(budget.period_month).padStart(2, "0")}/${budget.period_year}`;
+    return { title: `Presupuesto ${label}` };
+  } catch {
+    return { title: "Presupuesto" };
+  }
 }
 
 export default async function BudgetDetailPage({

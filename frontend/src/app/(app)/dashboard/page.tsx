@@ -67,7 +67,7 @@ function KpiCard({
         aria-hidden="true"
         className="absolute inset-x-0 top-0 h-1 bg-white/40"
       />
-      <CardHeader className="pb-2 flex items-center justify-between">
+      <CardHeader className="pb-2 flex flex-row items-center justify-between">
         <CardDescription>{title}</CardDescription>
         <div className={`flex size-10 items-center justify-center rounded-xl ${iconClassName}`}>
           <IconComponent className="size-5" />
@@ -90,7 +90,7 @@ function BudgetsAtRiskWidget({ alerts }: { alerts: BudgetAlertItem[] }) {
 
   return (
     <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-white">
-      <CardHeader className="flex items-center justify-between">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Presupuestos en riesgo</CardTitle>
           <CardDescription>
@@ -105,7 +105,7 @@ function BudgetsAtRiskWidget({ alerts }: { alerts: BudgetAlertItem[] }) {
         {atRisk.length === 0 ? (
           <div className="flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
             <ShieldCheck
-              className="size-6 shrink-0 text-amber-500"
+              className="size-6 shrink-0 text-emerald-600"
               aria-hidden="true"
             />
             <p className="text-sm font-medium text-emerald-800">
@@ -189,7 +189,7 @@ export default async function HomePage() {
   return (
     <div className="space-y-8">
       <header className="max-w-3xl">
-        <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+        <p className="text-sm font-semibold uppercase tracking-widest text-violet-600">
           Panel administrativo
         </p>
         <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -235,18 +235,18 @@ export default async function HomePage() {
                 title="Facturado Total"
                 value={formatCurrency(summary.total_invoiced)}
                 description="Facturas emitidas vigentes."
-                cardClassName="bg-gradient-to-br from-amber-50 to-white border-amber-100 shadow-sm hover:shadow-md hover:border-amber-200 transition-all"
-                iconClassName="bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/30"
-                textClassName="text-amber-950"
+                cardClassName="bg-gradient-to-br from-violet-50 to-white border-violet-100 shadow-sm hover:shadow-md hover:border-violet-200 transition-all"
+                iconClassName="bg-gradient-to-br from-violet-600 to-violet-700 text-white shadow-lg shadow-violet-500/30"
+                textClassName="text-violet-950"
                 Icon={TrendingUp}
               />
               <KpiCard
                 title="Saldo Pendiente"
                 value={formatCurrency(summary.pending_balance)}
                 description="Cartera por cobrar de facturas emitidas."
-                cardClassName="bg-gradient-to-br from-amber-100 to-white border-amber-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all"
-                iconClassName="bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-lg shadow-amber-700/30"
-                textClassName="text-amber-950"
+                cardClassName="bg-gradient-to-br from-violet-100 to-white border-violet-200 shadow-sm hover:shadow-md hover:border-violet-300 transition-all"
+                iconClassName="bg-gradient-to-br from-violet-600 to-violet-800 text-white shadow-lg shadow-violet-700/30"
+                textClassName="text-violet-950"
                 Icon={Clock}
               />
             </div>
@@ -293,10 +293,10 @@ export default async function HomePage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Link
             href="/pos"
-            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-amber-300 hover:shadow-md transition-all"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-violet-300 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-amber-50 text-amber-600 group-hover:bg-amber-100 transition-colors">
+              <div className="p-3 rounded-xl bg-violet-50 text-violet-600 group-hover:bg-violet-100 transition-colors">
                 <ShoppingCart className="size-6" />
               </div>
               <div>
@@ -321,10 +321,10 @@ export default async function HomePage() {
           </Link>
           <Link
             href="/contacts"
-            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-amber-400 hover:shadow-md transition-all"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm hover:border-violet-400 hover:shadow-md transition-all"
           >
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-amber-100 text-amber-800 group-hover:bg-amber-200 transition-colors">
+              <div className="p-3 rounded-xl bg-violet-100 text-violet-800 group-hover:bg-violet-200 transition-colors">
                 <UserPlus className="size-6" />
               </div>
               <div>

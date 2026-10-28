@@ -61,7 +61,7 @@ export default async function WarehousesPage() {
           Bodegas
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Ubicaciones donde Nexus ERP mantiene el stock de los productos.
+          Ubicaciones donde VANTAGE mantiene el stock de los productos.
         </p>
       </header>
 

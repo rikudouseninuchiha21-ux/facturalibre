@@ -90,7 +90,10 @@ class QuoteRepository:
             select(Quote, Contact.name)
             .join(Contact, Contact.id == Quote.contact_id)
             .where(Quote.id == quote_id, Quote.deleted_at.is_(None))
-            .options(selectinload(Quote.lines))
+            .options(
+                selectinload(Quote.converted_invoice),
+                selectinload(Quote.lines),
+            )
         )
         return self.db.execute(statement).first()
 
@@ -100,7 +103,10 @@ class QuoteRepository:
             select(Quote, Contact.name)
             .join(Contact, Contact.id == Quote.contact_id)
             .where(Quote.deleted_at.is_(None))
-            .options(selectinload(Quote.lines))
+            .options(
+                selectinload(Quote.converted_invoice),
+                selectinload(Quote.lines),
+            )
             .order_by(Quote.created_at.desc(), Quote.id)
             .limit(limit)
             .offset(offset)

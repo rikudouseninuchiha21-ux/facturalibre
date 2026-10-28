@@ -27,21 +27,21 @@ CONSENT_TYPES: tuple[str, ...] = (
     "terms_of_service",
 )
 
-PRIVACY_POLICY_TEXT = """# Política de Privacidad — Nexus ERP
+PRIVACY_POLICY_TEXT = """# Política de Privacidad — VANTAGE
 
-Nexus ERP recopila únicamente los datos necesarios para prestar el servicio
+VANTAGE recopila únicamente los datos necesarios para prestar el servicio
 de facturación, contabilidad y nómina. Las cookies esenciales mantienen la
 sesión iniciada; las analíticas y de marketing son opcionales y se activan
 solo con tu consentimiento explícito (Ley 1581 de 2012, GDPR y CCPA).
 
 Puedes revocar tu consentimiento en cualquier momento escribiendo a
-privacidad@nexuserp.co. No vendemos datos personales a terceros y los
+privacidad@vantage.co. No vendemos datos personales a terceros y los
 consentimientos quedan registrados con fecha, IP y agente de usuario como
 evidencia de cumplimiento."""
 
-TERMS_OF_SERVICE_TEXT = """# Términos y Condiciones — Nexus ERP
+TERMS_OF_SERVICE_TEXT = """# Términos y Condiciones — VANTAGE
 
-El uso de Nexus ERP implica la aceptación de estos términos: el titular
+El uso de VANTAGE implica la aceptación de estos términos: el titular
 de la cuenta es responsable de la veracidad de los datos fiscales
 registrados (facturación electrónica DIAN, nómina y contabilidad) y de la
 custodia de sus credenciales. El servicio se presta tal como está, con

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ApiError, updateCompanySettings, type CompanySetting } from "@/lib/api";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
+  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
 
 interface SettingsFormProps {
   companySettings: CompanySetting;
@@ -220,7 +220,7 @@ export function SettingsForm({
 
       {/* Datos DIAN de la empresa (Fase 38A) */}
       <div className="mt-6 border-t border-zinc-200 pt-6">
-        <h3 className="text-sm font-bold uppercase tracking-wider text-amber-700">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-violet-700">
           Facturación electrónica DIAN
         </h3>
         <p className="mt-1 text-sm text-zinc-500">
@@ -437,7 +437,7 @@ export function SettingsForm({
               onChange={(event) => setSoftwareId(event.target.value)}
               disabled={isSubmitting}
               className={inputClassName}
-              placeholder="NEXUS-ERP"
+              placeholder="VANTAGE-ERP"
             />
           </div>
           <div className="space-y-2">

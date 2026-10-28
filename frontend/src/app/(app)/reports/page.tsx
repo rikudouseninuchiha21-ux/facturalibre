@@ -37,17 +37,17 @@ export default function ReportsPage() {
           <Link
             key={report.href}
             href={report.href}
-            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-amber-400 hover:shadow-md"
+            className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition-all hover:border-violet-400 hover:shadow-md"
           >
             <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-amber-50 p-3 text-amber-600 group-hover:bg-amber-100">
+              <div className="rounded-xl bg-violet-50 p-3 text-violet-600 group-hover:bg-violet-100">
                 <report.icon className="size-6" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <h2 className="font-semibold text-zinc-900">{report.title}</h2>
                 <p className="mt-1 text-sm text-zinc-500">{report.description}</p>
               </div>
-              <ArrowRight className="ml-auto size-5 shrink-0 text-amber-600" aria-hidden="true" />
+              <ArrowRight className="ml-auto size-5 shrink-0 text-violet-600" aria-hidden="true" />
             </div>
           </Link>
         ))}

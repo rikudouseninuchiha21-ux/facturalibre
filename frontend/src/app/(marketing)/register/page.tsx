@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 export default function RegisterPage() {
   return (
-    <div className="mx-auto w-full max-w-lg">
-      <Card>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-violet-100 via-violet-50 to-white px-4 py-16">
+      <Card className="w-full max-w-lg shadow-xl shadow-violet-500/5">
         <CardHeader>
           <CardTitle>Crear administrador inicial</CardTitle>
           <CardDescription>

@@ -9,7 +9,7 @@ import { ApiError, createItem, type Tax } from "@/lib/api";
 import { formatTaxRate } from "@/lib/format";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 const pricePattern = /^\d+(\.\d{1,2})?$/;
 
@@ -193,7 +193,7 @@ export function ItemForm({ taxes }: ItemFormProps) {
               No hay impuestos registrados. Puedes crear el ítem sin impuesto o{" "}
               <Link
                 href="/taxes"
-                className="font-semibold text-amber-600 underline decoration-amber-300 underline-offset-2 hover:text-amber-700"
+                className="font-semibold text-violet-600 underline decoration-violet-300 underline-offset-2 hover:text-violet-700"
               >
                 crear un impuesto
               </Link>
@@ -211,7 +211,7 @@ export function ItemForm({ taxes }: ItemFormProps) {
               checked={priceIncludesTax}
               onChange={(event) => setPriceIncludesTax(event.target.checked)}
               disabled={isSubmitting}
-              className="rounded border-slate-300 bg-slate-50 text-amber-600 focus:ring-amber-600 focus:ring-1"
+              className="rounded border-slate-300 bg-slate-50 text-violet-600 focus:ring-violet-600 focus:ring-1"
             />
             <label
               htmlFor="item-price-includes-tax"

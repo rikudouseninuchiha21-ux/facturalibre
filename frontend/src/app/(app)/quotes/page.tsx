@@ -43,7 +43,7 @@ const statusStyles: Record<QuoteStatus, string> = {
   SENT: "bg-blue-50 text-blue-700 ring-blue-200",
   ACCEPTED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   REJECTED: "bg-red-50 text-red-700 ring-red-200",
-  CONVERTED: "bg-amber-50 text-amber-700 ring-amber-200",
+  CONVERTED: "bg-violet-50 text-violet-700 ring-violet-200",
 };
 
 function StatusBadge({ status }: { status: QuoteStatus }) {
@@ -85,7 +85,7 @@ export default async function QuotesPage() {
         </div>
         <Link
           href="/quotes/new"
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
         >
           <span aria-hidden="true">+</span>
           Nueva Cotización
@@ -137,7 +137,7 @@ export default async function QuotesPage() {
                     <TableCell className="font-mono text-xs font-medium text-slate-950">
                       <Link
                         href={`/quotes/${quote.id}`}
-                        className="text-amber-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                        className="text-violet-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
                       >
                         {quote.number ?? "—"}
                       </Link>
@@ -155,7 +155,7 @@ export default async function QuotesPage() {
                     <TableCell className="text-right">
                       <Link
                         href={`/quotes/${quote.id}`}
-                        className="text-sm font-medium text-amber-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                        className="text-sm font-medium text-violet-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
                       >
                         Ver detalle
                       </Link>

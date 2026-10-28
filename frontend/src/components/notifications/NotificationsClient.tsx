@@ -117,7 +117,7 @@ export function NotificationsClient({
           type="button"
           onClick={() => void handleMarkAllRead()}
           disabled={markingAll}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition-colors hover:border-amber-500 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-700 shadow-sm transition-colors hover:border-violet-500 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <CheckCheck className="size-4" aria-hidden="true" />
           {markingAll ? "Marcando…" : "Marcar todas como leídas"}
@@ -132,7 +132,7 @@ export function NotificationsClient({
               onClick={() => navigateWith(option, 1)}
               className={`rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
                 filter === option
-                  ? "bg-zinc-950 text-white"
+                  ? "bg-violet-600 text-white"
                   : "border border-zinc-300 bg-white text-zinc-600 hover:bg-zinc-50"
               }`}
             >
@@ -204,7 +204,7 @@ export function NotificationsClient({
                   {notification.link ? (
                     <Link
                       href={notification.link}
-                      className="flex w-full items-start gap-3 rounded-lg transition-colors hover:bg-amber-50/60"
+                      className="flex w-full items-start gap-3 rounded-lg transition-colors hover:bg-violet-50/60"
                     >
                       {content}
                     </Link>
@@ -218,7 +218,7 @@ export function NotificationsClient({
                       disabled={busyId === notification.id}
                       title="Marcar como leída"
                       aria-label={`Marcar como leída: ${notification.title}`}
-                      className="shrink-0 rounded-lg border border-zinc-300 bg-white p-1.5 text-zinc-500 shadow-sm transition-colors hover:border-amber-500 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="shrink-0 rounded-lg border border-zinc-300 bg-white p-1.5 text-zinc-500 shadow-sm transition-colors hover:border-violet-500 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Check className="size-4" aria-hidden="true" />
                     </button>

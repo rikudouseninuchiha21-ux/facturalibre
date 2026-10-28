@@ -102,7 +102,7 @@ export default async function PurchasesPage() {
         </div>
         <Link
           href="/purchases/new"
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+          className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
         >
           <span aria-hidden="true">+</span>
           Nueva Compra
@@ -156,13 +156,13 @@ export default async function PurchasesPage() {
                     <TableCell className="font-mono text-xs font-medium text-slate-950">
                       <Link
                         href={`/purchases/${purchase.id}`}
-                        className="text-amber-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-500"
+                        className="text-violet-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
                       >
                         {purchase.number ?? "—"}
                       </Link>
                     </TableCell>
                     <TableCell className="text-slate-900">
-                      {purchase.supplier_id}
+                      {purchase.supplier?.name ?? "Sin nombre"}
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={purchase.status} />

@@ -64,7 +64,7 @@ export function PayrollActions({ periodId, status }: PayrollActionsProps) {
               );
             }
           }}
-          className={`${actionButtonClassName} border-amber-300 text-amber-800 hover:bg-amber-50`}
+          className={`${actionButtonClassName} border-violet-300 text-violet-800 hover:bg-violet-50`}
         >
           <FileCode className="mr-1 size-3.5" aria-hidden="true" />
           XML Nómina
@@ -124,7 +124,7 @@ export function PayrollActions({ periodId, status }: PayrollActionsProps) {
         onClick={handleCalculate}
         disabled={isCalculating}
         aria-busy={isCalculating}
-        className={`${actionButtonClassName} border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-slate-900`}
+        className={`${actionButtonClassName} border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-violet-500`}
       >
         {isCalculating ? "Calculando..." : "Calcular Nómina"}
       </button>

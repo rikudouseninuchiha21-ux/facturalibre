@@ -39,7 +39,7 @@ export default async function AgingPage({ searchParams }: AgingPageProps) {
       <header>
         <Link
           href="/receivables"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 transition-colors hover:text-amber-900"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-violet-700 transition-colors hover:text-violet-900"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
           Volver a cartera

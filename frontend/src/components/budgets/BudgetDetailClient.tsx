@@ -37,7 +37,7 @@ import {
 import { formatCurrency } from "@/lib/format";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
+  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
 
 interface BudgetDetailClientProps {
   initialBudget: Budget;
@@ -247,7 +247,7 @@ export function BudgetDetailClient({
                   type="button"
                   onClick={() => void handleApprove()}
                   disabled={busy}
-                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 px-4 py-2 text-sm font-semibold text-zinc-950 shadow-sm transition-colors hover:from-amber-300 hover:to-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:from-violet-700 hover:to-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Aprobar
                 </button>
@@ -257,7 +257,7 @@ export function BudgetDetailClient({
                   type="button"
                   onClick={() => void handleClose()}
                   disabled={busy}
-                  className="rounded-lg bg-zinc-950 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Cerrar
                 </button>
@@ -371,7 +371,7 @@ export function BudgetDetailClient({
                 <button
                   type="submit"
                   disabled={busy || accounts.length === 0}
-                  className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition-colors hover:border-amber-500 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition-colors hover:border-violet-500 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Agregar línea
                 </button>
@@ -428,7 +428,7 @@ export function BudgetDetailClient({
                             }
                           }}
                           disabled={busy}
-                          className="w-36 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-right text-sm tabular-nums text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10"
+                          className="w-36 rounded-lg border border-zinc-300 bg-white px-2 py-1 text-right text-sm tabular-nums text-zinc-950 shadow-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-500/10"
                           aria-label={`Monto de la cuenta ${line.account_code}`}
                         />
                       ) : (
@@ -488,7 +488,7 @@ export function BudgetDetailClient({
             </p>
           ) : (
             <>
-              <div className="rounded-xl border border-zinc-200 bg-gradient-to-br from-amber-50 to-white p-4">
+              <div className="rounded-xl border border-zinc-200 bg-gradient-to-br from-violet-50 to-white p-4">
                 <p className="text-sm text-zinc-600">
                   Presupuesto{" "}
                   <span className="font-semibold text-zinc-950">
@@ -505,7 +505,7 @@ export function BudgetDetailClient({
                         ? "text-red-700"
                         : actuals.totals.alert_level_total === "CRITICAL"
                           ? "text-orange-700"
-                          : "text-amber-700"
+                          : "text-violet-700"
                     }`}
                   >
                     {actuals.totals.utilization_pct_total === null
@@ -531,7 +531,7 @@ export function BudgetDetailClient({
                         ? "bg-red-500"
                         : actuals.totals.alert_level_total === "CRITICAL"
                           ? "bg-orange-500"
-                          : "bg-gradient-to-r from-amber-300 to-amber-600"
+                          : "bg-gradient-to-r from-violet-400 to-violet-600"
                     }`}
                     style={{
                       width: `${Math.min(

@@ -95,7 +95,10 @@ class InvoiceRepository:
         statement = (
             select(Invoice)
             .where(Invoice.id == invoice_id, Invoice.deleted_at.is_(None))
-            .options(selectinload(Invoice.lines))
+            .options(
+                selectinload(Invoice.contact),
+                selectinload(Invoice.lines),
+            )
         )
         return self.db.scalar(statement)
 
@@ -104,7 +107,10 @@ class InvoiceRepository:
         statement = (
             select(Invoice)
             .where(Invoice.deleted_at.is_(None))
-            .options(selectinload(Invoice.lines))
+            .options(
+                selectinload(Invoice.contact),
+                selectinload(Invoice.lines),
+            )
             .order_by(Invoice.created_at.desc(), Invoice.id)
             .limit(limit)
             .offset(offset)

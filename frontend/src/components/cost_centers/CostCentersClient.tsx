@@ -27,7 +27,7 @@ import {
 } from "@/lib/api";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
+  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
 
 interface CostCentersClientProps {
   initialCostCenters: CostCenter[];
@@ -206,7 +206,7 @@ export function CostCentersClient({ initialCostCenters }: CostCentersClientProps
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 px-4 py-2 text-sm font-semibold text-zinc-950 shadow-sm transition-colors hover:from-amber-300 hover:to-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:from-violet-700 hover:to-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSubmitting ? "Creando..." : "Crear Centro de Costo"}
               </button>

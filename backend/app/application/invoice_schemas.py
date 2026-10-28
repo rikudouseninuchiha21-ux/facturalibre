@@ -12,6 +12,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.application.contact_schemas import ContactRead
 from app.domain.models.invoice import (
     DianDocumentStatus,
     LifecycleStatus,
@@ -96,6 +97,7 @@ class InvoiceRead(BaseModel):
     id: UUID
     number: str | None
     contact_id: UUID
+    contact: ContactRead
     issue_date: date
     due_date: date
     currency: str

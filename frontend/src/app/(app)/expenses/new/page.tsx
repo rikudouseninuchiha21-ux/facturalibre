@@ -16,7 +16,7 @@ export default async function NewExpensePage() {
         <div>
           <Link
             href="/expenses"
-            className="text-sm font-medium text-amber-600 transition-colors hover:text-amber-700"
+            className="text-sm font-medium text-violet-600 transition-colors hover:text-violet-700"
           >
             ← Volver a gastos
           </Link>

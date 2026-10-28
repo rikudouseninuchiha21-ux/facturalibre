@@ -131,7 +131,7 @@ export function ReconciliationPanel({
                         aria-pressed={isSelected}
                         className={`w-full px-4 py-3 text-left transition-colors ${
                           isSelected
-                            ? "bg-amber-50"
+                            ? "bg-violet-50"
                             : "bg-white hover:bg-slate-50"
                         }`}
                       >

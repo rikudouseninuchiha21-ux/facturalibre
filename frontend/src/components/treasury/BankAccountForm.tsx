@@ -13,7 +13,7 @@ import {
 } from "@/lib/api";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 const ACCOUNT_TYPES: { value: BankAccountType; label: string }[] = [
   { value: "CHECKING", label: "Cuenta corriente" },

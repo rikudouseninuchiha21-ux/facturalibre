@@ -44,7 +44,7 @@ export default async function NiifReportsPage() {
       <header>
         <Link
           href="/reports"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-amber-700 hover:text-amber-900"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-violet-700 hover:text-violet-900"
         >
           <ArrowLeft className="size-4" aria-hidden="true" />
           Volver a reportes

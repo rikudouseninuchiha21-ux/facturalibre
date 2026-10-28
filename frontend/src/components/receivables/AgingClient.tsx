@@ -25,7 +25,7 @@ import type { AgingReport, CustomerAging } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const inputClassName =
-  "block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10";
+  "block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-500/10";
 
 const BUCKET_OPTIONS = [
   { value: "all", label: "Todos los clientes" },
@@ -213,7 +213,7 @@ export function AgingClient({ initialReport }: AgingClientProps) {
               className={`${inputClassName} pl-9`}
             />
           </div>
-          <Button onClick={exportCsv} className="bg-zinc-900 hover:bg-zinc-800">
+          <Button onClick={exportCsv} className="bg-violet-600 hover:bg-violet-500">
             <Download className="mr-2 size-4" aria-hidden="true" />
             Exportar CSV
           </Button>
@@ -222,7 +222,7 @@ export function AgingClient({ initialReport }: AgingClientProps) {
 
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center">
-          <Search className="size-10 text-amber-500" aria-hidden="true" />
+          <Search className="size-10 text-violet-500" aria-hidden="true" />
           <p className="mt-3 font-semibold text-zinc-900">
             Sin clientes para este filtro
           </p>
@@ -258,10 +258,10 @@ export function AgingClient({ initialReport }: AgingClientProps) {
                     <TableCell className="text-right tabular-nums text-emerald-700">
                       {formatCurrency(row.current)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-amber-700">
+                    <TableCell className="text-right tabular-nums text-violet-700">
                       {formatCurrency(row.d0_30)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums text-amber-800">
+                    <TableCell className="text-right tabular-nums text-violet-800">
                       {formatCurrency(row.d31_60)}
                     </TableCell>
                     <TableCell className="text-right tabular-nums text-orange-700">
@@ -282,7 +282,7 @@ export function AgingClient({ initialReport }: AgingClientProps) {
                     <TableCell className="text-right">
                       <Link
                         href={`/receivables/customers/${row.contact_id}`}
-                        className="inline-flex items-center gap-1 text-sm font-semibold text-amber-700 hover:text-amber-900"
+                        className="inline-flex items-center gap-1 text-sm font-semibold text-violet-700 hover:text-violet-900"
                       >
                         Ver
                         <ArrowRight className="size-3.5" aria-hidden="true" />

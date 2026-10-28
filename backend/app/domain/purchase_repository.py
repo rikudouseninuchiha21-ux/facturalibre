@@ -95,7 +95,10 @@ class PurchaseRepository:
         statement = (
             select(PurchaseInvoice)
             .where(PurchaseInvoice.id == purchase_id)
-            .options(selectinload(PurchaseInvoice.lines))
+            .options(
+                selectinload(PurchaseInvoice.supplier),
+                selectinload(PurchaseInvoice.lines),
+            )
         )
         return self.db.scalar(statement)
 
@@ -103,7 +106,10 @@ class PurchaseRepository:
         """Lista facturas de compra ordenadas por fecha de creación."""
         statement = (
             select(PurchaseInvoice)
-            .options(selectinload(PurchaseInvoice.lines))
+            .options(
+                selectinload(PurchaseInvoice.supplier),
+                selectinload(PurchaseInvoice.lines),
+            )
             .order_by(PurchaseInvoice.created_at.desc(), PurchaseInvoice.id)
             .limit(limit)
             .offset(offset)

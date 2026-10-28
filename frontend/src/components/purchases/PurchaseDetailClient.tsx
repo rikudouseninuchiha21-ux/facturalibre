@@ -72,7 +72,7 @@ export function PurchaseDetailClient({
       <div className="mb-8 flex flex-col md:flex-row md:items-baseline justify-between gap-4">
         <div>
           <div className="text-2xl font-bold tracking-tight text-slate-950">
-            Nexus ERP
+            VANTAGE
           </div>
           <div className="text-sm text-slate-500">Factura de compra</div>
         </div>
@@ -89,6 +89,14 @@ export function PurchaseDetailClient({
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4 mb-8">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+            Proveedor
+          </p>
+          <p className="text-slate-900">
+            {purchase.supplier?.name ?? "Sin nombre"}
+          </p>
+        </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
             Fecha de Emisión
@@ -250,7 +258,7 @@ export function PurchaseDetailActions({
     <div className="max-w-4xl mx-auto mt-10 flex flex-wrap justify-end gap-2 print:hidden">
       <Link
         href="/purchases"
-        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
       >
         Volver a Compras
       </Link>
@@ -263,7 +271,7 @@ export function PurchaseDetailActions({
       </button>
       <button
         onClick={() => window.print()}
-        className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+        className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
       >
         Imprimir / PDF
       </button>

@@ -45,7 +45,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10 disabled:bg-zinc-100";
+  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-500/10 disabled:bg-zinc-100";
 
 const AGREEMENT_STATUS_LABELS: Record<AgreementStatus, string> = {
   ACTIVE: "Activo",
@@ -55,7 +55,7 @@ const AGREEMENT_STATUS_LABELS: Record<AgreementStatus, string> = {
 };
 
 const AGREEMENT_STATUS_STYLES: Record<AgreementStatus, string> = {
-  ACTIVE: "bg-amber-50 text-amber-800 ring-amber-200",
+  ACTIVE: "bg-violet-50 text-violet-800 ring-violet-200",
   COMPLETED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   BROKEN: "bg-red-50 text-red-700 ring-red-200",
   CANCELLED: "bg-zinc-100 text-zinc-600 ring-zinc-200",
@@ -318,15 +318,15 @@ export function CustomerAccountClient({
       ) : null}
 
       <section className="grid gap-4 md:grid-cols-3">
-        <Card className="bg-gradient-to-br from-amber-50 to-white">
+        <Card className="bg-gradient-to-br from-violet-50 to-white">
           <CardHeader className="pb-2 flex flex-row items-center justify-between">
             <CardDescription>Total por cobrar</CardDescription>
-            <span className="flex size-9 items-center justify-center rounded-xl bg-amber-600 text-white">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-violet-600 text-white">
               <Receipt className="size-4" aria-hidden="true" />
             </span>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold tabular-nums text-amber-950">
+            <p className="text-2xl font-bold tabular-nums text-violet-950">
               {formatCurrency(aging.total)}
             </p>
             <p className="mt-1 text-sm text-zinc-500">
@@ -388,7 +388,7 @@ export function CustomerAccountClient({
               resetMessages();
               setAgreementOpen(true);
             }}
-            className="bg-zinc-900 hover:bg-zinc-800"
+            className="bg-violet-600 hover:bg-violet-500"
           >
             <Plus className="mr-2 size-4" aria-hidden="true" />
             Nuevo acuerdo de pago
@@ -408,7 +408,7 @@ export function CustomerAccountClient({
         <CardContent>
           {statement.lines.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-zinc-50 px-6 py-10 text-center">
-              <Receipt className="size-9 text-amber-500" aria-hidden="true" />
+              <Receipt className="size-9 text-violet-500" aria-hidden="true" />
               <p className="mt-2 font-semibold text-zinc-900">
                 Sin movimientos en el rango
               </p>
@@ -487,7 +487,7 @@ export function CustomerAccountClient({
                 Renegociaciones de cartera. No generan contabilidad.
               </CardDescription>
             </div>
-            <Handshake className="size-5 text-amber-600" aria-hidden="true" />
+            <Handshake className="size-5 text-violet-600" aria-hidden="true" />
           </CardHeader>
           <CardContent className="space-y-4">
             {agreements.length === 0 ? (
@@ -547,7 +547,7 @@ export function CustomerAccountClient({
                               });
                               setPayAmount(installment.balance);
                             }}
-                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100"
+                            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-violet-700 hover:bg-violet-100"
                           >
                             <CreditCard className="size-3.5" aria-hidden="true" />
                             Abonar
@@ -587,7 +587,7 @@ export function CustomerAccountClient({
                 Niveles 1 a 5 con anti-spam de 24 horas por nivel.
               </CardDescription>
             </div>
-            <Bell className="size-5 text-amber-600" aria-hidden="true" />
+            <Bell className="size-5 text-violet-600" aria-hidden="true" />
           </CardHeader>
           <CardContent>
             {reminders.length === 0 ? (
@@ -598,7 +598,7 @@ export function CustomerAccountClient({
               <ul className="divide-y divide-zinc-100">
                 {reminders.map((reminder) => (
                   <li key={reminder.id} className="flex gap-3 py-3">
-                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-100 text-xs font-bold text-amber-800">
+                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-violet-100 text-xs font-bold text-violet-800">
                       {reminder.level}
                     </span>
                     <div className="min-w-0">
@@ -852,15 +852,15 @@ export function CustomerAccountClient({
             </div>
 
             {preview.length > 0 ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">
+              <div className="rounded-xl border border-violet-200 bg-violet-50 p-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-violet-800">
                   Vista previa de cuotas
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {preview.map((amount, index) => (
                     <span
                       key={`${index}-${amount}`}
-                      className="rounded-full bg-white px-2.5 py-1 text-xs font-medium tabular-nums text-amber-900 ring-1 ring-amber-200"
+                      className="rounded-full bg-white px-2.5 py-1 text-xs font-medium tabular-nums text-violet-900 ring-1 ring-violet-200"
                     >
                       #{index + 1} · {formatCurrency(amount)}
                     </span>

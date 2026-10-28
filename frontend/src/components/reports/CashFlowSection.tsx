@@ -98,15 +98,15 @@ function MetricCard({
   label: string;
   value: string;
   description: string;
-  tone: "gold" | "danger" | "neutral";
+  tone: "accent" | "danger" | "neutral";
 }) {
   const toneStyles = {
-    gold: "border-amber-200/80 bg-gradient-to-br from-amber-50 to-white",
+    accent: "border-violet-200/80 bg-gradient-to-br from-violet-50 to-white",
     danger: "border-red-200/80 bg-gradient-to-br from-red-50 to-white",
     neutral: "border-zinc-200/80 bg-gradient-to-br from-zinc-50 to-white",
   } as const;
   const valueStyles = {
-    gold: "text-amber-700",
+    accent: "text-violet-700",
     danger: "text-red-700",
     neutral: "text-zinc-950",
   } as const;
@@ -150,8 +150,8 @@ function CashFlowChart({ months }: { months: CashFlowMonth[] }) {
               x2="0"
               y2="1"
             >
-              <stop offset="0%" stopColor="#fbbf24" />
-              <stop offset="100%" stopColor="#d97706" />
+              <stop offset="0%" stopColor="#8b5cf6" />
+              <stop offset="100%" stopColor="#7c3aed" />
             </linearGradient>
           </defs>
           <XAxis
@@ -196,7 +196,7 @@ function CashFlowChart({ months }: { months: CashFlowMonth[] }) {
           <Bar
             dataKey="expenses"
             name="Egresos"
-            fill="#18181b"
+            fill="#7c3aed"
             radius={[6, 6, 0, 0]}
             maxBarSize={30}
           />
@@ -212,18 +212,18 @@ function AgingBucketList({ buckets }: { buckets: AgingBucketSummary[] }) {
       {buckets.map((bucket) => (
         <div
           key={bucket.key}
-          className="flex items-center justify-between rounded-xl border border-amber-100 bg-amber-50/70 px-3 py-2"
+          className="flex items-center justify-between rounded-xl border border-violet-100 bg-violet-50/70 px-3 py-2"
         >
           <div>
-            <p className="text-sm font-semibold text-amber-950">
+            <p className="text-sm font-semibold text-violet-950">
               {bucket.label}
             </p>
-            <p className="text-xs text-amber-700/80">
+            <p className="text-xs text-violet-700/80">
               {bucket.invoice_count} factura
               {bucket.invoice_count === 1 ? "" : "s"}
             </p>
           </div>
-          <p className="text-sm font-semibold tabular-nums text-amber-950">
+          <p className="text-sm font-semibold tabular-nums text-violet-950">
             {formatCurrency(bucket.total, "COP")}
           </p>
         </div>
@@ -237,7 +237,7 @@ export function CashFlowSection({ aging, cashFlow }: CashFlowSectionProps) {
     <section className="space-y-4" aria-labelledby="cartera-liquidez-title">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-600">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600">
             Liquidez
           </p>
           <h2
@@ -251,7 +251,7 @@ export function CashFlowSection({ aging, cashFlow }: CashFlowSectionProps) {
             cuentas por cobrar.
           </p>
         </div>
-        <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+        <span className="rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-xs font-semibold text-violet-800">
           Corte: {formatDate(aging.as_of)}
         </span>
       </div>
@@ -263,7 +263,7 @@ export function CashFlowSection({ aging, cashFlow }: CashFlowSectionProps) {
           description={`${aging.clients.length} cliente${
             aging.clients.length === 1 ? "" : "s"
           } con saldo pendiente.`}
-          tone="gold"
+          tone="accent"
         />
         <MetricCard
           label="Proyección a 30 días"
@@ -290,7 +290,7 @@ export function CashFlowSection({ aging, cashFlow }: CashFlowSectionProps) {
             <CardTitle>Flujo de caja</CardTitle>
             <CardDescription>
               Ingresos vs. egresos reales por mes. Los egresos se muestran en
-              negro y los ingresos en ámbar.
+              morado oscuro y los ingresos en violeta.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -21,9 +21,13 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  return {
-    title: `Compra ${id}`,
-  };
+  const cookieHeader = await getSessionCookieHeader();
+  try {
+    const purchase = await getPurchase(id, cookieHeader);
+    return { title: purchase.number ? `Compra ${purchase.number}` : "Compra" };
+  } catch {
+    return { title: "Compra" };
+  }
 }
 
 export default async function PurchaseDetailPage({

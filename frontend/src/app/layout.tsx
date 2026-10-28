@@ -7,10 +7,10 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Nexus ERP",
-    template: "%s | Nexus ERP",
+    default: "VANTAGE - ERP",
+    template: "%s | VANTAGE",
   },
-  description: "Nexus ERP.",
+  description: "Sistema de gestión empresarial VANTAGE",
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang="es" className="h-full">
-      <body className="min-h-screen bg-white text-zinc-900 antialiased">
+      <body className="min-h-screen bg-white text-slate-900 antialiased">
         {children}
     <CookieBanner />
       </body>

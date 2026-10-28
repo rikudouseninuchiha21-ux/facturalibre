@@ -34,7 +34,7 @@ import type { BudgetVsActualReport, CostCenter } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10";
+  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-500/10";
 
 interface BudgetVsActualClientProps {
   report: BudgetVsActualReport | null;
@@ -153,7 +153,7 @@ export function BudgetVsActualClient({
               <div className="flex items-end">
                 <button
                   type="submit"
-                  className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 px-4 py-2 text-sm font-semibold text-zinc-950 shadow-sm transition-colors hover:from-amber-300 hover:to-amber-500"
+                  className="inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-violet-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:from-violet-700 hover:to-violet-800"
                 >
                   Consultar
                 </button>
@@ -172,7 +172,7 @@ export function BudgetVsActualClient({
               id="report-level"
               value={levelFilter}
               onChange={(event) => setLevelFilter(event.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10"
+              className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-violet-600 focus:ring-2 focus:ring-violet-500/10"
             >
               <option value="">Todos</option>
               <option value="WARNING">Atención (80–90%)</option>
@@ -200,11 +200,11 @@ export function BudgetVsActualClient({
       ) : blocks.length === 0 ? (
         <Card>
           <CardContent>
-            <div className="rounded-xl border border-dashed border-amber-200 bg-amber-50 px-6 py-10 text-center">
-              <p className="font-medium text-amber-800">
+            <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50 px-6 py-10 text-center">
+              <p className="font-medium text-violet-800">
                 Ninguna cuenta tiene el nivel de alerta seleccionado
               </p>
-              <p className="mt-1 text-sm text-amber-700">
+              <p className="mt-1 text-sm text-violet-700">
                 Cambia el filtro de nivel de alerta para ver más líneas.
               </p>
             </div>
@@ -302,20 +302,20 @@ export function BudgetVsActualClient({
                       />
                       <Bar
                         dataKey="Real"
-                        fill="url(#budgetActualGoldGradient)"
+                        fill="url(#budgetActualAccentGradient)"
                         radius={[6, 6, 0, 0]}
                         maxBarSize={40}
                       />
                       <defs>
                         <linearGradient
-                          id="budgetActualGoldGradient"
+                          id="budgetActualAccentGradient"
                           x1="0"
                           y1="0"
                           x2="0"
                           y2="1"
                         >
-                          <stop offset="0%" stopColor="#fbbf24" />
-                          <stop offset="100%" stopColor="#d97706" />
+                          <stop offset="0%" stopColor="#8b5cf6" />
+                          <stop offset="100%" stopColor="#7c3aed" />
                         </linearGradient>
                       </defs>
                     </BarChart>

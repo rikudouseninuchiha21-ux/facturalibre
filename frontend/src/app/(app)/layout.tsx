@@ -10,10 +10,10 @@ import "../globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Nexus ERP",
-    template: "%s | Nexus ERP",
+    default: "VANTAGE - ERP",
+    template: "%s | VANTAGE",
   },
-  description: "Interfaz administrativa de Nexus ERP.",
+  description: "Sistema de gestión empresarial VANTAGE",
 };
 
 export default async function AppLayout({
@@ -33,7 +33,7 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-zinc-50 print:h-auto print:overflow-visible print:bg-white">
+    <div className="flex h-screen w-full overflow-hidden bg-violet-50 print:h-auto print:overflow-visible print:bg-white">
       {/* Sidebar */}
       <Sidebar currentUser={currentUser} />
 
@@ -50,8 +50,8 @@ export default async function AppLayout({
         </main>
 
         {/* Footer (Fijo abajo) */}
-        <footer className="shrink-0 border-t border-zinc-200 bg-white px-8 py-4 text-sm text-zinc-500 print:hidden">
-          Nexus ERP · Fase 22
+        <footer className="shrink-0 border-t border-violet-100 bg-white px-8 py-4 text-sm text-slate-500 print:hidden">
+          VANTAGE · Gestión empresarial
         </footer>
       </div>
     </div>

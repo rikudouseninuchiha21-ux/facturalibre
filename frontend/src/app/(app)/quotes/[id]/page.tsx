@@ -11,7 +11,13 @@ export async function generateMetadata({
   params,
 }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  return { title: `Cotización ${id}` };
+  const cookieHeader = await getSessionCookieHeader();
+  try {
+    const quote = await getQuote(id, cookieHeader);
+    return { title: quote.number ? `Cotización ${quote.number}` : "Cotización" };
+  } catch {
+    return { title: "Cotización" };
+  }
 }
 
 export default async function QuotePage({

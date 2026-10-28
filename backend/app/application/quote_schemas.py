@@ -91,6 +91,7 @@ class QuoteRead(BaseModel):
     currency: str
     status: QuoteStatus
     converted_invoice_id: UUID | None
+    converted_invoice_number: str | None = None
     subtotal: Decimal
     tax_total: Decimal
     total: Decimal

@@ -5,17 +5,17 @@ import "../globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Nexus ERP",
-    template: "%s | Nexus ERP",
+    default: "VANTAGE - ERP",
+    template: "%s | VANTAGE",
   },
-  description: "El ERP para facturación, inventario, nómina y contabilidad de tu empresa en Colombia.",
+  description: "Sistema de gestión empresarial VANTAGE",
 };
 
 export default function MarketingLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className="flex min-h-screen flex-col bg-white text-zinc-900 antialiased">
+    <div className="flex min-h-screen flex-col bg-white text-slate-900 antialiased">
       {children}
     </div>
   );

@@ -28,7 +28,7 @@ import {
 import { formatCurrency } from "@/lib/format";
 
 const fieldClassName =
-  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
 const numberFieldClassName = `${fieldClassName} tabular-nums`;
 
@@ -453,7 +453,7 @@ export function PurchaseForm({
             type="button"
             onClick={() => dispatchLineAction({ type: "add", key: generateUuidV4() })}
             disabled={isSubmitting || items.length === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span aria-hidden="true">+</span>
             Agregar Ítem
@@ -463,7 +463,7 @@ export function PurchaseForm({
           {!hasRequiredCatalogs ? (
             <div
               role="alert"
-              className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+              className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-800"
             >
               <p className="font-semibold">
                 Faltan datos para crear la compra.
@@ -737,7 +737,7 @@ export function PurchaseForm({
           <div className="flex flex-wrap justify-end gap-3">
             <Link
               href="/purchases"
-              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
             >
               Cancelar
             </Link>

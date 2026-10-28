@@ -28,7 +28,7 @@ import {
 import { formatCurrency, formatMonth } from "@/lib/format";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
+  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-500";
 
 const numberFieldClassName = `${inputClassName} tabular-nums`;
 
@@ -207,29 +207,29 @@ export function AssetsClient({
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-3xl border border-amber-500/20 bg-gradient-to-br from-zinc-950 via-zinc-900 to-amber-950 p-6 text-white shadow-xl shadow-amber-950/10 md:p-8">
+      <section className="overflow-hidden rounded-3xl border border-violet-500/20 bg-gradient-to-br from-violet-950 via-violet-900 to-violet-950 p-6 text-white shadow-xl shadow-violet-950/10 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-6">
           <div className="max-w-2xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-amber-300/80">
+            <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-violet-300/80">
               Contabilidad · Activos fijos
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
               Activos Fijos
             </h1>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-300">
+            <p className="mt-3 max-w-xl text-sm leading-6 text-violet-200">
               Controla el costo, la depreciación acumulada y el valor neto de
               los bienes de la empresa con depreciación mensual por línea
               recta.
             </p>
           </div>
-          <div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-right">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200/80">
+          <div className="rounded-2xl border border-violet-400/30 bg-violet-400/10 px-4 py-3 text-right">
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-violet-200/80">
               Método contable
             </p>
-            <p className="mt-1 text-lg font-semibold text-amber-200">
+            <p className="mt-1 text-lg font-semibold text-violet-200">
               Línea recta
             </p>
-            <p className="mt-1 text-xs text-zinc-400">
+            <p className="mt-1 text-xs text-violet-300">
               Débito 5160 · Crédito 1592
             </p>
           </div>
@@ -237,23 +237,23 @@ export function AssetsClient({
 
         <div className="mt-8 grid gap-3 sm:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-400">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-300">
               Costo total
             </p>
             <p className="mt-2 text-xl font-bold tabular-nums text-white">
               {formatCurrency(totalCost, "COP")}
             </p>
           </div>
-          <div className="rounded-2xl border border-amber-400/20 bg-amber-400/10 px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-200/80">
+          <div className="rounded-2xl border border-violet-400/20 bg-violet-400/10 px-4 py-4">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-200/80">
               Depreciación acumulada
             </p>
-            <p className="mt-2 text-xl font-bold tabular-nums text-amber-200">
+            <p className="mt-2 text-xl font-bold tabular-nums text-violet-200">
               {formatCurrency(totalAccumulated, "COP")}
             </p>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 backdrop-blur">
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-zinc-400">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-violet-300">
               Valor actual
             </p>
             <p className="mt-2 text-xl font-bold tabular-nums text-white">
@@ -263,7 +263,7 @@ export function AssetsClient({
         </div>
       </section>
 
-      <Card className="border-amber-200/70 bg-gradient-to-br from-white via-amber-50/30 to-white shadow-md shadow-amber-500/5">
+      <Card className="border-violet-200/70 bg-gradient-to-br from-white via-violet-50/30 to-white shadow-md shadow-violet-500/5">
         <CardHeader>
           <CardTitle>Registrar activo fijo</CardTitle>
           <CardDescription>
@@ -281,7 +281,7 @@ export function AssetsClient({
                   className="block text-sm font-medium text-zinc-700"
                 >
                   Código{" "}
-                  <span className="text-amber-600" aria-hidden="true">
+                  <span className="text-violet-600" aria-hidden="true">
                     *
                   </span>
                 </label>
@@ -306,7 +306,7 @@ export function AssetsClient({
                   className="block text-sm font-medium text-zinc-700"
                 >
                   Nombre{" "}
-                  <span className="text-amber-600" aria-hidden="true">
+                  <span className="text-violet-600" aria-hidden="true">
                     *
                   </span>
                 </label>
@@ -331,7 +331,7 @@ export function AssetsClient({
                   className="block text-sm font-medium text-zinc-700"
                 >
                   Fecha de compra{" "}
-                  <span className="text-amber-600" aria-hidden="true">
+                  <span className="text-violet-600" aria-hidden="true">
                     *
                   </span>
                 </label>
@@ -353,7 +353,7 @@ export function AssetsClient({
                   className="block text-sm font-medium text-zinc-700"
                 >
                   Costo inicial{" "}
-                  <span className="text-amber-600" aria-hidden="true">
+                  <span className="text-violet-600" aria-hidden="true">
                     *
                   </span>
                 </label>
@@ -401,7 +401,7 @@ export function AssetsClient({
                   className="block text-sm font-medium text-zinc-700"
                 >
                   Vida útil (meses){" "}
-                  <span className="text-amber-600" aria-hidden="true">
+                  <span className="text-violet-600" aria-hidden="true">
                     *
                   </span>
                 </label>
@@ -444,7 +444,7 @@ export function AssetsClient({
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 shadow-amber-500/30 hover:from-amber-400 hover:to-amber-500 sm:w-auto"
+                className="w-full bg-gradient-to-r from-violet-600 to-violet-700 shadow-violet-500/30 hover:from-violet-700 hover:to-violet-800 sm:w-auto"
               >
                 {isSubmitting ? "Registrando..." : "Registrar activo"}
               </Button>
@@ -454,7 +454,7 @@ export function AssetsClient({
       </Card>
 
       <Card className="overflow-hidden border-zinc-200/80 shadow-sm">
-        <CardHeader className="border-b border-zinc-100 bg-gradient-to-r from-zinc-50 via-white to-amber-50/50">
+        <CardHeader className="border-b border-zinc-100 bg-gradient-to-r from-zinc-50 via-white to-violet-50/50">
           <CardTitle>Portafolio de activos</CardTitle>
           <CardDescription>
             {assets.length === 0
@@ -464,7 +464,7 @@ export function AssetsClient({
         </CardHeader>
         <CardContent>
           {assets.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/40 px-6 py-12 text-center">
+            <div className="rounded-2xl border border-dashed border-violet-200 bg-violet-50/40 px-6 py-12 text-center">
               <p className="font-semibold text-zinc-800">
                 Tu portafolio de activos está vacío
               </p>
@@ -500,7 +500,7 @@ export function AssetsClient({
 
                   return (
                     <TableRow key={asset.id}>
-                      <TableCell className="font-mono text-xs font-semibold text-amber-700">
+                      <TableCell className="font-mono text-xs font-semibold text-violet-700">
                         {asset.code}
                       </TableCell>
                       <TableCell className="font-medium text-zinc-950">
@@ -512,7 +512,7 @@ export function AssetsClient({
                       <TableCell className="text-right tabular-nums text-zinc-800">
                         {formatCurrency(asset.initial_cost, "COP")}
                       </TableCell>
-                      <TableCell className="text-right tabular-nums font-medium text-amber-700">
+                      <TableCell className="text-right tabular-nums font-medium text-violet-700">
                         {formatCurrency(asset.accumulated_depreciation, "COP")}
                       </TableCell>
                       <TableCell className="text-right tabular-nums font-semibold text-zinc-950">
@@ -529,7 +529,7 @@ export function AssetsClient({
                               ? "El activo no está activo o ya está totalmente depreciado"
                               : `Depreciar ${formatMonth(currentMonth)} ${currentYear}`
                           }
-                          className="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800 shadow-sm transition-colors hover:border-amber-400 hover:bg-amber-100 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-50 disabled:text-zinc-400"
+                          className="inline-flex items-center justify-center rounded-lg border border-violet-300 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-800 shadow-sm transition-colors hover:border-violet-400 hover:bg-violet-100 disabled:cursor-not-allowed disabled:border-zinc-200 disabled:bg-zinc-50 disabled:text-zinc-400"
                         >
                           {isBusy ? "Depreciando..." : "Depreciar Mes Actual"}
                         </button>

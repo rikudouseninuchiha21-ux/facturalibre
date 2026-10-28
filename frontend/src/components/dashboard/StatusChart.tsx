@@ -23,7 +23,7 @@ interface StatusDatum {
 
 const STATUS_COLORS = {
   draft: "#a1a1aa",
-  issued: "#10b981",
+  issued: "#7c3aed",
   void: "#f43f5e",
 } as const;
 

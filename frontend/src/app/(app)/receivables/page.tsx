@@ -54,7 +54,7 @@ export default async function ReceivablesPage() {
     <div className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-widest text-amber-600">
+          <p className="text-sm font-semibold uppercase tracking-widest text-violet-600">
             Cobranza
           </p>
           <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -68,7 +68,7 @@ export default async function ReceivablesPage() {
         <div className="flex flex-wrap gap-3">
           <Link
             href="/receivables/aging"
-            className="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-amber-700"
+            className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-500"
           >
             Ver aging completo
             <ArrowRight className="size-4" aria-hidden="true" />
@@ -88,15 +88,15 @@ export default async function ReceivablesPage() {
       {summary ? (
         <>
           <section className="grid gap-4 md:grid-cols-3">
-            <Card className="bg-gradient-to-br from-amber-100 to-white">
+            <Card className="bg-gradient-to-br from-violet-100 to-white">
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <CardDescription>Total por cobrar</CardDescription>
-                <span className="flex size-9 items-center justify-center rounded-xl bg-amber-600 text-white">
+                <span className="flex size-9 items-center justify-center rounded-xl bg-violet-600 text-white">
                   <Wallet className="size-4" aria-hidden="true" />
                 </span>
               </CardHeader>
               <CardContent>
-                <p className="text-3xl font-bold tracking-tight text-amber-950 tabular-nums">
+                <p className="text-3xl font-bold tracking-tight text-violet-950 tabular-nums">
                   {formatCurrency(summary.buckets_totals.total)}
                 </p>
                 <p className="mt-1 text-sm text-zinc-500">
@@ -206,7 +206,7 @@ export default async function ReceivablesPage() {
                         <TableCell className="text-right">
                           <Link
                             href={`/receivables/customers/${customer.contact_id}`}
-                            className="inline-flex items-center gap-1 text-sm font-semibold text-amber-700 hover:text-amber-900"
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-violet-700 hover:text-violet-900"
                           >
                             Ver
                             <ArrowRight className="size-3.5" aria-hidden="true" />
@@ -221,7 +221,7 @@ export default async function ReceivablesPage() {
           </Card>
 
           <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-600">
-            <Users className="size-4 text-amber-600" aria-hidden="true" />
+            <Users className="size-4 text-violet-600" aria-hidden="true" />
             El aging se calcula con los pagos y notas crédito reales. Los
             acuerdos de pago son de gestión y no alteran la contabilidad.
           </div>

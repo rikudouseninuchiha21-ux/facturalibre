@@ -12,8 +12,8 @@ import type { ReceivablesSummary } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 
 const OVERDUE_BUCKETS = [
-  { key: "d0_30", label: "0 – 30 días", bar: "bg-amber-300" },
-  { key: "d31_60", label: "31 – 60 días", bar: "bg-amber-500" },
+  { key: "d0_30", label: "0 – 30 días", bar: "bg-violet-300" },
+  { key: "d31_60", label: "31 – 60 días", bar: "bg-violet-500" },
   { key: "d61_90", label: "61 – 90 días", bar: "bg-orange-500" },
   { key: "d91_120", label: "91 – 120 días", bar: "bg-red-400" },
   { key: "d120_plus", label: "120+ días", bar: "bg-red-600" },
@@ -23,15 +23,15 @@ export function ReceivablesWidget({ summary }: { summary: ReceivablesSummary }) 
   const hasOverdue = Number(summary.total_overdue) > 0;
 
   return (
-    <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-white">
-      <CardHeader className="flex items-center justify-between">
+    <Card className="border-violet-200 bg-gradient-to-br from-violet-50 to-white">
+      <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Cartera vencida</CardTitle>
           <CardDescription>
             Saldo pendiente por vencimiento al {summary.as_of_date}.
           </CardDescription>
         </div>
-        <div className="flex size-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+        <div className="flex size-10 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
           {hasOverdue ? (
             <AlertCircle className="size-5" aria-hidden="true" />
           ) : (
@@ -55,7 +55,7 @@ export function ReceivablesWidget({ summary }: { summary: ReceivablesSummary }) 
           </div>
           <Link
             href="/receivables"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-700 transition-colors hover:text-amber-900"
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-violet-700 transition-colors hover:text-violet-900"
           >
             Ver cartera
             <ArrowRight className="size-4" aria-hidden="true" />

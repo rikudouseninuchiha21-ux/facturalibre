@@ -34,7 +34,7 @@ const statusStyles: Record<string, string> = {
   SENT: "bg-blue-50 text-blue-700 ring-blue-200",
   ACCEPTED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   REJECTED: "bg-red-50 text-red-700 ring-red-200",
-  CONVERTED: "bg-amber-50 text-amber-700 ring-amber-200",
+  CONVERTED: "bg-violet-50 text-violet-700 ring-violet-200",
 };
 
 interface QuoteDetailProps {
@@ -111,7 +111,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
         <div className="flex items-center gap-3">
           <Link
             href="/quotes"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-900"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
           >
             ← Volver a cotizaciones
           </Link>
@@ -119,7 +119,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             <Button
               onClick={() => handleSetStatus("SENT")}
               disabled={isSending}
-              className="bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-500/30"
+              className="bg-violet-600 hover:bg-violet-500 shadow-sm shadow-violet-500/30"
             >
               {isSending ? "Enviando..." : "Marcar como Enviada"}
             </Button>
@@ -146,7 +146,7 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             <Button
               onClick={handleConvert}
               disabled={isConverting}
-              className="bg-amber-600 hover:bg-amber-700 shadow-sm shadow-amber-500/30"
+              className="bg-violet-600 hover:bg-violet-500 shadow-sm shadow-violet-500/30"
             >
               {isConverting ? "Convirtiendo..." : "Convertir a Factura"}
             </Button>
@@ -249,9 +249,12 @@ export function QuoteDetail({ quote }: QuoteDetailProps) {
             <CardContent className="space-y-3">
               <div className="flex items-start justify-between gap-2">
                 <span className="text-sm text-slate-500">Factura</span>
-                <span className="text-sm font-medium tabular-nums text-slate-950">
-                  {quote.converted_invoice_id}
-                </span>
+                <Link
+                  href={`/invoices/${quote.converted_invoice_id}`}
+                  className="text-sm font-medium tabular-nums text-violet-600 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
+                >
+                  {quote.converted_invoice_number ?? "Ver factura"}
+                </Link>
               </div>
             </CardContent>
           </Card>

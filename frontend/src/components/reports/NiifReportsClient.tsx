@@ -14,9 +14,6 @@ import type {
   NiifIncomeStatement,
 } from "@/lib/api";
 
-const inputClassName =
-  "mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 shadow-sm outline-none transition focus:border-amber-600 focus:ring-2 focus:ring-amber-500/10";
-
 interface NiifReportsClientProps {
   income: NiifIncomeStatement;
   balance: NiifBalanceSheet;
@@ -49,7 +46,7 @@ function renderRows(rows: Row[], fileName: string) {
         <button
           type="button"
           onClick={exportCsv}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-zinc-800"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500"
         >
           <Download className="size-3.5" aria-hidden="true" />
           Exportar CSV
@@ -148,7 +145,7 @@ export function NiifReportsClient({ income, balance, cash }: NiifReportsClientPr
               onClick={() => setTab(key)}
               className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
                 tab === key
-                  ? "bg-amber-600 text-white shadow-sm"
+                  ? "bg-violet-600 text-white shadow-sm"
                   : "bg-zinc-100 text-zinc-700 hover:bg-zinc-200"
               }`}
             >

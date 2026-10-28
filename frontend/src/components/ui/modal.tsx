@@ -30,9 +30,9 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`max-h-[90vh] w-full ${maxWidthClassName} overflow-y-auto rounded-2xl border border-zinc-200 bg-white shadow-2xl`}
+        className={`max-h-[90vh] w-full ${maxWidthClassName} overflow-y-auto rounded-2xl border border-slate-200 bg-white shadow-2xl`}
       >
-        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-zinc-100 bg-white px-6 py-4">
+        <div className="sticky top-0 flex items-start justify-between gap-4 border-b border-violet-100 bg-white px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-zinc-950">{title}</h2>
             {description ? (

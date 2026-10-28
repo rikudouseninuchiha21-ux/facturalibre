@@ -16,7 +16,7 @@ import {
 } from "@/lib/api";
 
 const selectClassName =
-  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 const inputClassName = selectClassName;
 
@@ -153,13 +153,13 @@ export function MovementForm() {
       ) : null}
 
       {!isLoadingOptions && !optionsError && !hasOptions ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-800">
           {warehouses.length === 0 ? (
             <p>
               No hay bodegas activas. Crea una en{" "}
               <Link
                 href="/warehouses"
-                className="font-semibold text-amber-900 underline decoration-amber-400 underline-offset-2"
+                className="font-semibold text-violet-900 underline decoration-violet-400 underline-offset-2"
               >
                 Bodegas
               </Link>

@@ -26,11 +26,11 @@ const money = (value: string): string => formatCurrency(value, "COP");
 const tabStyles =
   "inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2";
 
-const tabActive = "bg-slate-900 text-white";
+const tabActive = "bg-violet-600 text-white";
 const tabInactive = "text-slate-600 hover:text-slate-950";
 
 const inputStyles =
-  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
+  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20";
 
 type Tab = "income" | "balance" | "ledger" | "trial";
 
@@ -506,7 +506,7 @@ function LedgerView({
             type="button"
             onClick={() => void handleSearch()}
             disabled={loading}
-            className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Consultando…" : "Consultar"}
           </button>
@@ -863,7 +863,7 @@ function TrialBalanceView({
                   type="button"
                   onClick={() => void handleClosePeriod()}
                   disabled={closing}
-                  className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center justify-center rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {closing ? "Cerrando…" : "Cerrar Periodo"}
                 </button>

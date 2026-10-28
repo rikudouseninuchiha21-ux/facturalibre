@@ -119,13 +119,13 @@ export function NotificationsBell() {
         onClick={() => setIsOpen((open) => !open)}
         aria-label={`Notificaciones: ${count} sin leer`}
         aria-expanded={isOpen}
-        className="relative rounded-lg p-2 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-amber-700"
+        className="relative rounded-lg p-2 text-violet-600 transition-colors hover:bg-violet-50 hover:text-violet-800"
       >
         <Bell className="size-5" aria-hidden="true" />
         {count > 0 ? (
           <span
             aria-hidden="true"
-            className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 px-1 text-[10px] font-bold text-zinc-950 shadow"
+            className="absolute -right-0.5 -top-0.5 flex min-w-[18px] items-center justify-center rounded-full bg-violet-600 px-1 text-[10px] font-bold text-white shadow"
           >
             {badgeLabel}
           </span>
@@ -144,7 +144,7 @@ export function NotificationsBell() {
               <button
                 type="button"
                 onClick={() => void handleMarkAllRead()}
-                className="text-xs font-semibold text-amber-700 hover:text-amber-800"
+                className="text-xs font-semibold text-violet-600 hover:text-violet-800"
               >
                 Marcar todas
               </button>
@@ -166,7 +166,7 @@ export function NotificationsBell() {
                       <Link
                         href={notification.link ?? "/notifications"}
                         onClick={() => setIsOpen(false)}
-                        className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-amber-50/60"
+                        className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-violet-50/60"
                       >
                         <span
                           className={`mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full ${SEVERITY_STYLES[notification.severity]}`}
@@ -193,7 +193,7 @@ export function NotificationsBell() {
             <Link
               href="/notifications"
               onClick={() => setIsOpen(false)}
-              className="block px-4 py-2.5 text-center text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-50"
+              className="block px-4 py-2.5 text-center text-sm font-semibold text-violet-600 transition-colors hover:bg-violet-50"
             >
               Ver todas
             </Link>

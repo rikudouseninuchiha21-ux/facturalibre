@@ -116,7 +116,7 @@ export function InvoiceActions({
               onClick={handleIssue}
               disabled={isPending}
               aria-busy={pendingAction === "issue"}
-              className={`${actionButtonClassName} border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-slate-900`}
+              className={`${actionButtonClassName} border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50 focus-visible:outline-violet-500`}
             >
               {pendingAction === "issue" ? "Emitiendo..." : "Emitir"}
             </button>

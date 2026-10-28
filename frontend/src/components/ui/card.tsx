@@ -6,7 +6,7 @@ export function Card({
 }: ComponentProps<"section">) {
   return (
     <section
-      className={`rounded-2xl border border-zinc-200/60 bg-white shadow-sm ${className}`}
+      className={`rounded-2xl border border-slate-200 bg-white shadow-sm ${className}`}
       {...props}
     />
   );
@@ -27,7 +27,7 @@ export function CardTitle({
 }: ComponentProps<"h2">) {
   return (
     <h2
-      className={`text-lg font-semibold tracking-tight text-zinc-950 ${className}`}
+      className={`text-lg font-semibold tracking-tight text-slate-900 ${className}`}
       {...props}
     />
   );
@@ -39,7 +39,7 @@ export function CardDescription({
 }: ComponentProps<"p">) {
   return (
     <p
-      className={`text-sm leading-6 text-zinc-600 ${className}`}
+      className={`text-sm leading-6 text-slate-600 ${className}`}
       {...props}
     />
   );

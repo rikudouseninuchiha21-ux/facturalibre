@@ -56,7 +56,7 @@ LEGAL_LEGEND = (
 )
 HABILITACION_LEGEND = "Factura electrónica generada en modo habilitación — sin validez fiscal aún."
 LOCAL_NOTE = (
-    "Documento generado localmente por Nexus ERP (Fase 38A): sin firma XAdES y sin envío a la DIAN."
+    "Documento generado localmente por VANTAGE (Fase 38A): sin firma XAdES y sin envío a la DIAN."
 )
 
 PAYMENT_MEAN_LABELS: dict[str, str] = {

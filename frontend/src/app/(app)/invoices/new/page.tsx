@@ -60,7 +60,7 @@ export default async function NewInvoicePage() {
         <div>
           <Link
             href="/invoices"
-            className="text-sm font-medium text-amber-600 transition-colors hover:text-amber-700"
+            className="text-sm font-medium text-violet-600 transition-colors hover:text-violet-700"
           >
             ← Volver a facturas
           </Link>
@@ -91,7 +91,7 @@ export default async function NewInvoicePage() {
             </div>
             <Link
               href="/invoices/new"
-              className="inline-flex items-center justify-center rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-700"
+              className="inline-flex items-center justify-center rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
             >
               Reintentar
             </Link>

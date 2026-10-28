@@ -90,29 +90,29 @@ export function Sidebar({ currentUser }: SidebarProps) {
 
   return (
     <aside
-      className="w-64 bg-zinc-950 border-r border-zinc-800 text-white z-50 shrink-0 flex flex-col h-screen print:hidden"
+      className="w-64 bg-violet-950 border-r border-violet-900 text-white z-50 shrink-0 flex flex-col h-screen print:hidden"
     >
       {/* Sidebar header with logo */}
-      <div className="flex items-center justify-between px-4 py-6 border-b border-zinc-800 bg-zinc-950 shrink-0">
+      <div className="flex items-center justify-between px-4 py-6 border-b border-violet-900 bg-violet-950 shrink-0">
         <div className="flex items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-amber-200 to-amber-600 text-xs font-bold text-zinc-950 shadow-lg shadow-amber-500/30">
-            N
+          <div className="flex size-8 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-700 text-xs font-bold text-white shadow-lg shadow-violet-900/40">
+            V
           </div>
           <span
             className={
               isCollapsed
                 ? "hidden"
-                : "bg-gradient-to-r from-amber-200 to-amber-500 bg-clip-text text-lg font-bold tracking-tight text-transparent"
+                : "bg-gradient-to-r from-violet-300 to-violet-200 bg-clip-text text-lg font-bold tracking-tight text-transparent"
             }
           >
-            Nexus ERP
+            VANTAGE
           </span>
         </div>
         <button
           type="button"
           onClick={() => setIsCollapsed((prev) => !prev)}
           aria-label="Colapsar menú"
-          className="md:hidden p-2 rounded-md text-zinc-400 hover:bg-zinc-900 hover:text-amber-300 transition-colors"
+          className="md:hidden p-2 rounded-md text-violet-300 hover:bg-violet-900 hover:text-white transition-colors"
         >
           <svg
             className={`size-5 ${isCollapsed ? "-rotate-90" : ""}`}
@@ -137,7 +137,7 @@ export function Sidebar({ currentUser }: SidebarProps) {
 
           return (
             <div key={category.label}>
-              <h3 className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-zinc-500">
+              <h3 className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-violet-400">
                 {category.label}
               </h3>
               <ul className="space-y-0.5">
@@ -145,12 +145,18 @@ export function Sidebar({ currentUser }: SidebarProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
+                    className={`relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                       pathname === item.href
-                        ? "bg-amber-500/10 text-amber-400 font-medium"
-                        : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
+                        ? "bg-violet-600 text-white font-medium shadow-sm shadow-violet-950/40"
+                        : "text-violet-200 hover:bg-violet-800 hover:text-white"
                     }`}
                   >
+                    {pathname === item.href ? (
+                      <span
+                        aria-hidden="true"
+                        className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-violet-400"
+                      />
+                    ) : null}
                     <item.icon className="size-4 shrink-0" />
                     {isCollapsed ? (
                       <span className="sr-only">{item.label}</span>
@@ -166,17 +172,17 @@ export function Sidebar({ currentUser }: SidebarProps) {
       </nav>
 
       {/* Footer with user profile */}
-      <div className="shrink-0 p-4 border-t border-zinc-800 bg-zinc-950">
+      <div className="shrink-0 p-4 border-t border-violet-900 bg-violet-950">
         <div className="flex items-center justify-between w-full gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-600/10 text-amber-400 text-sm font-bold border border-amber-500/20">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-violet-600/20 text-violet-300 text-sm font-bold border border-violet-500/30">
               {currentUser?.full_name?.charAt(0) || "U"}
             </div>
             <div className="flex flex-col min-w-0">
               <span className="text-sm font-medium text-white truncate">
                 {currentUser?.full_name}
               </span>
-              <span className="text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
+              <span className="text-[10px] font-semibold text-violet-300 uppercase tracking-wider">
                 {currentUser?.role}
               </span>
             </div>

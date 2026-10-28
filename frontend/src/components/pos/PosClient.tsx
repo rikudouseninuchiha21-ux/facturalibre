@@ -255,7 +255,7 @@ export function PosClient({ contacts }: PosClientProps) {
                   placeholder="Buscar producto..."
                   value={searchQuery}
                   onChange={(event) => handleSearchChange(event.target.value)}
-                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                 />
                 {searchResults.length > 0 && (
                   <div className="absolute z-10 w-full mt-1 rounded-lg border border-slate-200 bg-white shadow-lg max-h-48 overflow-y-auto">
@@ -347,7 +347,7 @@ export function PosClient({ contacts }: PosClientProps) {
                                 onChange={(event) =>
                                   updateLineQuantity(index, event.target.value)
                                 }
-                                className="w-24 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-950 tabular-nums outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+                                className="w-24 rounded-lg border border-slate-300 bg-white px-2 py-1 text-sm text-slate-950 tabular-nums outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                               />
                             </TableCell>
                             <TableCell className="text-right tabular-nums text-slate-900">
@@ -404,7 +404,7 @@ export function PosClient({ contacts }: PosClientProps) {
                     id="pos-customer"
                     value={customerId}
                     onChange={(event) => setCustomerId(event.target.value)}
-                    className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                    className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                   >
                     {customerOptions.map((option) => (
                       <option key={option.id} value={option.id}>
@@ -429,7 +429,7 @@ export function PosClient({ contacts }: PosClientProps) {
                     inputMode="decimal"
                     value={cashReceived}
                     onChange={(event) => setCashReceived(event.target.value)}
-                    className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 tabular-nums shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                    className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 tabular-nums shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20"
                   />
                 </div>
 
@@ -465,7 +465,7 @@ export function PosClient({ contacts }: PosClientProps) {
               <Button
                 onClick={handleCheckout}
                 disabled={isProcessing || cart.length === 0 || cash < totals.total}
-                className="w-full bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-60 disabled:cursor-not-allowed py-3"
+                className="w-full bg-violet-600 text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed py-3"
               >
                 {isProcessing
                   ? "Procesando..."

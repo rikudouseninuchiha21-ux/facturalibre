@@ -94,7 +94,7 @@ export function InvoiceDetail({
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between print:flex-row print:items-start print:justify-between">
           <div className="min-w-0">
             <div className="text-2xl font-bold tracking-tight text-zinc-950">
-              {companySettings?.name ?? "FacturaLibre"}
+              {companySettings?.name ?? "VANTAGE"}
             </div>
             <div className="mt-1 space-y-0.5 text-sm text-slate-600">
               {companySettings?.address ? (
@@ -454,7 +454,7 @@ export function InvoiceDetail({
                       }
                     }}
                     disabled={dianBusy !== null}
-                    className="bg-zinc-900 text-white hover:bg-zinc-800"
+                    className="bg-violet-600 text-white hover:bg-violet-500"
                   >
                     <RefreshCw className="mr-2 size-4" aria-hidden="true" />
                     Regenerar CUFE
@@ -473,7 +473,7 @@ export function InvoiceDetail({
         <div className="mt-10 flex flex-wrap justify-end gap-2 print:hidden">
           <Link
             href="/invoices"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition-colors hover:border-zinc-400 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zinc-900"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 shadow-sm transition-colors hover:border-zinc-400 hover:bg-zinc-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-500"
           >
             Volver a Facturas
           </Link>
@@ -495,7 +495,7 @@ export function InvoiceDetail({
               onClick={() => {
                 setIsCreditNoteOpen(true);
               }}
-              className="bg-amber-600 text-white hover:bg-amber-700"
+              className="bg-violet-600 text-white hover:bg-violet-500"
             >
               Crear Nota Crédito
             </Button>

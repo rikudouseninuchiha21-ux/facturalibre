@@ -23,7 +23,12 @@ export function TableHeader({
   className = "",
   ...props
 }: ComponentProps<"thead">) {
-  return <thead className={`bg-slate-50 ${className}`} {...props} />;
+  return (
+    <thead
+      className={`border-b border-violet-100 bg-slate-50 ${className}`}
+      {...props}
+    />
+  );
 }
 
 export function TableBody({

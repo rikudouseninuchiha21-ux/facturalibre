@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ApiError, login, register } from "@/lib/api";
 
 const inputClassName =
-  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
+  "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 shadow-sm outline-none transition focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500";
 
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -179,7 +179,7 @@ export function RegisterForm() {
         ¿Ya tienes cuenta?{" "}
         <Link
           href="/login"
-          className="font-semibold text-amber-600 hover:text-amber-700"
+          className="font-semibold text-violet-600 hover:text-violet-700"
         >
           Iniciar sesión
         </Link>

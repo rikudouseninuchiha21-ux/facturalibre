@@ -25,9 +25,13 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  return {
-    title: `Cuenta bancaria ${id}`,
-  };
+  const cookieHeader = await getSessionCookieHeader();
+  try {
+    const account = await getBankAccount(id, cookieHeader);
+    return { title: `Cuenta bancaria ${account.name}` };
+  } catch {
+    return { title: "Cuenta bancaria" };
+  }
 }
 
 export default async function BankAccountPage({
@@ -76,7 +80,7 @@ export default async function BankAccountPage({
         <div className="mt-6">
           <Link
             href="/treasury"
-            className="text-sm font-medium text-amber-600 hover:text-amber-800"
+            className="text-sm font-medium text-violet-600 hover:text-violet-800"
           >
             ← Volver a tesorería
           </Link>
@@ -92,7 +96,7 @@ export default async function BankAccountPage({
       <header>
         <Link
           href="/treasury"
-          className="text-sm font-medium text-amber-600 transition-colors hover:text-amber-800"
+          className="text-sm font-medium text-violet-600 transition-colors hover:text-violet-800"
         >
           ← Volver a tesorería
         </Link>

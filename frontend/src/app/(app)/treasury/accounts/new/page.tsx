@@ -35,7 +35,7 @@ export default async function NewBankAccountPage() {
       <header>
         <Link
           href="/treasury"
-          className="text-sm font-medium text-amber-600 transition-colors hover:text-amber-800"
+          className="text-sm font-medium text-violet-600 transition-colors hover:text-violet-800"
         >
           ← Volver a tesorería
         </Link>
@@ -61,7 +61,7 @@ export default async function NewBankAccountPage() {
               {error}
             </div>
           ) : pucAccounts.length === 0 ? (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-700">
               No hay cuentas PUC del grupo 11 disponibles. Revisa la
               configuración contable antes de crear una cuenta bancaria.
             </div>

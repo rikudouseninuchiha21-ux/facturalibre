@@ -27,9 +27,13 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  return {
-    title: `Factura ${id}`,
-  };
+  const cookieHeader = await getSessionCookieHeader();
+  try {
+    const invoice = await getInvoice(id, cookieHeader);
+    return { title: invoice.number ? `Factura ${invoice.number}` : "Factura" };
+  } catch {
+    return { title: "Factura" };
+  }
 }
 
 export default async function InvoicePage({

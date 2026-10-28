@@ -12,6 +12,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from app.application.contact_schemas import ContactRead
 from app.domain.models.purchase import PurchaseStatus
 
 Money = Annotated[Decimal, Field(max_digits=18, decimal_places=2, ge=0)]
@@ -74,6 +75,7 @@ class PurchaseRead(BaseModel):
     id: UUID
     number: str | None
     supplier_id: UUID
+    supplier: ContactRead
     issue_date: date
     due_date: date
     status: PurchaseStatus
