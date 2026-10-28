@@ -2467,3 +2467,84 @@ export function downloadPayrollPdf(periodId: string): Promise<void> {
 export function downloadPayrollPila(periodId: string): Promise<void> {
   return downloadPayrollDocument(periodId, "pila");
 }
+
+// -- Reportes NIIF (Fase 39C) ------------------------------------------------
+
+export interface NiifSection {
+  label: string;
+  accounts: { code: string; name: string; balance: string }[][];
+  total: string;
+  kind?: string;
+}
+
+export interface NiifIncomeStatement {
+  from_date: string;
+  to_date: string;
+  sections: NiifSection[];
+  revenue: string;
+  cost_of_sales: string;
+  gross_profit: string;
+  pretax_income: string;
+  income_tax: string;
+  net_income: string;
+}
+
+export interface NiifBalanceSheet {
+  as_of_date: string;
+  current_assets: string;
+  non_current_assets: string;
+  total_assets: string;
+  current_liabilities: string;
+  non_current_liabilities: string;
+  total_liabilities: string;
+  equity: string;
+  period_result: string;
+  total_equity: string;
+  difference: string;
+}
+
+export interface NiifCashFlow {
+  from_date: string;
+  to_date: string;
+  net_income: string;
+  depreciation: string;
+  receivables_change: string;
+  inventory_change: string;
+  payables_change: string;
+  operating_cash_flow: string;
+  investing_cash_flow: string;
+  financing_cash_flow: string;
+  net_cash_change: string;
+  opening_cash: string;
+  closing_cash: string;
+  bank_closing_cash: string;
+}
+
+export function getNiifIncomeStatement(
+  fromDate: string,
+  toDate: string,
+  cookieHeader?: string,
+): Promise<NiifIncomeStatement> {
+  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
+  return apiGet<NiifIncomeStatement>(
+    `/reports/niif/income-statement?${params}`,
+    cookieHeader,
+  );
+}
+
+export function getNiifBalanceSheet(
+  asOfDate: string,
+  cookieHeader?: string,
+): Promise<NiifBalanceSheet> {
+  const params = new URLSearchParams({ as_of_date: asOfDate });
+  return apiGet<NiifBalanceSheet>(`/reports/niif/balance-sheet?${params}`, cookieHeader);
+}
+
+export function getNiifCashFlow(
+  fromDate: string,
+  toDate: string,
+  cookieHeader?: string,
+): Promise<NiifCashFlow> {
+  const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
+  return apiGet<NiifCashFlow>(`/reports/niif/cash-flow?${params}`, cookieHeader);
+}

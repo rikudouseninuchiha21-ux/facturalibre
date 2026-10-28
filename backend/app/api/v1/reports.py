@@ -17,6 +17,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.dependencies.auth import get_current_user, require_role
+from app.application.accounting.niif_reports import NiifReportsService
 from app.application.accounting.schemas import AccountingAccountRead
 from app.application.budget_actuals_service import BudgetActualsService
 from app.application.budget_schemas import BudgetVsActualReportResponse
@@ -132,6 +133,17 @@ def _days_overdue(due_date: date, as_of: date) -> int:
 def _monthly_totals(rows: list[MonthlyCashFlowRow]) -> dict[tuple[int, int], Decimal]:
     """Convierte filas mensuales en un mapa (año, mes) -> total."""
     return {(row.year, row.month): row.total for row in rows}
+
+
+def get_niif_reports_service(db: DbSession) -> NiifReportsService:
+    """Construye el servicio de estados financieros NIIF (Fase 39C)."""
+    return NiifReportsService(db)
+
+
+NiifReportsServiceDep = Annotated[
+    NiifReportsService,
+    Depends(get_niif_reports_service),
+]
 
 
 def get_reports_repository(db: DbSession) -> ReportsRepository:
@@ -830,4 +842,41 @@ def export_payments_csv(
         headers={
             "Content-Disposition": f'attachment; filename="{PAYMENT_CSV_FILENAME}"',
         },
+    )
+
+
+@router.get("/niif/income-statement")
+def get_income_statement_niif(
+    service: NiifReportsServiceDep,
+    from_date: Annotated[str, Query()],
+    to_date: Annotated[str, Query()],
+) -> dict[str, object]:
+    """Estado de Resultados NIIF por función (Decimal, del PUC 4/5/6)."""
+    return service.income_statement_niif(
+        from_date=_parse_date(from_date) or date.today(),
+        to_date=_parse_date(to_date) or date.today(),
+    )
+
+
+@router.get("/niif/balance-sheet")
+def get_balance_sheet_niif(
+    service: NiifReportsServiceDep,
+    as_of_date: Annotated[str, Query()],
+) -> dict[str, object]:
+    """Balance General NIIF: corriente/no corriente + ecuación verificada."""
+    return service.balance_sheet_niif(
+        as_of_date=_parse_date(as_of_date) or date.today(),
+    )
+
+
+@router.get("/niif/cash-flow")
+def get_cash_flow_niif(
+    service: NiifReportsServiceDep,
+    from_date: Annotated[str, Query()],
+    to_date: Annotated[str, Query()],
+) -> dict[str, object]:
+    """Flujo de Efectivo por método indirecto (variación de capital de trabajo)."""
+    return service.cash_flow_niif(
+        from_date=_parse_date(from_date) or date.today(),
+        to_date=_parse_date(to_date) or date.today(),
     )
