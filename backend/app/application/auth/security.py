@@ -8,7 +8,21 @@ from datetime import timedelta
 
 from passlib.context import CryptContext
 
+from app.core.config import get_settings
+
 SESSION_COOKIE_NAME = "facturalibre_session"
+
+
+def session_cookie_secure() -> bool:
+    """Flag ``Secure`` de la cookie de sesión según el entorno.
+
+    ``True`` solo en producción: con HTTPS el navegador la rechaza si no
+    viaja por un canal seguro. En ``http://localhost`` (desarrollo y tests)
+    debe ser ``False`` o el navegador bloquea la cookie y no hay sesión.
+    """
+    return get_settings().environment.strip().lower() in {"production", "prod"}
+
+
 SESSION_TTL = timedelta(hours=24)
 SESSION_TTL_SECONDS = int(SESSION_TTL.total_seconds())
 

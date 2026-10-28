@@ -13,6 +13,7 @@ from app.application.auth.schemas import LoginRequest, RegisterRequest, UserRead
 from app.application.auth.security import (
     SESSION_COOKIE_NAME,
     SESSION_TTL_SECONDS,
+    session_cookie_secure,
 )
 from app.application.auth.service import AuthService
 from app.core.rate_limiter import RATE_LIMIT_ENABLED, login_rate_limiter
@@ -92,7 +93,7 @@ def login(
         max_age=SESSION_TTL_SECONDS,
         expires=expires_at,
         path="/",
-        secure=True,
+        secure=session_cookie_secure(),
         httponly=True,
         samesite="strict",
     )
@@ -108,7 +109,7 @@ def logout(request: Request, db: DbSession) -> Response:
     response.delete_cookie(
         key=SESSION_COOKIE_NAME,
         path="/",
-        secure=True,
+        secure=session_cookie_secure(),
         httponly=True,
         samesite="strict",
     )

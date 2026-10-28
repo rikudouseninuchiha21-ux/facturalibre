@@ -111,9 +111,11 @@ def test_login_sets_secure_http_only_cookie(
     set_cookie = response.headers["set-cookie"].lower()
 
     assert "httponly" in set_cookie
-    assert "secure" in set_cookie
     assert "samesite=strict" in set_cookie
     assert "max-age=86400" in set_cookie
+    # En entorno de test la cookie no lleva Secure (solo en producción):
+    # el navegador la rechazaría en http://localhost.
+    assert "secure" not in set_cookie
 
     raw_token = anonymous_client.cookies.get(SESSION_COOKIE_NAME)
     assert raw_token is not None
