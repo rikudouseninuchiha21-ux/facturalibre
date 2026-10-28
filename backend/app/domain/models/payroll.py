@@ -14,9 +14,11 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
+    Text,
     UniqueConstraint,
     Uuid,
     func,
@@ -24,6 +26,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.invoice import DianDocumentStatus
 from app.infrastructure.database import Base
 
 
@@ -58,6 +61,24 @@ class Employee(Base):
     email: Mapped[str | None] = mapped_column(String(255))
     base_salary: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
+
+    # -- Fase 39A: datos fiscales para la Nómina Electrónica (Dec. 1601/2020).
+    # ``document`` ya es el número: aquí va el tipo (CC, CE, NIT, PA).
+    document_type: Mapped[str | None] = mapped_column(String(10))
+    birth_date: Mapped[date | None] = mapped_column(Date)
+    address: Mapped[str | None] = mapped_column(String(200))
+    municipality_code: Mapped[str | None] = mapped_column(String(5))
+    department_code: Mapped[str | None] = mapped_column(String(2))
+    contract_type: Mapped[str | None] = mapped_column(String(20))
+    salary_type: Mapped[str | None] = mapped_column(String(20))
+    # Nivel de riesgo ARL: I, II, III, IV o V.
+    risk_level: Mapped[str | None] = mapped_column(String(5))
+    bank_account: Mapped[str | None] = mapped_column(String(50))
+    afp_code: Mapped[str | None] = mapped_column(String(20))
+    eps_code: Mapped[str | None] = mapped_column(String(20))
+    arl_code: Mapped[str | None] = mapped_column(String(20))
+    severance_fund_code: Mapped[str | None] = mapped_column(String(20))
+    compensation_fund_code: Mapped[str | None] = mapped_column(String(20))
     is_active: Mapped[bool] = mapped_column(
         Boolean,
         nullable=False,
@@ -111,6 +132,21 @@ class PayrollPeriod(Base):
         index=True,
         comment="Centro de costo al que se atribuye la liquidación de nómina.",
     )
+    # -- Fase 39A: documento electrónico de nómina.
+    dian_cune: Mapped[str | None] = mapped_column(String(96))
+    dian_status: Mapped[DianDocumentStatus | None] = mapped_column(
+        Enum(
+            DianDocumentStatus,
+            name="dian_document_status",
+            native_enum=True,
+            values_callable=_enum_values,
+        ),
+        nullable=True,
+        index=True,
+    )
+    xml_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    payment_date: Mapped[date | None] = mapped_column(Date)
+    notes_dian: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -176,6 +212,9 @@ class PayrollDetail(Base):
 
     period: Mapped[PayrollPeriod] = relationship(back_populates="details")
     employee: Mapped[Employee] = relationship(back_populates="payroll_details")
+    contribution: Mapped[PayrollContribution | None] = relationship(
+        back_populates="detail", uselist=False
+    )
 
     @property
     def employee_name(self) -> str:
@@ -186,3 +225,113 @@ class PayrollDetail(Base):
     def employee_document(self) -> str:
         """Documento del empleado para la representación pública."""
         return self.employee.document
+
+
+class PayrollContribution(Base):
+    """Aportes y prestaciones de un empleado dentro de un periodo de nómina.
+
+    Una fila por ``PayrollDetail`` (1:1). Solo persisten los aportes del
+    empleador y las provisiones; las deducciones del empleado (salud y
+    pensión 4 %) ya viven en ``PayrollDetail``.
+    """
+
+    __tablename__ = "payroll_contributions"
+
+    __table_args__ = (
+        CheckConstraint("health_employer >= 0", name="ck_payroll_contributions_health_employer"),
+        CheckConstraint("health_employee >= 0", name="ck_payroll_contributions_health_employee"),
+        CheckConstraint("pension_employer >= 0", name="ck_payroll_contributions_pension_employer"),
+        CheckConstraint("pension_employee >= 0", name="ck_payroll_contributions_pension_employee"),
+        CheckConstraint("arl_employer >= 0", name="ck_payroll_contributions_arl"),
+        CheckConstraint(
+            "compensation_fund >= 0", name="ck_payroll_contributions_compensation_fund"
+        ),
+        CheckConstraint("icbf >= 0", name="ck_payroll_contributions_icbf"),
+        CheckConstraint("sena >= 0", name="ck_payroll_contributions_sena"),
+        CheckConstraint("severance >= 0", name="ck_payroll_contributions_severance"),
+        CheckConstraint(
+            "severance_interest >= 0", name="ck_payroll_contributions_severance_interest"
+        ),
+        CheckConstraint("vacation >= 0", name="ck_payroll_contributions_vacation"),
+        CheckConstraint("bonus >= 0", name="ck_payroll_contributions_bonus"),
+        Index("ix_payroll_contributions_period_id", "period_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        primary_key=True,
+        default=uuid.uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+    payroll_detail_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid,
+        ForeignKey("payroll_details.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    # Denormalizado para consultar aportes por periodo sin JOIN.
+    period_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("payroll_periods.id", ondelete="CASCADE"), nullable=False
+    )
+    health_employee: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    health_employer: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    pension_employee: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    pension_employer: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    arl_employer: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    compensation_fund: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    icbf: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    sena: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    severance: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    severance_interest: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    vacation: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    bonus: Mapped[Decimal] = mapped_column(
+        Numeric(18, 2), nullable=False, default=Decimal("0.00"), server_default=text("0")
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    detail: Mapped[PayrollDetail] = relationship(back_populates="contribution")
+
+    @property
+    def total_employer_contributions(self) -> Decimal:
+        """Aportes a cargo del empleador (excluye provisiones)."""
+        return (
+            self.health_employer
+            + self.pension_employer
+            + self.arl_employer
+            + self.compensation_fund
+            + self.icbf
+            + self.sena
+        )
+
+
+__all__ = [
+    "Employee",
+    "PayrollContribution",
+    "PayrollDetail",
+    "PayrollPeriod",
+    "PayrollPeriodStatus",
+]

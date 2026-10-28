@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { InvoiceDianBadge } from "@/components/invoices/InvoiceDianBadge";
 import { PayrollActions } from "@/components/payroll/PayrollActions";
 import { PayrollForm } from "@/components/payroll/PayrollForm";
 import {
@@ -130,6 +131,7 @@ export default async function PayrollPage() {
                   <TableHead>Mes</TableHead>
                   <TableHead>Año</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Estado DIAN</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -144,6 +146,9 @@ export default async function PayrollPage() {
                     </TableCell>
                     <TableCell>
                       <PayrollStatus status={period.status} />
+                    </TableCell>
+                    <TableCell>
+                      <InvoiceDianBadge dianStatus={period.dian_status} />
                     </TableCell>
                     <TableCell className="text-right">
                       <PayrollActions

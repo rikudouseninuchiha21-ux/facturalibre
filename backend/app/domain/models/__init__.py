@@ -41,6 +41,7 @@ from app.domain.models.number_sequence import NumberSequence
 from app.domain.models.payment import Payment
 from app.domain.models.payroll import (
     Employee,
+    PayrollContribution,
     PayrollDetail,
     PayrollPeriod,
     PayrollPeriodStatus,
@@ -110,6 +111,7 @@ __all__ = [
     "PaymentAgreementInstallment",
     "PaymentReminder",
     "PaymentStatus",
+    "PayrollContribution",
     "PayrollDetail",
     "PayrollPeriod",
     "PayrollPeriodStatus",

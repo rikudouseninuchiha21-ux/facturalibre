@@ -8,6 +8,7 @@ empleador quedan fuera de esta fase y deben implementarse antes de producción.
 
 from __future__ import annotations
 
+import calendar
 from datetime import date
 from decimal import Decimal
 from uuid import UUID
@@ -19,10 +20,19 @@ from app.application.budget_notifications import (
     capture_alert_levels,
     notify_threshold_crossings,
 )
+from app.application.payroll.payroll_calculator import (
+    DEFAULT_RISK_LEVEL,
+    compute_bonus,
+    compute_contributions,
+    compute_severance,
+    compute_severance_interest,
+    compute_vacation,
+)
 from app.domain.calculations import round_money
 from app.domain.employee_repository import EmployeeRepository
 from app.domain.exceptions import PayrollError, ResourceNotFoundError
 from app.domain.models.payroll import (
+    PayrollContribution,
     PayrollDetail,
     PayrollPeriod,
     PayrollPeriodStatus,
@@ -46,6 +56,16 @@ class PayrollService:
         self.payroll_repository = PayrollRepository(db)
         self.employee_repository = EmployeeRepository(db)
 
+    @staticmethod
+    def _days_worked_for(period: PayrollPeriod, employee_start: date) -> int:
+        """Días del mes del periodo, recortados por la fecha de ingreso."""
+        days_in_month = calendar.monthrange(period.year, period.month)[1]
+        month_start = date(period.year, period.month, 1)
+        if employee_start > month_start:
+            worked = (month_start.replace(day=days_in_month) - employee_start).days + 1
+            return max(min(worked, days_in_month), 0)
+        return days_in_month
+
     def calculate_period(self, period_id: UUID) -> PayrollPeriod:
         """Liquida a todos los empleados activos y cierra el periodo.
 
@@ -66,23 +86,49 @@ class PayrollService:
             raise PayrollError("No hay empleados activos para liquidar")
 
         details: list[PayrollDetail] = []
+        contributions: list[PayrollContribution] = []
         for employee in employees:
             base_salary = round_money(employee.base_salary)
             health_deduction = round_money(base_salary * HEALTH_RATE)
             pension_deduction = round_money(base_salary * PENSION_RATE)
             net_pay = round_money(base_salary - health_deduction - pension_deduction)
-            details.append(
-                PayrollDetail(
+            detail = PayrollDetail(
+                period_id=period.id,
+                employee_id=employee.id,
+                base_salary=base_salary,
+                health_deduction=health_deduction,
+                pension_deduction=pension_deduction,
+                net_pay=net_pay,
+            )
+            details.append(detail)
+
+            # Aportes y provisiones de Fase 39A: los aportes del empleado
+            # coinciden con las deducciones (misma tasa 4 %), el resto es a
+            # cargo del empleador o provisión de prestaciones.
+            days_worked = self._days_worked_for(period, employee.start_date)
+            rates = compute_contributions(base_salary, employee.risk_level or DEFAULT_RISK_LEVEL)
+            severance = compute_severance(base_salary, days_worked)
+            contributions.append(
+                PayrollContribution(
+                    detail=detail,
                     period_id=period.id,
-                    employee_id=employee.id,
-                    base_salary=base_salary,
-                    health_deduction=health_deduction,
-                    pension_deduction=pension_deduction,
-                    net_pay=net_pay,
+                    health_employee=health_deduction,
+                    health_employer=rates["health_employer"],
+                    pension_employee=pension_deduction,
+                    pension_employer=rates["pension_employer"],
+                    arl_employer=rates["arl_employer"],
+                    compensation_fund=rates["compensation_fund"],
+                    icbf=rates["icbf"],
+                    sena=rates["sena"],
+                    severance=severance,
+                    severance_interest=compute_severance_interest(severance, days_worked),
+                    vacation=compute_vacation(base_salary, days_worked),
+                    bonus=compute_bonus(base_salary, days_worked),
                 )
             )
 
         self.db.add_all(details)
+        self.db.add_all(contributions)
         period.status = PayrollPeriodStatus.CLOSED
         self.db.flush()
 

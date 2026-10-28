@@ -389,6 +389,18 @@ export interface EmployeeCreateInput {
   base_salary: string;
   start_date: string;
   is_active?: boolean;
+  document_type?: string;
+  address?: string;
+  municipality_code?: string;
+  department_code?: string;
+  contract_type?: string;
+  salary_type?: string;
+  risk_level?: string;
+  eps_code?: string;
+  afp_code?: string;
+  arl_code?: string;
+  severance_fund_code?: string;
+  compensation_fund_code?: string;
 }
 
 export type PayrollPeriodStatus = "DRAFT" | "CLOSED";
@@ -411,6 +423,9 @@ export interface PayrollPeriod {
   month: number;
   year: number;
   status: PayrollPeriodStatus;
+  dian_cune: string | null;
+  dian_status: DianDocumentStatus | null;
+  payment_date: string | null;
   created_at: string;
   details: PayrollDetail[];
   total_base: string;
@@ -2401,4 +2416,54 @@ export function regenerateInvoiceCufe(
   return apiPost<RegeneratedCufe>(
     `/invoices/${encodeURIComponent(invoiceId)}/regenerate-cufe`,
   );
+}
+
+
+// -- Nómina electrónica DIAN (Fase 39A) ---------------------------------
+
+async function downloadPayrollDocument(
+  periodId: string,
+  extension: "xml" | "pdf" | "pila",
+): Promise<void> {
+  const response = await fetch(
+    `/api/v1/payroll/periods/${encodeURIComponent(periodId)}/${extension}`,
+    { credentials: "include", cache: "no-store" },
+  );
+  if (!response.ok) {
+    const fallback = `${response.status} ${response.statusText}`.trim();
+    let detail = fallback;
+    try {
+      const body = (await response.json()) as { detail?: unknown };
+      if (typeof body.detail === "string") detail = body.detail;
+    } catch {
+      // La respuesta de error no era JSON.
+    }
+    throw new ApiError(
+      `No se pudo descargar el documento de nómina: ${detail}`,
+      response.status,
+    );
+  }
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = match?.[1] ?? `NE-periodo.${extension}`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+export function downloadPayrollXml(periodId: string): Promise<void> {
+  return downloadPayrollDocument(periodId, "xml");
+}
+
+export function downloadPayrollPdf(periodId: string): Promise<void> {
+  return downloadPayrollDocument(periodId, "pdf");
+}
+
+export function downloadPayrollPila(periodId: string): Promise<void> {
+  return downloadPayrollDocument(periodId, "pila");
 }

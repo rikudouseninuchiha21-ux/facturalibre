@@ -16,6 +16,7 @@ from pydantic import (
     model_validator,
 )
 
+from app.domain.models.invoice import DianDocumentStatus
 from app.domain.models.payroll import PayrollPeriodStatus
 
 Salary = Annotated[Decimal, Field(max_digits=18, decimal_places=2, gt=0)]
@@ -35,6 +36,22 @@ class EmployeeCreate(BaseModel):
     start_date: date
     is_active: bool = True
 
+    # -- Fase 39A: datos fiscales para la Nómina Electrónica.
+    document_type: str | None = Field(default=None, max_length=10)
+    birth_date: date | None = None
+    address: str | None = Field(default=None, max_length=200)
+    municipality_code: str | None = Field(default=None, max_length=5)
+    department_code: str | None = Field(default=None, max_length=2)
+    contract_type: str | None = Field(default=None, max_length=20)
+    salary_type: str | None = Field(default=None, max_length=20)
+    risk_level: str | None = Field(default=None, max_length=5)
+    bank_account: str | None = Field(default=None, max_length=50)
+    afp_code: str | None = Field(default=None, max_length=20)
+    eps_code: str | None = Field(default=None, max_length=20)
+    arl_code: str | None = Field(default=None, max_length=20)
+    severance_fund_code: str | None = Field(default=None, max_length=20)
+    compensation_fund_code: str | None = Field(default=None, max_length=20)
+
 
 class EmployeeUpdate(BaseModel):
     """Actualización parcial de un empleado."""
@@ -48,6 +65,22 @@ class EmployeeUpdate(BaseModel):
     base_salary: Salary | None = None
     start_date: date | None = None
     is_active: bool | None = None
+
+    # -- Fase 39A: datos fiscales para la Nómina Electrónica.
+    document_type: str | None = Field(default=None, max_length=10)
+    birth_date: date | None = None
+    address: str | None = Field(default=None, max_length=200)
+    municipality_code: str | None = Field(default=None, max_length=5)
+    department_code: str | None = Field(default=None, max_length=2)
+    contract_type: str | None = Field(default=None, max_length=20)
+    salary_type: str | None = Field(default=None, max_length=20)
+    risk_level: str | None = Field(default=None, max_length=5)
+    bank_account: str | None = Field(default=None, max_length=50)
+    afp_code: str | None = Field(default=None, max_length=20)
+    eps_code: str | None = Field(default=None, max_length=20)
+    arl_code: str | None = Field(default=None, max_length=20)
+    severance_fund_code: str | None = Field(default=None, max_length=20)
+    compensation_fund_code: str | None = Field(default=None, max_length=20)
 
     @model_validator(mode="after")
     def validate_update_fields(self) -> Self:
@@ -81,6 +114,20 @@ class EmployeeRead(BaseModel):
     base_salary: Decimal
     start_date: date
     is_active: bool
+    document_type: str | None = None
+    birth_date: date | None = None
+    address: str | None = None
+    municipality_code: str | None = None
+    department_code: str | None = None
+    contract_type: str | None = None
+    salary_type: str | None = None
+    risk_level: str | None = None
+    bank_account: str | None = None
+    afp_code: str | None = None
+    eps_code: str | None = None
+    arl_code: str | None = None
+    severance_fund_code: str | None = None
+    compensation_fund_code: str | None = None
     created_at: datetime
 
 
@@ -120,6 +167,9 @@ class PayrollPeriodRead(BaseModel):
     month: int
     year: int
     status: PayrollPeriodStatus
+    dian_cune: str | None = None
+    dian_status: DianDocumentStatus | None = None
+    payment_date: date | None = None
     cost_center_id: UUID | None
     created_at: datetime
     details: list[PayrollDetailRead]
