@@ -1,9 +1,7 @@
 version: 2
 updates:
-  # Actualizaciones de seguridad y parches/menores (patch/minor) solamente.
-  # Las versiones mayores (major) se ignoran en todos los ecosistemas para no
-  # abrir PRs que rompan la compatibilidad (p. ej. Next 16 → 17, React 19 → 20):
-  # esas se evalúan manualmente por fase del proyecto.
+  # Solo parches/minor (incluye avisos de seguridad).
+  # Las versiones mayores se evaluan manualmente por fase.
   - package-ecosystem: "pip"
     directory: "/backend"
     schedule:
