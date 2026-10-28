@@ -38,7 +38,7 @@ jobs:
           version: latest
 
       - name: Caché de uv
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/uv
           key: uv-${{ runner.os }}-${{ hashFiles('backend/uv.lock') }}
@@ -94,7 +94,7 @@ jobs:
           corepack prepare pnpm@10.34.7 --activate
 
       - name: Caché de pnpm
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.pnpm-store
           key: pnpm-${{ runner.os }}-${{ hashFiles('frontend/pnpm-lock.yaml') }}
