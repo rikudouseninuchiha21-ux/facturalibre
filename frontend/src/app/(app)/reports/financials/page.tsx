@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 import { CashFlowSection } from "@/components/reports/CashFlowSection";
 import { FinancialsClient } from "@/components/reports/FinancialsClient";
@@ -30,11 +32,12 @@ export default async function FinancialsPage() {
   const cookieHeader = await getSessionCookieHeader();
 
   const today = new Date();
-  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const startOfYear = `${today.getFullYear()}-01-01`;
 
   const toISODate = (d: Date): string =>
     d.toISOString().slice(0, 10);
+
+  const todayISO = toISODate(today);
 
   let incomeStatement: Awaited<
     ReturnType<typeof getIncomeStatement>
@@ -49,12 +52,8 @@ export default async function FinancialsPage() {
 
   try {
     [incomeStatement, balanceSheet] = await Promise.all([
-      getIncomeStatement(
-        toISODate(startOfMonth),
-        toISODate(endOfMonth),
-        cookieHeader,
-      ),
-      getBalanceSheet(toISODate(today), cookieHeader),
+      getIncomeStatement(startOfYear, todayISO, cookieHeader),
+      getBalanceSheet(todayISO, cookieHeader),
     ]);
   } catch (cause) {
     error =
@@ -92,7 +91,14 @@ export default async function FinancialsPage() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-950">
+        <Link
+          href="/reports"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-violet-700 hover:text-violet-900"
+        >
+          <ArrowLeft className="size-4" aria-hidden="true" />
+          Volver a reportes
+        </Link>
+        <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
           Estados Financieros
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
@@ -151,9 +157,9 @@ export default async function FinancialsPage() {
           balanceSheet={balanceSheet!}
           accounts={accounts}
           isAdmin={isAdmin}
-          initialStartDate={toISODate(startOfMonth)}
-          initialEndDate={toISODate(endOfMonth)}
-          initialAsOfDate={toISODate(today)}
+          initialStartDate={startOfYear}
+          initialEndDate={todayISO}
+          initialAsOfDate={todayISO}
         />
       )}
     </div>

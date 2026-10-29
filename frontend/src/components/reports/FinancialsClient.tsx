@@ -16,6 +16,8 @@ import {
   type LedgerReport,
   type TrialBalanceReport,
   closePeriod,
+  getBalanceSheet,
+  getIncomeStatement,
   getLedger,
   getTrialBalance,
 } from "@/lib/api";
@@ -54,9 +56,79 @@ export function FinancialsClient({
   initialAsOfDate,
 }: FinancialsClientProps) {
   const [tab, setTab] = useState<Tab>("income");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const [asOfDate, setAsOfDate] = useState("");
+  const [startDate, setStartDate] = useState(initialStartDate);
+  const [endDate, setEndDate] = useState(initialEndDate);
+  const [asOfDate, setAsOfDate] = useState(initialAsOfDate);
+  const [incomeData, setIncomeData] = useState(incomeStatement);
+  const [balanceData, setBalanceData] = useState(balanceSheet);
+  const [reportError, setReportError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadIncomeStatement(): Promise<void> {
+      if (!startDate || !endDate) {
+        return;
+      }
+      if (startDate > endDate) {
+        if (active) {
+          setReportError("La fecha inicial no puede ser posterior a la fecha final.");
+        }
+        return;
+      }
+
+      try {
+        const data = await getIncomeStatement(startDate, endDate);
+        if (active) {
+          setIncomeData(data);
+          setReportError(null);
+        }
+      } catch (cause) {
+        if (active) {
+          setReportError(
+            cause instanceof Error
+              ? cause.message
+              : "No se pudo actualizar el Estado de Resultados.",
+          );
+        }
+      }
+    }
+
+    void loadIncomeStatement();
+    return () => {
+      active = false;
+    };
+  }, [startDate, endDate]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadBalanceSheet(): Promise<void> {
+      if (!asOfDate) {
+        return;
+      }
+      try {
+        const data = await getBalanceSheet(asOfDate);
+        if (active) {
+          setBalanceData(data);
+          setReportError(null);
+        }
+      } catch (cause) {
+        if (active) {
+          setReportError(
+            cause instanceof Error
+              ? cause.message
+              : "No se pudo actualizar el Balance General.",
+          );
+        }
+      }
+    }
+
+    void loadBalanceSheet();
+    return () => {
+      active = false;
+    };
+  }, [asOfDate]);
 
   return (
     <div className="space-y-6">
@@ -95,9 +167,18 @@ export function FinancialsClient({
         </button>
       </div>
 
+      {reportError ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          {reportError}
+        </div>
+      ) : null}
+
       {tab === "income" ? (
         <IncomeStatementView
-          data={incomeStatement}
+          data={incomeData}
           startDate={startDate}
           endDate={endDate}
           onStartDateChange={setStartDate}
@@ -105,7 +186,7 @@ export function FinancialsClient({
         />
       ) : tab === "balance" ? (
         <BalanceSheetView
-          data={balanceSheet}
+          data={balanceData}
           asOfDate={asOfDate}
           onAsOfDateChange={setAsOfDate}
         />
