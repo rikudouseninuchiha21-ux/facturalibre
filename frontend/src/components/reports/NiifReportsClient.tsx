@@ -34,7 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  downloadFile,
+  downloadFileNative,
   getDrillDownReport,
   getFinancialReportExportUrl,
   getNiifBalanceSheet,
@@ -208,8 +208,6 @@ export function NiifReportsClient() {
   const [balance, setBalance] = useState<NiifBalanceSheet | null>(null);
   const [cash, setCash] = useState<NiifCashFlow | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isExporting, setIsExporting] = useState(false);
-  const [showDirectDownload, setShowDirectDownload] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [drillAccount, setDrillAccount] = useState<{ code: string; name: string } | null>(null);
@@ -532,27 +530,8 @@ export function NiifReportsClient() {
     setDrillError(null);
   }
 
-  async function handleExport(): Promise<void> {
-    setError(null);
-    setIsExporting(true);
-    try {
-      await downloadFile(
-        exportHref,
-        tab === "balance" ? "balance-general.xlsx" : "estado-resultados.xlsx",
-        "No se pudo exportar el reporte",
-      );
-      // Si el navegador bloquea la descarga programática del blob, el usuario
-      // conserva un enlace nativo de respaldo que usa el Content-Disposition.
-      setShowDirectDownload(true);
-    } catch (cause) {
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "No se pudo exportar el reporte.",
-      );
-    } finally {
-      setIsExporting(false);
-    }
+  function handleExport(): void {
+    downloadFileNative(exportHref);
   }
 
   return (
@@ -593,23 +572,10 @@ export function NiifReportsClient() {
             ) : null}
           </div>
           {tab !== "cash" ? (
-            <div className="flex flex-col gap-1 self-start lg:self-auto">
-              <Button
-                onClick={() => void handleExport()}
-                disabled={isExporting}
-              >
-                <Download className="mr-2 size-4" aria-hidden="true" />
-                {isExporting ? "Exportando..." : "Exportar a Excel"}
-              </Button>
-              {showDirectDownload ? (
-                <a
-                  href={exportHref}
-                  className="text-xs font-medium text-violet-600 underline-offset-2 hover:text-violet-500 hover:underline"
-                >
-                  ¿No inició la descarga? Descargar directamente
-                </a>
-              ) : null}
-            </div>
+            <Button onClick={handleExport} className="self-start lg:self-auto">
+              <Download className="mr-2 size-4" aria-hidden="true" />
+              Exportar a Excel
+            </Button>
           ) : null}
         </CardContent>
       </Card>

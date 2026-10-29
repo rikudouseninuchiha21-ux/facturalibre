@@ -987,19 +987,11 @@ export function getWarehouses(cookieHeader?: string): Promise<Warehouse[]> {
  * fuerza la descarga mediante un enlace temporal.
  */
 export async function downloadInvoicesCsv(): Promise<void> {
-  return downloadFile(
-    "/api/v1/reports/invoices.csv",
-    "facturas.csv",
-    "No se pudo descargar el listado de facturas",
-  );
+  downloadFileNative("/api/v1/reports/invoices.csv");
 }
 
 export async function downloadPaymentsCsv(): Promise<void> {
-  return downloadFile(
-    "/api/v1/reports/payments.csv",
-    "pagos.csv",
-    "No se pudo descargar el listado de pagos",
-  );
+  downloadFileNative("/api/v1/reports/payments.csv");
 }
 
 async function errorDetail(response: Response, fallback: string): Promise<string> {
@@ -1050,11 +1042,37 @@ function filenameFromDisposition(disposition: string | null): string | null {
 }
 
 /**
+ * Descarga nativa: abre el endpoint en una pestaña nueva.
+ *
+ * El backend responde con `Content-Disposition: attachment`, por lo que el
+ * navegador delega la descarga a su gestor nativo (sin fetch ni Blob).
+ */
+export function downloadFileNative(url: string): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const popup = window.open(url, "_blank");
+  if (popup) {
+    return;
+  }
+
+  // Fallback si el navegador bloquea la pestaña emergente.
+  const link = document.createElement("a");
+  link.href = url;
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+/**
  * Descarga un archivo protegido por cookie con manejo uniforme de errores.
  *
- * No descarga nada si el backend responde 4xx/5xx o si devuelve JSON por
- * error. Si la respuesta es válida, usa el nombre del header
- * `Content-Disposition` y cae al nombre proporcionado como fallback.
+ * Se conserva como fallback para flujos que necesiten mostrar el error JSON
+ * en la propia interfaz. La descarga principal usa `downloadFileNative`.
  */
 export async function downloadFile(
   path: string,
@@ -2692,23 +2710,23 @@ export interface RegeneratedCufe {
  * del navegador. Solo para facturas emitidas; el backend responde 422 si
  * faltan datos DIAN del emisor o del adquiriente.
  */
-async function downloadInvoiceDocument(
+function downloadInvoiceDocument(
   invoiceId: string,
   extension: "xml" | "pdf",
-): Promise<void> {
-  return downloadFile(
+): void {
+  downloadFileNative(
     `/api/v1/invoices/${encodeURIComponent(invoiceId)}/${extension}`,
-    `FV-documento.${extension}`,
-    "No se pudo descargar el documento DIAN",
   );
 }
 
 export function downloadInvoiceXml(invoiceId: string): Promise<void> {
-  return downloadInvoiceDocument(invoiceId, "xml");
+  downloadInvoiceDocument(invoiceId, "xml");
+  return Promise.resolve();
 }
 
 export function downloadInvoicePdf(invoiceId: string): Promise<void> {
-  return downloadInvoiceDocument(invoiceId, "pdf");
+  downloadInvoiceDocument(invoiceId, "pdf");
+  return Promise.resolve();
 }
 
 export function regenerateInvoiceCufe(
@@ -2722,27 +2740,28 @@ export function regenerateInvoiceCufe(
 
 // -- Nómina electrónica DIAN (Fase 39A) ---------------------------------
 
-async function downloadPayrollDocument(
+function downloadPayrollDocument(
   periodId: string,
   extension: "xml" | "pdf" | "pila",
-): Promise<void> {
-  return downloadFile(
+): void {
+  downloadFileNative(
     `/api/v1/payroll/periods/${encodeURIComponent(periodId)}/${extension}`,
-    `NE-periodo.${extension}`,
-    "No se pudo descargar el documento de nómina",
   );
 }
 
 export function downloadPayrollXml(periodId: string): Promise<void> {
-  return downloadPayrollDocument(periodId, "xml");
+  downloadPayrollDocument(periodId, "xml");
+  return Promise.resolve();
 }
 
 export function downloadPayrollPdf(periodId: string): Promise<void> {
-  return downloadPayrollDocument(periodId, "pdf");
+  downloadPayrollDocument(periodId, "pdf");
+  return Promise.resolve();
 }
 
 export function downloadPayrollPila(periodId: string): Promise<void> {
-  return downloadPayrollDocument(periodId, "pila");
+  downloadPayrollDocument(periodId, "pila");
+  return Promise.resolve();
 }
 
 // -- Reportes NIIF (Fase 39C) ------------------------------------------------
