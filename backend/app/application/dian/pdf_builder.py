@@ -4,7 +4,7 @@ Librería: **reportlab** (platypus). Decisión documentada: reportlab pesa
 ~5 MB y no requiere librerías del sistema; weasyprint ofrece maquetación
 HTML/CSS pero añade pango/cairo (~50 MB de imagen Docker). Para un
 documento fiscal tabular A4, reportlab es suficiente y mantiene la imagen
-ligera. Paleta Black & Gold del proyecto.
+ligera. Paleta Violeta Corporativa de VANTAGE.
 
 Incluye: datos del emisor, bloque de resolución DIAN, adquiriente, datos
 del documento, tabla de ítems, totales por impuesto, valor en letras,
@@ -43,12 +43,14 @@ if TYPE_CHECKING:
     from app.domain.models.contact import Contact
     from app.domain.models.invoice import Invoice
 
-BLACK = colors.HexColor("#18181B")
-GOLD = colors.HexColor("#D97706")
-GOLD_LIGHT = colors.HexColor("#FBBF24")
-SOFT_BG = colors.HexColor("#FAF9F6")
-BORDER = colors.HexColor("#E4E4E7")
-GRAY = colors.HexColor("#52525B")
+VIOLET = colors.HexColor("#7C3AED")
+VIOLET_LIGHT = colors.HexColor("#8B5CF6")
+VIOLET_DARK = colors.HexColor("#5B21B6")
+VIOLET_PALE = colors.HexColor("#EDE9FE")
+SOFT_BG = colors.HexColor("#F9FAFB")
+BORDER = colors.HexColor("#E5E7EB")
+INK = colors.HexColor("#111827")
+GRAY = colors.HexColor("#6B7280")
 
 LEGAL_LEGEND = (
     "Esta factura se asimila en todos sus efectos a una letra de cambio de "
@@ -74,24 +76,53 @@ def _style(name: str, **kwargs: object) -> ParagraphStyle:
         "fontName": "Helvetica",
         "fontSize": 8.5,
         "leading": 11,
-        "textColor": BLACK,
+        "textColor": INK,
     }
     defaults.update(kwargs)
     return ParagraphStyle(name, **defaults)  # type: ignore[arg-type]
 
 
-TITLE_STYLE = _style("title", fontName="Helvetica-Bold", fontSize=16, textColor=GOLD_LIGHT)
-COMPANY_STYLE = _style("company", fontName="Helvetica-Bold", fontSize=11, textColor=colors.white)
-HEADER_NOTE_STYLE = _style("header_note", fontSize=8, textColor=colors.HexColor("#A1A1AA"))
-LABEL_STYLE = _style("label", fontName="Helvetica-Bold", fontSize=8, textColor=GRAY, spaceBefore=4)
-VALUE_STYLE = _style("value")
-ITEM_STYLE = _style("item", fontSize=8)
-LEGAL_STYLE = _style("legal", fontSize=7.5, textColor=GRAY, leading=10)
+TITLE_STYLE = _style(
+    "title",
+    fontName="Helvetica-Bold",
+    fontSize=18,
+    leading=21,
+    textColor=colors.white,
+)
+COMPANY_STYLE = _style(
+    "company",
+    fontName="Helvetica-Bold",
+    fontSize=11,
+    textColor=colors.white,
+)
+HEADER_NOTE_STYLE = _style("header_note", fontSize=8.5, textColor=VIOLET_PALE)
+LABEL_STYLE = _style(
+    "label",
+    fontName="Helvetica-Bold",
+    fontSize=8.5,
+    textColor=VIOLET_DARK,
+    spaceBefore=4,
+)
+VALUE_STYLE = _style("value", textColor=INK)
+ITEM_STYLE = _style("item", fontSize=8, textColor=INK)
+LEGAL_STYLE = _style("legal", fontSize=8.5, textColor=GRAY, leading=11.5)
+TOTAL_LABEL_STYLE = _style(
+    "total_label",
+    fontName="Helvetica-Bold",
+    fontSize=11,
+    textColor=VIOLET_DARK,
+)
+TOTAL_VALUE_STYLE = _style(
+    "total_value",
+    fontName="Helvetica-Bold",
+    fontSize=12,
+    textColor=VIOLET_DARK,
+)
 
 
 def _kv(label: str, value: str | None) -> Paragraph:
     return Paragraph(
-        f'<font color="#52525B"><b>{escape(label)}:</b></font> {escape(value or "—")}',
+        f'<font color="#5B21B6"><b>{escape(label)}:</b></font> {escape(value or "—")}',
         VALUE_STYLE,
     )
 
@@ -123,19 +154,19 @@ def build_invoice_pdf(
         pagesize=A4,
         leftMargin=1.6 * cm,
         rightMargin=1.6 * cm,
-        topMargin=1.4 * cm,
-        bottomMargin=1.4 * cm,
+        topMargin=1.6 * cm,
+        bottomMargin=1.6 * cm,
         title=f"Factura electrónica {invoice_number}",
     )
 
     story: list[object] = []
 
-    # -- Encabezado negro con acento dorado ---------------------------------
+    # -- Encabezado violeta corporativo -------------------------------------
     header = Table(
         [
             [
                 [
-                    Paragraph("NEXUS ERP", TITLE_STYLE),
+                    Paragraph("VANTAGE", TITLE_STYLE),
                     Paragraph("Factura Electrónica de Venta · UBL 2.1 DIAN", HEADER_NOTE_STYLE),
                 ],
                 [
@@ -152,18 +183,18 @@ def build_invoice_pdf(
     header.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, -1), BLACK),
+                ("BACKGROUND", (0, 0), (-1, -1), VIOLET),
                 ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 10),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-                ("LINEBELOW", (0, 0), (-1, -1), 2, GOLD),
+                ("LEFTPADDING", (0, 0), (-1, -1), 14),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 14),
+                ("TOPPADDING", (0, 0), (-1, -1), 12),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+                ("LINEBELOW", (0, 0), (-1, -1), 3, VIOLET_LIGHT),
             ]
         )
     )
     story.append(header)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 14))
 
     # -- Emisor y resolución ------------------------------------------------
     issuer_block = [
@@ -201,18 +232,19 @@ def build_invoice_pdf(
     identity.setStyle(
         TableStyle(
             [
-                ("BOX", (0, 0), (-1, -1), 0.7, BORDER),
+                ("BOX", (0, 0), (-1, -1), 0.4, BORDER),
                 ("BACKGROUND", (0, 0), (0, 0), SOFT_BG),
+                ("LINEAFTER", (0, 0), (0, 0), 0.4, BORDER),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
             ]
         )
     )
     story.append(identity)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 12))
 
     # -- Adquiriente y datos del documento ----------------------------------
     terms_days = invoice.payment_terms_days
@@ -245,18 +277,19 @@ def build_invoice_pdf(
     parties.setStyle(
         TableStyle(
             [
-                ("BOX", (0, 0), (-1, -1), 0.7, BORDER),
-                ("BACKGROUND", (1, 0), (1, 0), SOFT_BG),
+                ("BOX", (0, 0), (-1, -1), 0.4, BORDER),
+                ("BACKGROUND", (0, 0), (0, 0), SOFT_BG),
+                ("LINEAFTER", (0, 0), (0, 0), 0.4, BORDER),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 6),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 8),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
             ]
         )
     )
     story.append(parties)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 14))
 
     # -- Tabla de ítems ------------------------------------------------------
     item_header = [
@@ -264,7 +297,7 @@ def build_invoice_pdf(
         "Descripción",
         "Cant.",
         "Und.",
-        "Vlr. unitario",
+        "Vr. unit.",
         "Desc. %",
         "Subtotal",
         "Impuesto",
@@ -291,13 +324,13 @@ def build_invoice_pdf(
     items_table = Table(
         item_rows,
         colWidths=[
+            2.2 * cm,
+            4.2 * cm,
+            1.1 * cm,
+            1.1 * cm,
             2.1 * cm,
-            4.6 * cm,
-            1.4 * cm,
-            1.2 * cm,
-            2.1 * cm,
-            1.4 * cm,
-            2.1 * cm,
+            1.1 * cm,
+            2.0 * cm,
             1.9 * cm,
             2.1 * cm,
         ],
@@ -306,80 +339,86 @@ def build_invoice_pdf(
     items_table.setStyle(
         TableStyle(
             [
-                ("BACKGROUND", (0, 0), (-1, 0), BLACK),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("BACKGROUND", (0, 0), (-1, 0), VIOLET_PALE),
+                ("TEXTCOLOR", (0, 0), (-1, 0), VIOLET_DARK),
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("FONTSIZE", (0, 0), (-1, -1), 7.5),
+                ("FONTSIZE", (0, 0), (-1, 0), 7.3),
+                ("FONTSIZE", (0, 1), (-1, -1), 8),
                 ("ALIGN", (2, 0), (-1, -1), "RIGHT"),
-                ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("GRID", (0, 0), (-1, -1), 0.4, BORDER),
-                ("LINEBELOW", (0, 0), (-1, 0), 1, GOLD),
+                ("VALIGN", (0, 0), (-1, 0), "MIDDLE"),
+                ("VALIGN", (0, 1), (-1, -1), "TOP"),
+                ("LINEBELOW", (0, 0), (-1, 0), 1.2, VIOLET_LIGHT),
+                ("LINEBELOW", (0, 1), (-1, -1), 0.3, BORDER),
+                ("LINEAFTER", (0, 0), (-2, -1), 0.3, BORDER),
                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, SOFT_BG]),
-                ("TOPPADDING", (0, 0), (-1, -1), 4),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
             ]
         )
     )
     story.append(items_table)
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 12))
 
     # -- Totales --------------------------------------------------------------
-    totals_rows: list[list[object]] = [["Subtotal", format_money(invoice.subtotal)]]
+    totals_rows: list[list[str]] = [["Subtotal", format_money(invoice.subtotal)]]
     for group in tax_groups:
         totals_rows.append([f"{group.name} {format_money(group.rate)}%", format_money(group.tax)])
     totals_rows.append(["TOTAL A PAGAR", format_money(invoice.total)])
+    last_total = len(totals_rows) - 1
     totals_table = Table(
         [
-            [Paragraph(str(label), ITEM_STYLE), Paragraph(str(value), ITEM_STYLE)]
-            for label, value in totals_rows
+            [
+                Paragraph(
+                    str(label),
+                    TOTAL_LABEL_STYLE if index == last_total else ITEM_STYLE,
+                ),
+                Paragraph(
+                    str(value),
+                    TOTAL_VALUE_STYLE if index == last_total else ITEM_STYLE,
+                ),
+            ]
+            for index, (label, value) in enumerate(totals_rows)
         ],
         colWidths=[5.4 * cm, 3.6 * cm],
         hAlign="RIGHT",
     )
     totals_style: list[tuple[object, ...]] = [
         ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ("GRID", (0, 0), (-1, -2), 0.4, BORDER),
-        ("TOPPADDING", (0, 0), (-1, -1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LINEBELOW", (0, 0), (-1, last_total - 1), 0.3, BORDER),
+        ("LINEABOVE", (0, last_total), (-1, last_total), 1.2, VIOLET),
+        ("BACKGROUND", (0, last_total), (-1, last_total), VIOLET_PALE),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("TOPPADDING", (0, last_total), (-1, last_total), 9),
+        ("BOTTOMPADDING", (0, last_total), (-1, last_total), 9),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
     ]
-    totals_style.append(
-        ("BACKGROUND", (0, len(totals_rows) - 1), (-1, len(totals_rows) - 1), BLACK)
-    )
-    totals_style.append(
-        ("TEXTCOLOR", (0, len(totals_rows) - 1), (-1, len(totals_rows) - 1), GOLD_LIGHT)
-    )
-    totals_style.append(
-        (
-            "FONTNAME",
-            (0, len(totals_rows) - 1),
-            (-1, len(totals_rows) - 1),
-            "Helvetica-Bold",
-        )
-    )
     totals_table.setStyle(TableStyle(totals_style))
     story.append(totals_table)
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 12))
 
     # -- Valor en letras + CUFE ----------------------------------------------
     story.append(
         Paragraph(
-            f'<font color="#52525B"><b>Valor en letras:</b></font> '
+            f'<font color="#5B21B6"><b>Valor en letras:</b></font> '
             f"{escape(number_to_words_es_co(invoice.total))}",
             VALUE_STYLE,
         )
     )
-    story.append(Spacer(1, 4))
+    story.append(Spacer(1, 6))
     visible_cufe = f"{cufe[:8]}…{cufe[-4:]}" if len(cufe) > 16 else cufe
     story.append(
         Paragraph(
-            f'<font color="#52525B"><b>CUFE:</b></font> {escape(visible_cufe)} '
-            '<font color="#A1A1AA">(completo en el código QR)</font>',
+            f'<font color="#5B21B6"><b>CUFE:</b></font> {escape(visible_cufe)} '
+            '<font color="#6B7280">(completo en el código QR)</font>',
             VALUE_STYLE,
         )
     )
-    story.append(Spacer(1, 10))
+    story.append(Spacer(1, 14))
 
     # -- QR + leyendas --------------------------------------------------------
     payload = build_qr_payload(
@@ -390,27 +429,28 @@ def build_invoice_pdf(
         tax_amounts=tax_amounts,
         issue_time=issue_time,
     )
-    qr_image = Image(io.BytesIO(build_qr_png(payload)), width=3.4 * cm, height=3.4 * cm)
+    qr_image = Image(io.BytesIO(build_qr_png(payload)), width=4.2 * cm, height=4.2 * cm)
     legends = [
         Paragraph(escape(LEGAL_LEGEND), LEGAL_STYLE),
-        Spacer(1, 6),
+        Spacer(1, 8),
     ]
     if environment == "HABILITACION":
         legends.append(Paragraph(escape(HABILITACION_LEGEND), LEGAL_STYLE))
-        legends.append(Spacer(1, 6))
+        legends.append(Spacer(1, 8))
     legends.append(Paragraph(escape(LOCAL_NOTE), LEGAL_STYLE))
 
-    footer = Table([[qr_image, legends]], colWidths=[4 * cm, 13.8 * cm])
+    footer = Table([[qr_image, legends]], colWidths=[4.8 * cm, 13.0 * cm])
     footer.setStyle(
         TableStyle(
             [
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("BOX", (0, 0), (-1, -1), 0.7, BORDER),
+                ("BOX", (0, 0), (-1, -1), 0.4, BORDER),
+                ("LINEABOVE", (0, 0), (-1, 0), 1.2, VIOLET_LIGHT),
                 ("BACKGROUND", (0, 0), (-1, -1), SOFT_BG),
-                ("LEFTPADDING", (0, 0), (-1, -1), 8),
-                ("RIGHTPADDING", (0, 0), (-1, -1), 8),
-                ("TOPPADDING", (0, 0), (-1, -1), 8),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
             ]
         )
     )

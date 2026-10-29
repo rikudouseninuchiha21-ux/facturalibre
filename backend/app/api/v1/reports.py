@@ -11,7 +11,7 @@ from decimal import Decimal
 from typing import Annotated, Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -42,8 +42,13 @@ from app.application.report_schemas import (
     TrialBalanceResponse,
     TrialBalanceRow,
 )
+from app.application.reports.excel_exporter import (
+    export_balance_sheet_xlsx,
+    export_income_statement_xlsx,
+)
 from app.domain.accounting_repository import AccountingRepository
 from app.domain.calculations import ZERO_MONEY, round_money
+from app.domain.company_setting_repository import CompanySettingRepository
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.models.accounting import (
     AccountingAccount,
@@ -975,6 +980,51 @@ def export_financial_report_csv(
     return StreamingResponse(
         _csv_stream(fieldnames, rows),
         media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+
+@router.get("/export/xlsx")
+def export_financial_report_xlsx(
+    repository: AccountingRepositoryDep,
+    report: Annotated[str, Query()],
+    from_date: Annotated[str | None, Query()] = None,
+    to_date: Annotated[str | None, Query()] = None,
+    as_of_date: Annotated[str | None, Query()] = None,
+) -> Response:
+    """Exporta el Estado de Resultados o el Balance General a un XLSX formateado."""
+    company = CompanySettingRepository(repository.db).get()
+    company_name = company.name if company is not None else "VANTAGE"
+
+    if report == "income-statement":
+        start = _parse_date(from_date)
+        end = _parse_date(to_date)
+        statement = _compute_income_statement(repository, start, end)
+        content = export_income_statement_xlsx(
+            statement,
+            company_name=company_name,
+            from_date=start,
+            to_date=end,
+        )
+        filename = "estado-resultados.xlsx"
+    elif report == "balance-sheet":
+        cutoff = _parse_date(as_of_date)
+        sheet = _compute_balance_sheet(repository, cutoff)
+        content = export_balance_sheet_xlsx(
+            sheet,
+            company_name=company_name,
+            as_of_date=cutoff,
+        )
+        filename = "balance-general.xlsx"
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="report debe ser income-statement o balance-sheet",
+        )
+
+    return Response(
+        content=content,
+        media_type=("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 

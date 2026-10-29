@@ -1,12 +1,14 @@
-"""Pruebas de exportación CSV de los estados financieros."""
+"""Pruebas de exportación XLSX de los estados financieros."""
 
 from __future__ import annotations
 
+import io
 from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
 from fastapi.testclient import TestClient
+from openpyxl import load_workbook
 from sqlalchemy.orm import Session
 
 from app.domain.models.accounting import (
@@ -17,6 +19,7 @@ from app.domain.models.accounting import (
 )
 
 D = Decimal
+XLSX_MEDIA_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 
 def _post_entry(
@@ -46,7 +49,10 @@ def _post_entry(
     db.flush()
 
 
-def test_export_income_statement_csv(client: TestClient, db_session: Session) -> None:
+def test_export_income_statement_xlsx(
+    client: TestClient,
+    db_session: Session,
+) -> None:
     _post_entry(
         db_session,
         date(2026, 3, 2),
@@ -61,7 +67,7 @@ def test_export_income_statement_csv(client: TestClient, db_session: Session) ->
     )
 
     response = client.get(
-        "/api/v1/reports/export/csv",
+        "/api/v1/reports/export/xlsx",
         params={
             "report": "income-statement",
             "from_date": "2026-03-01",
@@ -69,20 +75,44 @@ def test_export_income_statement_csv(client: TestClient, db_session: Session) ->
         },
     )
     assert response.status_code == 200, response.text
-    assert response.headers["content-type"].startswith("text/csv")
-    assert 'filename="estado-resultados.csv"' in response.headers["content-disposition"]
+    assert response.headers["content-type"] == XLSX_MEDIA_TYPE
+    assert 'filename="estado-resultados.xlsx"' in response.headers["content-disposition"]
 
-    text = response.content.decode("utf-8-sig")
-    lines = text.splitlines()
-    assert lines[0] == "Tipo,Código,Cuenta,Saldo"
-    assert any(line.startswith("Ingreso,4135,") and line.endswith(",1000.00") for line in lines)
-    assert any(
-        line.startswith("Gasto/Costo,510506,") and line.endswith(",250.00") for line in lines
-    )
-    assert "UTILIDAD NETA,,,750.00" in lines
+    workbook = load_workbook(io.BytesIO(response.content), data_only=True)
+    sheet = workbook.active
+    assert sheet["A1"].value == "VANTAGE - Estado de Resultados"
+    assert "Empresa:" in str(sheet["A2"].value)
+    assert [sheet.cell(row=4, column=column).value for column in range(1, 5)] == [
+        "Tipo",
+        "Código",
+        "Cuenta",
+        "Saldo",
+    ]
+
+    values: dict[str, Decimal] = {}
+    number_formats: dict[str, str] = {}
+    for row in range(5, sheet.max_row + 1):
+        code = sheet.cell(row=row, column=2).value
+        if code:
+            values[str(code)] = Decimal(str(sheet.cell(row=row, column=4).value))
+            number_formats[str(code)] = sheet.cell(row=row, column=4).number_format
+
+    assert values["4135"] == D("1000.00")
+    assert values["510506"] == D("250.00")
+    assert number_formats["4135"] == "#,##0.00"
+
+    totals = {
+        str(sheet.cell(row=row, column=1).value): Decimal(str(sheet.cell(row=row, column=4).value))
+        for row in range(5, sheet.max_row + 1)
+        if str(sheet.cell(row=row, column=1).value or "").startswith("UTILIDAD")
+    }
+    assert totals["UTILIDAD NETA"] == D("750.00")
 
 
-def test_export_balance_sheet_csv(client: TestClient, db_session: Session) -> None:
+def test_export_balance_sheet_xlsx(
+    client: TestClient,
+    db_session: Session,
+) -> None:
     _post_entry(
         db_session,
         date(2026, 3, 2),
@@ -91,15 +121,26 @@ def test_export_balance_sheet_csv(client: TestClient, db_session: Session) -> No
     )
 
     response = client.get(
-        "/api/v1/reports/export/csv",
+        "/api/v1/reports/export/xlsx",
         params={
             "report": "balance-sheet",
             "as_of_date": "2026-03-31",
         },
     )
     assert response.status_code == 200, response.text
-    assert 'filename="balance-general.csv"' in response.headers["content-disposition"]
-    text = response.content.decode("utf-8-sig")
-    assert text.splitlines()[0] == "Tipo,Código,Cuenta,Saldo"
-    assert "TOTAL ACTIVO,,,500.00" in text
-    assert "TOTAL PATRIMONIO,,,500.00" in text
+    assert response.headers["content-type"] == XLSX_MEDIA_TYPE
+    assert 'filename="balance-general.xlsx"' in response.headers["content-disposition"]
+
+    workbook = load_workbook(io.BytesIO(response.content), data_only=True)
+    sheet = workbook.active
+    assert sheet["A1"].value == "VANTAGE - Balance General"
+    assert "Empresa:" in str(sheet["A2"].value)
+
+    rows = {
+        str(sheet.cell(row=row, column=1).value): Decimal(str(sheet.cell(row=row, column=4).value))
+        for row in range(5, sheet.max_row + 1)
+        if sheet.cell(row=row, column=1).value
+    }
+    assert rows["TOTAL ACTIVO"] == D("500.00")
+    assert rows["TOTAL PATRIMONIO"] == D("500.00")
+    assert rows["PASIVO + PATRIMONIO"] == D("500.00")

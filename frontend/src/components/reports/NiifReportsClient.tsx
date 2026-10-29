@@ -538,7 +538,7 @@ export function NiifReportsClient() {
     try {
       await downloadFile(
         exportHref,
-        tab === "balance" ? "balance-general.csv" : "estado-resultados.csv",
+        tab === "balance" ? "balance-general.xlsx" : "estado-resultados.xlsx",
         "No se pudo exportar el reporte",
       );
       // Si el navegador bloquea la descarga programática del blob, el usuario

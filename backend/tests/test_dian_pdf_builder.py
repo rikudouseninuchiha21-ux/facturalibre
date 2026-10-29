@@ -51,6 +51,7 @@ def test_pdf_contains_cufe_and_legends(db_session: Session) -> None:
     reader = PdfReader(io.BytesIO(pdf))
     text = "\n".join(page.extract_text() or "" for page in reader.pages)
 
+    assert "VANTAGE" in text
     assert cufe[:8] in text
     assert "Art. 779" in text
     assert "sin validez fiscal" in text

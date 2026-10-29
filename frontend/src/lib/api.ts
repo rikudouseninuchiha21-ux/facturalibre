@@ -2894,5 +2894,5 @@ export function getFinancialReportExportUrl(
   if (params.asOfDate) {
     search.set("as_of_date", params.asOfDate);
   }
-  return `/api/v1/reports/export/csv?${search.toString()}`;
+  return `/api/v1/reports/export/xlsx?${search.toString()}`;
 }
