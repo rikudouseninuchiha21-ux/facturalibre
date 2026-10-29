@@ -986,12 +986,12 @@ export function getWarehouses(cookieHeader?: string): Promise<Warehouse[]> {
  * sesión automáticamente con `credentials: "include"`, obtiene el blob y
  * fuerza la descarga mediante un enlace temporal.
  */
-export async function downloadInvoicesCsv(): Promise<void> {
-  downloadFileNative("/api/v1/reports/invoices.csv");
+export function downloadInvoicesCsv(): Promise<void> {
+  return downloadFileNative("/api/v1/reports/invoices.csv", "facturas.csv");
 }
 
-export async function downloadPaymentsCsv(): Promise<void> {
-  downloadFileNative("/api/v1/reports/payments.csv");
+export function downloadPaymentsCsv(): Promise<void> {
+  return downloadFileNative("/api/v1/reports/payments.csv", "pagos.csv");
 }
 
 async function errorDetail(response: Response, fallback: string): Promise<string> {
@@ -1041,44 +1041,58 @@ function filenameFromDisposition(disposition: string | null): string | null {
   return plain?.[1]?.trim() ?? null;
 }
 
-/**
- * Descarga nativa: abre el endpoint en una pestaña nueva.
- *
- * El backend responde con `Content-Disposition: attachment`, por lo que el
- * navegador delega la descarga a su gestor nativo (sin fetch ni Blob).
- */
-export function downloadFileNative(url: string): void {
-  if (typeof window === "undefined") {
-    return;
-  }
+function defaultDownloadName(url: string): string {
+  const path = url.split("?")[0]?.toLowerCase() ?? "";
 
-  const popup = window.open(url, "_blank");
-  if (popup) {
-    return;
+  if (path.endsWith(".pdf")) {
+    return "documento.pdf";
   }
+  if (path.endsWith(".xlsx")) {
+    return "reporte.xlsx";
+  }
+  if (path.endsWith(".csv")) {
+    return "reporte.csv";
+  }
+  if (path.endsWith(".xml")) {
+    return "documento.xml";
+  }
+  if (path.endsWith(".zip")) {
+    return "archivo.zip";
+  }
+  return "descarga";
+}
 
-  // Fallback si el navegador bloquea la pestaña emergente.
-  const link = document.createElement("a");
-  link.href = url;
-  link.target = "_blank";
-  link.rel = "noopener";
-  link.style.display = "none";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+function safeFileName(fileName: string): string {
+  const cleaned = fileName.replace(/[\\/]/g, "_").trim();
+  return cleaned.length > 0 ? cleaned : "descarga";
+}
+
+function isHtmlPayload(contentType: string, fileName: string): boolean {
+  return (
+    contentType.includes("text/html") ||
+    contentType.includes("application/xhtml+xml") ||
+    fileName.toLowerCase().endsWith(".html")
+  );
 }
 
 /**
- * Descarga un archivo protegido por cookie con manejo uniforme de errores.
+ * Descarga un archivo protegido por cookie mediante `fetch` + Blob.
  *
- * Se conserva como fallback para flujos que necesiten mostrar el error JSON
- * en la propia interfaz. La descarga principal usa `downloadFileNative`.
+ * Se usa `fetch` (y no `window.open`) para poder inspeccionar el estado HTTP
+ * antes de descargar: si el backend responde 401/403/422/500, se lee el JSON
+ * de error y se lanza una excepción en lugar de guardar el error como archivo.
+ * El nombre siempre se fija en `link.download`, por lo que el navegador nunca
+ * genera nombres UUID sin extensión.
  */
 export async function downloadFile(
   path: string,
   fallbackFileName: string,
   errorLabel = "No se pudo descargar el archivo",
 ): Promise<void> {
+  if (typeof window === "undefined") {
+    throw new ApiError("La descarga solo está disponible en el navegador.", 0);
+  }
+
   const response = await fetch(path, {
     credentials: "include",
     cache: "no-store",
@@ -1091,20 +1105,30 @@ export async function downloadFile(
   }
 
   const contentType = response.headers.get("Content-Type") ?? "";
+  const dispositionFileName = filenameFromDisposition(
+    response.headers.get("Content-Disposition"),
+  );
+  const fileName = safeFileName(dispositionFileName ?? fallbackFileName);
+
+  // Un 200 con JSON o HTML no es un archivo descargable: es un error de la API
+  // o la página de login devuelta tras expirar la sesión.
   if (contentType.includes("application/json")) {
     const detail = await errorDetail(response, fallback);
     throw new ApiError(`${errorLabel}: ${detail}`, response.status);
   }
+  if (isHtmlPayload(contentType, fileName)) {
+    throw new ApiError(
+      `${errorLabel}: la sesión expiró o el servidor devolvió una página HTML en vez del archivo.`,
+      response.status,
+    );
+  }
 
-  const fileName =
-    filenameFromDisposition(response.headers.get("Content-Disposition")) ??
-    fallbackFileName;
   const buffer = await response.arrayBuffer();
   const blob = new Blob([buffer], { type: contentType || "application/octet-stream" });
-  const url = URL.createObjectURL(blob);
+  const objectUrl = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
-  link.href = url;
+  link.href = objectUrl;
   link.download = fileName;
   link.rel = "noopener";
   link.style.display = "none";
@@ -1114,16 +1138,32 @@ export async function downloadFile(
   } catch {
     // Fallback para navegadores/webviews que bloquean clicks programáticos
     // sobre blob URLs: deja que el navegador gestione la descarga nativa.
-    if (typeof window !== "undefined") {
-      window.location.assign(path);
-    }
+    window.location.assign(path);
     return;
+  } finally {
+    // Mantener el ancla en el DOM mientras el navegador inicia la descarga y
+    // revocar el blob después: hacerlo de inmediato puede cancelarla.
+    window.setTimeout(() => {
+      link.remove();
+      URL.revokeObjectURL(objectUrl);
+    }, 1_500);
   }
-  // Mantener el ancla en el DOM mientras el navegador procesa la descarga.
-  // Retirarla de inmediato puede cancelarla en Firefox/Safari.
-  window.setTimeout(() => link.remove(), 5000);
-  // Revocar el blob demasiado pronto también puede cancelar la descarga.
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/**
+ * Alias histórico de `downloadFile`.
+ *
+ * Antes abría el endpoint con `window.open`; ahora usa `fetch` + Blob para
+ * detectar errores HTTP y evitar que un JSON de FastAPI se guarde como archivo
+ * con nombre UUID. Devuelve una promesa para que el componente pueda mostrar
+ * el mensaje real con `try/catch`.
+ */
+export function downloadFileNative(
+  url: string,
+  fallbackFileName = defaultDownloadName(url),
+  errorLabel = "No se pudo descargar el archivo",
+): Promise<void> {
+  return downloadFile(url, fallbackFileName, errorLabel);
 }
 
 export function createWarehouse(
@@ -2713,20 +2753,19 @@ export interface RegeneratedCufe {
 function downloadInvoiceDocument(
   invoiceId: string,
   extension: "xml" | "pdf",
-): void {
-  downloadFileNative(
+): Promise<void> {
+  return downloadFileNative(
     `/api/v1/invoices/${encodeURIComponent(invoiceId)}/${extension}`,
+    extension === "pdf" ? "factura.pdf" : "factura.xml",
   );
 }
 
 export function downloadInvoiceXml(invoiceId: string): Promise<void> {
-  downloadInvoiceDocument(invoiceId, "xml");
-  return Promise.resolve();
+  return downloadInvoiceDocument(invoiceId, "xml");
 }
 
 export function downloadInvoicePdf(invoiceId: string): Promise<void> {
-  downloadInvoiceDocument(invoiceId, "pdf");
-  return Promise.resolve();
+  return downloadInvoiceDocument(invoiceId, "pdf");
 }
 
 export function regenerateInvoiceCufe(
@@ -2743,25 +2782,23 @@ export function regenerateInvoiceCufe(
 function downloadPayrollDocument(
   periodId: string,
   extension: "xml" | "pdf" | "pila",
-): void {
-  downloadFileNative(
+): Promise<void> {
+  return downloadFileNative(
     `/api/v1/payroll/periods/${encodeURIComponent(periodId)}/${extension}`,
+    extension === "pdf" ? "nomina.pdf" : extension === "xml" ? "nomina.xml" : "pila.xml",
   );
 }
 
 export function downloadPayrollXml(periodId: string): Promise<void> {
-  downloadPayrollDocument(periodId, "xml");
-  return Promise.resolve();
+  return downloadPayrollDocument(periodId, "xml");
 }
 
 export function downloadPayrollPdf(periodId: string): Promise<void> {
-  downloadPayrollDocument(periodId, "pdf");
-  return Promise.resolve();
+  return downloadPayrollDocument(periodId, "pdf");
 }
 
 export function downloadPayrollPila(periodId: string): Promise<void> {
-  downloadPayrollDocument(periodId, "pila");
-  return Promise.resolve();
+  return downloadPayrollDocument(periodId, "pila");
 }
 
 // -- Reportes NIIF (Fase 39C) ------------------------------------------------

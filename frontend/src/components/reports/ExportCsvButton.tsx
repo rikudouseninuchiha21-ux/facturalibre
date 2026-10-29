@@ -12,9 +12,26 @@ interface ExportCsvButtonProps {
 export function ExportCsvButton({
   label,
   path,
+  fileName,
 }: ExportCsvButtonProps) {
+  async function handleDownload(): Promise<void> {
+    try {
+      await downloadFileNative(path, fileName);
+    } catch (cause) {
+      window.alert(
+        cause instanceof Error
+          ? cause.message
+          : "No se pudo descargar el archivo. Inténtalo de nuevo.",
+      );
+    }
+  }
+
   return (
-    <Button onClick={() => downloadFileNative(path)}>
+    <Button
+      onClick={() => {
+        void handleDownload();
+      }}
+    >
       {label}
     </Button>
   );

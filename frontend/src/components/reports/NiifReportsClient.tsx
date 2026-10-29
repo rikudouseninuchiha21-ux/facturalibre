@@ -530,8 +530,19 @@ export function NiifReportsClient() {
     setDrillError(null);
   }
 
-  function handleExport(): void {
-    downloadFileNative(exportHref);
+  async function handleExport(): Promise<void> {
+    try {
+      await downloadFileNative(
+        exportHref,
+        tab === "balance" ? "balance-general.xlsx" : "estado-resultados.xlsx",
+      );
+    } catch (cause) {
+      window.alert(
+        cause instanceof Error
+          ? cause.message
+          : "No se pudo descargar el archivo. Inténtalo de nuevo.",
+      );
+    }
   }
 
   return (
@@ -572,7 +583,12 @@ export function NiifReportsClient() {
             ) : null}
           </div>
           {tab !== "cash" ? (
-            <Button onClick={handleExport} className="self-start lg:self-auto">
+            <Button
+              onClick={() => {
+                void handleExport();
+              }}
+              className="self-start lg:self-auto"
+            >
               <Download className="mr-2 size-4" aria-hidden="true" />
               Exportar a Excel
             </Button>
