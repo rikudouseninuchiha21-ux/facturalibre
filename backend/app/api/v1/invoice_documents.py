@@ -44,8 +44,11 @@ DianServiceDep = Annotated[DianDocumentService, Depends(get_dian_service)]
 
 def _attachment_filename(invoice: Invoice, extension: str) -> str:
     """FV- + número completo de la factura (el número ya trae el prefijo)."""
-    number = invoice.number or str(invoice.id)
-    return f"FV-{number}.{extension}"
+    if invoice.number:
+        return f"FV-{invoice.number}.{extension}"
+    # Los borradores aún no tienen número autorizado. Evita exponer el UUID
+    # completo como nombre de archivo.
+    return f"FV-BORRADOR-{invoice.id.hex[:8].upper()}.{extension}"
 
 
 @router.get(

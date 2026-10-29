@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  downloadFile,
   getDrillDownReport,
   getFinancialReportExportUrl,
   getNiifBalanceSheet,
@@ -207,6 +208,7 @@ export function NiifReportsClient() {
   const [balance, setBalance] = useState<NiifBalanceSheet | null>(null);
   const [cash, setCash] = useState<NiifCashFlow | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [drillAccount, setDrillAccount] = useState<{ code: string; name: string } | null>(null);
@@ -529,6 +531,26 @@ export function NiifReportsClient() {
     setDrillError(null);
   }
 
+  async function handleExport(): Promise<void> {
+    setError(null);
+    setIsExporting(true);
+    try {
+      await downloadFile(
+        exportHref,
+        tab === "balance" ? "balance-general.csv" : "estado-resultados.csv",
+        "No se pudo exportar el reporte",
+      );
+    } catch (cause) {
+      setError(
+        cause instanceof Error
+          ? cause.message
+          : "No se pudo exportar el reporte.",
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <Card>
@@ -567,13 +589,14 @@ export function NiifReportsClient() {
             ) : null}
           </div>
           {tab !== "cash" ? (
-            <a
-              href={exportHref}
-              className="inline-flex items-center justify-center gap-2 self-start rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-500 lg:self-auto"
+            <Button
+              onClick={() => void handleExport()}
+              disabled={isExporting}
+              className="self-start lg:self-auto"
             >
-              <Download className="size-4" aria-hidden="true" />
-              Exportar a Excel
-            </a>
+              <Download className="mr-2 size-4" aria-hidden="true" />
+              {isExporting ? "Exportando..." : "Exportar a Excel"}
+            </Button>
           ) : null}
         </CardContent>
       </Card>

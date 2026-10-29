@@ -987,24 +987,100 @@ export function getWarehouses(cookieHeader?: string): Promise<Warehouse[]> {
  * fuerza la descarga mediante un enlace temporal.
  */
 export async function downloadInvoicesCsv(): Promise<void> {
-  return downloadCsv("/api/v1/reports/invoices.csv", "facturas.csv");
+  return downloadFile(
+    "/api/v1/reports/invoices.csv",
+    "facturas.csv",
+    "No se pudo descargar el listado de facturas",
+  );
 }
 
 export async function downloadPaymentsCsv(): Promise<void> {
-  return downloadCsv("/api/v1/reports/payments.csv", "pagos.csv");
+  return downloadFile(
+    "/api/v1/reports/payments.csv",
+    "pagos.csv",
+    "No se pudo descargar el listado de pagos",
+  );
 }
 
-async function downloadCsv(path: string, fileName: string): Promise<void> {
+async function errorDetail(response: Response, fallback: string): Promise<string> {
+  try {
+    const body = (await response.json()) as { detail?: unknown; message?: unknown };
+    const detail = body.detail ?? body.message;
+    if (typeof detail === "string") {
+      return detail;
+    }
+    if (Array.isArray(detail)) {
+      const messages = detail
+        .map((item) => {
+          if (typeof item === "string") return item;
+          if (item && typeof item === "object" && "msg" in item) {
+            return String((item as { msg: unknown }).msg);
+          }
+          return "";
+        })
+        .filter(Boolean);
+      if (messages.length > 0) {
+        return messages.join("; ");
+      }
+    }
+  } catch {
+    // La respuesta de error no era JSON.
+  }
+  return fallback;
+}
+
+function filenameFromDisposition(disposition: string | null): string | null {
+  if (!disposition) {
+    return null;
+  }
+  const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (encoded?.[1]) {
+    try {
+      return decodeURIComponent(encoded[1]);
+    } catch {
+      return encoded[1];
+    }
+  }
+  const quoted = disposition.match(/filename="([^"]+)"/i);
+  if (quoted?.[1]) {
+    return quoted[1];
+  }
+  const plain = disposition.match(/filename=([^;]+)/i);
+  return plain?.[1]?.trim() ?? null;
+}
+
+/**
+ * Descarga un archivo protegido por cookie con manejo uniforme de errores.
+ *
+ * No descarga nada si el backend responde 4xx/5xx o si devuelve JSON por
+ * error. Si la respuesta es válida, usa el nombre del header
+ * `Content-Disposition` y cae al nombre proporcionado como fallback.
+ */
+export async function downloadFile(
+  path: string,
+  fallbackFileName: string,
+  errorLabel = "No se pudo descargar el archivo",
+): Promise<void> {
   const response = await fetch(path, {
     credentials: "include",
     cache: "no-store",
   });
 
+  const fallback = `${response.status} ${response.statusText}`.trim();
   if (!response.ok) {
-    const fallback = `${response.status} ${response.statusText}`.trim();
-    throw new Error(`Error al descargar ${path}: ${fallback}`);
+    const detail = await errorDetail(response, fallback);
+    throw new ApiError(`${errorLabel}: ${detail}`, response.status);
   }
 
+  const contentType = response.headers.get("Content-Type") ?? "";
+  if (contentType.includes("application/json")) {
+    const detail = await errorDetail(response, fallback);
+    throw new ApiError(`${errorLabel}: ${detail}`, response.status);
+  }
+
+  const fileName =
+    filenameFromDisposition(response.headers.get("Content-Disposition")) ??
+    fallbackFileName;
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
 
@@ -2605,39 +2681,11 @@ async function downloadInvoiceDocument(
   invoiceId: string,
   extension: "xml" | "pdf",
 ): Promise<void> {
-  const response = await fetch(
+  return downloadFile(
     `/api/v1/invoices/${encodeURIComponent(invoiceId)}/${extension}`,
-    { credentials: "include", cache: "no-store" },
+    `FV-documento.${extension}`,
+    "No se pudo descargar el documento DIAN",
   );
-
-  if (!response.ok) {
-    const fallback = `${response.status} ${response.statusText}`.trim();
-    let detail = fallback;
-    try {
-      const body = (await response.json()) as { detail?: unknown };
-      if (typeof body.detail === "string") {
-        detail = body.detail;
-      }
-    } catch {
-      // La respuesta de error no era JSON; se conserva el mensaje HTTP.
-    }
-    throw new ApiError(
-      `No se pudo descargar el documento DIAN: ${detail}`,
-      response.status,
-    );
-  }
-
-  const disposition = response.headers.get("Content-Disposition") ?? "";
-  const match = disposition.match(/filename="([^"]+)"/);
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = match?.[1] ?? `FV-documento.${extension}`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
 export function downloadInvoiceXml(invoiceId: string): Promise<void> {
@@ -2663,35 +2711,11 @@ async function downloadPayrollDocument(
   periodId: string,
   extension: "xml" | "pdf" | "pila",
 ): Promise<void> {
-  const response = await fetch(
+  return downloadFile(
     `/api/v1/payroll/periods/${encodeURIComponent(periodId)}/${extension}`,
-    { credentials: "include", cache: "no-store" },
+    `NE-periodo.${extension}`,
+    "No se pudo descargar el documento de nómina",
   );
-  if (!response.ok) {
-    const fallback = `${response.status} ${response.statusText}`.trim();
-    let detail = fallback;
-    try {
-      const body = (await response.json()) as { detail?: unknown };
-      if (typeof body.detail === "string") detail = body.detail;
-    } catch {
-      // La respuesta de error no era JSON.
-    }
-    throw new ApiError(
-      `No se pudo descargar el documento de nómina: ${detail}`,
-      response.status,
-    );
-  }
-  const disposition = response.headers.get("Content-Disposition") ?? "";
-  const match = disposition.match(/filename="([^"]+)"/);
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = match?.[1] ?? `NE-periodo.${extension}`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 }
 
 export function downloadPayrollXml(periodId: string): Promise<void> {
