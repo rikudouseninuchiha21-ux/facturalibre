@@ -11,6 +11,13 @@
 
 const API_PREFIX = "/api/v1";
 
+export interface UserCompany {
+  id: string;
+  name: string;
+  tax_id: string | null;
+  role: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -18,6 +25,58 @@ export interface User {
   role: string;
   is_active: boolean;
   created_at: string;
+  active_company_id?: string | null;
+  active_company_name?: string | null;
+  companies?: UserCompany[];
+}
+
+export interface Company {
+  id: string;
+  name: string;
+  tax_id: string | null;
+  dv: string | null;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  tax_regime: string | null;
+  person_type: string | null;
+  fiscal_responsibility: string | null;
+  dian_municipality_code: string | null;
+  dian_department_code: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CompanyMembership {
+  company: Company;
+  role: string;
+}
+
+export interface CompanyCreateInput {
+  name: string;
+  tax_id?: string;
+  dv?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  tax_regime?: string;
+  person_type?: string;
+  fiscal_responsibility?: string;
+  dian_municipality_code?: string;
+  dian_department_code?: string;
+}
+
+export interface CompanyUser {
+  user_id: string;
+  email: string;
+  full_name: string;
+  role: string;
+  is_active: boolean;
+}
+
+export interface CompanyUserAssignInput {
+  user_id: string;
+  role: string;
 }
 
 export interface LoginInput {
@@ -1216,6 +1275,44 @@ export function logout(): Promise<void> {
 
 export function getCurrentUser(cookieHeader?: string): Promise<User> {
   return apiGet<User>("/auth/me", cookieHeader);
+}
+
+export function switchCompany(companyId: string): Promise<User> {
+  return apiPost<User>(
+    `/auth/switch-company/${encodeURIComponent(companyId)}`,
+  );
+}
+
+export function getCompanies(
+  cookieHeader?: string,
+): Promise<CompanyMembership[]> {
+  return apiGet<CompanyMembership[]>("/companies", cookieHeader);
+}
+
+export function createCompany(
+  payload: CompanyCreateInput,
+): Promise<Company> {
+  return apiPost<Company>("/companies", payload);
+}
+
+export function getCompanyUsers(
+  companyId: string,
+  cookieHeader?: string,
+): Promise<CompanyUser[]> {
+  return apiGet<CompanyUser[]>(
+    `/companies/${encodeURIComponent(companyId)}/users`,
+    cookieHeader,
+  );
+}
+
+export function assignCompanyUser(
+  companyId: string,
+  payload: CompanyUserAssignInput,
+): Promise<CompanyUser> {
+  return apiPost<CompanyUser>(
+    `/companies/${encodeURIComponent(companyId)}/users`,
+    payload,
+  );
 }
 
 export function getPurchases(cookieHeader?: string): Promise<Purchase[]> {

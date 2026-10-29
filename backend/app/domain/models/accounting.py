@@ -24,6 +24,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 
@@ -126,16 +127,17 @@ class AccountingAccount(Base):
     entry_lines: Mapped[list[AccountingEntryLine]] = relationship(back_populates="account")
 
 
-class AccountingEntry(Base):
+class AccountingEntry(CompanyScopedMixin, Base):
     """Asiento o comprobante contable de partida doble."""
 
     __tablename__ = "accounting_entries"
 
     __table_args__ = (
         UniqueConstraint(
+            "company_id",
             "source_type",
             "source_id",
-            name="uq_accounting_entries_source_type_source_id",
+            name="uq_accounting_entries_company_source",
         ),
     )
 
@@ -182,7 +184,7 @@ class AccountingEntry(Base):
     )
 
 
-class AccountingEntryLine(Base):
+class AccountingEntryLine(CompanyScopedMixin, Base):
     """Movimiento débito/crédito de un asiento."""
 
     __tablename__ = "accounting_entry_lines"
@@ -237,7 +239,7 @@ class AccountingEntryLine(Base):
         return self.account.name
 
 
-class FiscalPeriod(Base):
+class FiscalPeriod(CompanyScopedMixin, Base):
     """Periodo contable mensual.
 
     La ausencia de fila equivale a un periodo abierto. La fila se crea cuando
@@ -251,7 +253,12 @@ class FiscalPeriod(Base):
     __table_args__ = (
         CheckConstraint("month >= 1 AND month <= 12", name="ck_fiscal_periods_month_range"),
         CheckConstraint("year >= 2000", name="ck_fiscal_periods_year_min"),
-        UniqueConstraint("month", "year", name="uq_fiscal_periods_month_year"),
+        UniqueConstraint(
+            "company_id",
+            "month",
+            "year",
+            name="uq_fiscal_periods_company_month_year",
+        ),
         Index("ix_fiscal_periods_year_month", "year", "month"),
     )
 

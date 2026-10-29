@@ -27,6 +27,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.domain.models.invoice import DianDocumentStatus
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 
@@ -42,12 +43,15 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class Employee(Base):
+class Employee(CompanyScopedMixin, Base):
     """Empleado activo o histórico de la empresa."""
 
     __tablename__ = "employees"
 
-    __table_args__ = (CheckConstraint("base_salary > 0", name="ck_employees_base_salary_positive"),)
+    __table_args__ = (
+        UniqueConstraint("company_id", "document", name="uq_employees_company_document"),
+        CheckConstraint("base_salary > 0", name="ck_employees_base_salary_positive"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -55,7 +59,7 @@ class Employee(Base):
         default=uuid.uuid4,
         server_default=text("gen_random_uuid()"),
     )
-    document: Mapped[str] = mapped_column(String(30), nullable=False, unique=True)
+    document: Mapped[str] = mapped_column(String(30), nullable=False)
     first_name: Mapped[str] = mapped_column(String(100), nullable=False)
     last_name: Mapped[str] = mapped_column(String(100), nullable=False)
     email: Mapped[str | None] = mapped_column(String(255))
@@ -93,13 +97,18 @@ class Employee(Base):
     payroll_details: Mapped[list[PayrollDetail]] = relationship(back_populates="employee")
 
 
-class PayrollPeriod(Base):
+class PayrollPeriod(CompanyScopedMixin, Base):
     """Periodo mensual de liquidación de nómina."""
 
     __tablename__ = "payroll_periods"
 
     __table_args__ = (
-        UniqueConstraint("month", "year", name="uq_payroll_periods_month_year"),
+        UniqueConstraint(
+            "company_id",
+            "month",
+            "year",
+            name="uq_payroll_periods_company_month_year",
+        ),
         CheckConstraint("month BETWEEN 1 AND 12", name="ck_payroll_periods_month_range"),
         CheckConstraint("year BETWEEN 2000 AND 2100", name="ck_payroll_periods_year_range"),
     )
@@ -158,7 +167,7 @@ class PayrollPeriod(Base):
     )
 
 
-class PayrollDetail(Base):
+class PayrollDetail(CompanyScopedMixin, Base):
     """Liquidación de un empleado dentro de un periodo de nómina."""
 
     __tablename__ = "payroll_details"
@@ -227,7 +236,7 @@ class PayrollDetail(Base):
         return self.employee.document
 
 
-class PayrollContribution(Base):
+class PayrollContribution(CompanyScopedMixin, Base):
     """Aportes y prestaciones de un empleado dentro de un periodo de nómina.
 
     Una fila por ``PayrollDetail`` (1:1). Solo persisten los aportes del

@@ -68,3 +68,20 @@ class UserRead(BaseModel):
     role: UserRole
     is_active: bool
     created_at: datetime
+
+
+class UserCompanyRead(BaseModel):
+    """Empresa visible para el selector de tenant."""
+
+    id: UUID
+    name: str
+    tax_id: str | None
+    role: UserRole
+
+
+class SessionUserRead(UserRead):
+    """Usuario con la empresa activa y todas sus membresías."""
+
+    active_company_id: UUID | None = None
+    active_company_name: str | None = None
+    companies: list[UserCompanyRead] = Field(default_factory=list)

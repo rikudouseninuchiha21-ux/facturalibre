@@ -24,6 +24,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -45,11 +46,11 @@ class QuoteStatus(enum.StrEnum):
     CONVERTED = "CONVERTED"
 
 
-class Quote(Base):
+class Quote(CompanyScopedMixin, Base):
     __tablename__ = "quotes"
 
     __table_args__ = (
-        UniqueConstraint("number", name="uq_quotes_number"),
+        UniqueConstraint("company_id", "number", name="uq_quotes_company_number"),
         CheckConstraint("subtotal >= 0", name="ck_quotes_subtotal_non_negative"),
         CheckConstraint("tax_total >= 0", name="ck_quotes_tax_total_non_negative"),
         CheckConstraint("total >= 0", name="ck_quotes_total_non_negative"),

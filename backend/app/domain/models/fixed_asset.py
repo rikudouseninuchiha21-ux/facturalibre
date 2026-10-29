@@ -29,6 +29,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 TWOPLACES = Decimal("0.01")
@@ -46,13 +47,13 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class FixedAsset(Base):
+class FixedAsset(CompanyScopedMixin, Base):
     """Activo fijo sujeto a depreciación por línea recta."""
 
     __tablename__ = "fixed_assets"
 
     __table_args__ = (
-        UniqueConstraint("code", name="uq_fixed_assets_code"),
+        UniqueConstraint("company_id", "code", name="uq_fixed_assets_company_code"),
         CheckConstraint("initial_cost > 0", name="ck_fixed_assets_initial_cost_positive"),
         CheckConstraint("salvage_value >= 0", name="ck_fixed_assets_salvage_value_non_negative"),
         CheckConstraint(
@@ -134,7 +135,7 @@ class FixedAsset(Base):
         return self.accumulated_depreciation >= base
 
 
-class DepreciationEntry(Base):
+class DepreciationEntry(CompanyScopedMixin, Base):
     """Cuota mensual de depreciación de un activo fijo.
 
     La fecha se guarda como el último día del mes depreciado. La restricción

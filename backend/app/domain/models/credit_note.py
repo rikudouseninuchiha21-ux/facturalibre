@@ -24,6 +24,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -40,7 +41,7 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class CreditNote(Base):
+class CreditNote(CompanyScopedMixin, Base):
     """Nota crédito asociada a una factura de venta emitida."""
 
     __tablename__ = "credit_notes"
@@ -108,7 +109,7 @@ class CreditNote(Base):
     )
 
 
-class CreditNoteLine(Base):
+class CreditNoteLine(CompanyScopedMixin, Base):
     """Línea de una nota crédito."""
 
     __tablename__ = "credit_note_lines"

@@ -26,6 +26,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -64,11 +65,11 @@ class DianDocumentStatus(enum.StrEnum):
     RECHAZADO = "RECHAZADO"
 
 
-class Invoice(Base):
+class Invoice(CompanyScopedMixin, Base):
     __tablename__ = "invoices"
 
     __table_args__ = (
-        UniqueConstraint("number", name="uq_invoices_number"),
+        UniqueConstraint("company_id", "number", name="uq_invoices_company_number"),
         CheckConstraint("subtotal >= 0", name="ck_invoices_subtotal_non_negative"),
         CheckConstraint("tax_total >= 0", name="ck_invoices_tax_total_non_negative"),
         CheckConstraint("total >= 0", name="ck_invoices_total_non_negative"),

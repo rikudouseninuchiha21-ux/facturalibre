@@ -40,6 +40,11 @@ class User(Base):
     """
 
     __tablename__ = "users"
+    __allow_unmapped__ = True
+
+    # Contexto de la petición; no se persisten en la tabla de usuarios.
+    active_company_id: uuid.UUID | None = None
+    active_role: UserRole = UserRole.ADMIN
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -105,6 +110,12 @@ class AuthSession(Base):
         nullable=False,
         unique=True,
         comment="Hash SHA-256 del token de sesión; el token original no se almacena.",
+    )
+    active_company_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid,
+        ForeignKey("companies.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -16,6 +16,7 @@ from app.domain.exceptions import ResourceNotFoundError
 from app.domain.models.credit_note import CreditNote, CreditNoteLine, CreditNoteStatus
 from app.domain.models.idempotency_key import IdempotencyKey
 from app.domain.models.number_sequence import NumberSequence
+from app.infrastructure.tenancy import require_company_id
 
 CREDIT_NOTE_SEQUENCE_NAME = "credit_note"
 CREDIT_NOTE_SEQUENCE_PREFIX = "NC"
@@ -125,11 +126,12 @@ class CreditNoteRepository:
             self.db.execute(
                 pg_insert(NumberSequence)
                 .values(
+                    company_id=require_company_id(self.db),
                     name=CREDIT_NOTE_SEQUENCE_NAME,
                     prefix=CREDIT_NOTE_SEQUENCE_PREFIX,
                     next_number=1,
                 )
-                .on_conflict_do_nothing(index_elements=["name"])
+                .on_conflict_do_nothing(index_elements=["company_id", "name"])
             )
             sequence = self.db.scalar(
                 select(NumberSequence)

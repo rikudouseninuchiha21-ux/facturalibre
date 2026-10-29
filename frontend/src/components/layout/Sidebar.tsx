@@ -79,6 +79,7 @@ const NAVIGATION = [
       { href: "/warehouses", label: "Bodegas", icon: Warehouse, roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
       { href: "/inventory", label: "Inventario", icon: Layers, roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
       { href: "/taxes", label: "Impuestos", icon: Percent, roles: ["ADMIN", "ACCOUNTANT"] },
+      { href: "/companies", label: "Empresas", icon: Building2, roles: ["ADMIN"] },
       { href: "/settings", label: "Configuración", icon: Settings, roles: ["ADMIN"] },
     ],
   },

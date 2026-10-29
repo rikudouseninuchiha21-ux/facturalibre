@@ -16,6 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -23,7 +24,7 @@ if TYPE_CHECKING:
     from app.domain.models.quote import Quote
 
 
-class QuoteLine(Base):
+class QuoteLine(CompanyScopedMixin, Base):
     __tablename__ = "quote_lines"
 
     __table_args__ = (

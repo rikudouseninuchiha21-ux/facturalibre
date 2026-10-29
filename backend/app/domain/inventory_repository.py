@@ -10,6 +10,7 @@ from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import Session, joinedload
 
 from app.domain.models.stock import StockBalance, StockMovement, StockMovementType
+from app.infrastructure.tenancy import require_company_id
 
 COST_PRECISION = Decimal("0.0001")
 INCREASE_TYPES = (
@@ -57,7 +58,12 @@ class InventoryRepository:
         """
         statement = (
             pg_insert(StockBalance)
-            .values(item_id=item_id, warehouse_id=warehouse_id, quantity=0)
+            .values(
+                company_id=require_company_id(self.db),
+                item_id=item_id,
+                warehouse_id=warehouse_id,
+                quantity=0,
+            )
             .on_conflict_do_nothing(
                 index_elements=[StockBalance.item_id, StockBalance.warehouse_id]
             )

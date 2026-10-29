@@ -21,6 +21,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -43,7 +44,7 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class StockMovement(Base):
+class StockMovement(CompanyScopedMixin, Base):
     """Movimiento inmutable que explica una variación de stock."""
 
     __tablename__ = "stock_movements"
@@ -96,7 +97,7 @@ class StockMovement(Base):
     warehouse: Mapped[Warehouse] = relationship()
 
 
-class StockBalance(Base):
+class StockBalance(CompanyScopedMixin, Base):
     """Saldo actual por ítem y bodega, derivado del libro de movimientos."""
 
     __tablename__ = "stock_balances"

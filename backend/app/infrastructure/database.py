@@ -39,3 +39,7 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+# Registra los listeners globales de aislamiento multi-empresa.
+from app.infrastructure import tenancy as _tenancy  # noqa: E402,F401

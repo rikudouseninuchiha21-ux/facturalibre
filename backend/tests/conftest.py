@@ -10,11 +10,12 @@ from uuid import uuid4
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, create_engine, select, text
 from sqlalchemy.orm import Session
 
 from app.application.auth.security import SESSION_COOKIE_NAME, hash_session_token
 from app.domain.models.auth import AuthSession, User
+from app.domain.models.company import Company
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
@@ -59,6 +60,12 @@ def db_session(test_engine: Engine) -> Iterator[Session]:
         join_transaction_mode="create_savepoint",
         expire_on_commit=False,
     )
+    company_id = session.scalar(
+        select(Company.id).order_by(Company.created_at, Company.id).limit(1)
+    )
+    if company_id is None:
+        raise RuntimeError("La base de test no tiene una empresa inicial")
+    session.info["company_id"] = company_id
     try:
         yield session
     finally:

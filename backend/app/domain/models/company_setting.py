@@ -5,16 +5,27 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import BigInteger, Date, DateTime, String, Uuid, func, text
+from sqlalchemy import (
+    BigInteger,
+    Date,
+    DateTime,
+    String,
+    UniqueConstraint,
+    Uuid,
+    func,
+    text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 
-class CompanySetting(Base):
+class CompanySetting(CompanyScopedMixin, Base):
     """Configuración de la empresa para facturación y reportes."""
 
     __tablename__ = "company_settings"
+    __table_args__ = (UniqueConstraint("company_id", name="uq_company_settings_company_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid,

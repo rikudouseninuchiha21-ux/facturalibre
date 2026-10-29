@@ -67,12 +67,14 @@ class AuthRepository:
         user_id: UUID,
         token_hash: str,
         expires_at: datetime,
+        active_company_id: UUID | None = None,
     ) -> AuthSession:
         """Agrega una sesión a la transacción actual."""
         session = AuthSession(
             user_id=user_id,
             token=token_hash,
             expires_at=expires_at,
+            active_company_id=active_company_id,
         )
         self.db.add(session)
         self.db.flush()
@@ -80,8 +82,13 @@ class AuthRepository:
 
     def get_user_by_session(self, token_hash: str) -> User | None:
         """Devuelve el usuario activo asociado a una sesión vigente."""
+        context = self.get_session_by_token(token_hash)
+        return context[0] if context is not None else None
+
+    def get_session_by_token(self, token_hash: str) -> tuple[User, AuthSession] | None:
+        """Devuelve usuario y sesión vigentes para resolver la empresa activa."""
         statement = (
-            select(User)
+            select(User, AuthSession)
             .join(AuthSession)
             .where(
                 AuthSession.token == token_hash,
@@ -89,7 +96,12 @@ class AuthRepository:
                 User.is_active.is_(True),
             )
         )
-        return self.db.scalar(statement)
+        return self.db.execute(statement).first()
+
+    def update_session_company(self, session: AuthSession, company_id: UUID) -> None:
+        """Cambia la empresa activa de una sesión existente."""
+        session.active_company_id = company_id
+        self.db.flush()
 
     def delete_session(self, token_hash: str) -> bool:
         """Elimina una sesión por el hash de su token."""

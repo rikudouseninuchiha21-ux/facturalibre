@@ -32,6 +32,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -67,7 +68,7 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class PaymentReminder(Base):
+class PaymentReminder(CompanyScopedMixin, Base):
     """Recordatorio de cobranza enviado (o registrado) sobre una factura.
 
     ``contact_id`` se duplica desde la factura para permitir consultas de
@@ -126,7 +127,7 @@ class PaymentReminder(Base):
     creator: Mapped[User] = relationship()
 
 
-class PaymentAgreement(Base):
+class PaymentAgreement(CompanyScopedMixin, Base):
     """Acuerdo de pago (global del cliente o ligado a una factura)."""
 
     __tablename__ = "payment_agreements"
@@ -205,7 +206,7 @@ class PaymentAgreement(Base):
         return self.total_amount - self.paid_total
 
 
-class PaymentAgreementInstallment(Base):
+class PaymentAgreementInstallment(CompanyScopedMixin, Base):
     """Cuota de un acuerdo de pago."""
 
     __tablename__ = "payment_agreement_installments"

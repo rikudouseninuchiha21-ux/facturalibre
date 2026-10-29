@@ -24,6 +24,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -42,7 +43,7 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class PurchaseInvoice(Base):
+class PurchaseInvoice(CompanyScopedMixin, Base):
     """Factura de compra recibida de un proveedor."""
 
     __tablename__ = "purchase_invoices"
@@ -126,7 +127,7 @@ class PurchaseInvoice(Base):
     )
 
 
-class PurchaseLine(Base):
+class PurchaseLine(CompanyScopedMixin, Base):
     """Línea de una factura de compra."""
 
     __tablename__ = "purchase_lines"
@@ -178,7 +179,7 @@ class PurchaseLine(Base):
     item: Mapped[Item | None] = relationship(back_populates="purchase_lines")
 
 
-class PurchasePayment(Base):
+class PurchasePayment(CompanyScopedMixin, Base):
     """Pago realizado a una factura de compra (proveedor)."""
 
     __tablename__ = "purchase_payments"

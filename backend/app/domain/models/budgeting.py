@@ -26,6 +26,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -45,7 +46,7 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class CostCenter(Base):
+class CostCenter(CompanyScopedMixin, Base):
     """Centro de costo (Ventas, Administración, Producción, etc.).
 
     Dimensión contable opcional: los asientos pueden etiquetarse con un
@@ -53,6 +54,7 @@ class CostCenter(Base):
     """
 
     __tablename__ = "cost_centers"
+    __table_args__ = (UniqueConstraint("company_id", "code", name="uq_cost_centers_company_code"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid,
@@ -60,7 +62,7 @@ class CostCenter(Base):
         default=uuid.uuid4,
         server_default=text("gen_random_uuid()"),
     )
-    code: Mapped[str] = mapped_column(String(20), nullable=False, unique=True)
+    code: Mapped[str] = mapped_column(String(20), nullable=False)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[str | None] = mapped_column(Text)
     is_active: Mapped[bool] = mapped_column(
@@ -81,7 +83,7 @@ class CostCenter(Base):
     )
 
 
-class Budget(Base):
+class Budget(CompanyScopedMixin, Base):
     """Presupuesto mensual de un centro de costo.
 
     Un presupuesto agrupa líneas por cuenta PUC. Solo se puede editar en
@@ -93,10 +95,11 @@ class Budget(Base):
 
     __table_args__ = (
         UniqueConstraint(
+            "company_id",
             "cost_center_id",
             "period_year",
             "period_month",
-            name="uq_budgets_cost_center_period",
+            name="uq_budgets_company_cost_center_period",
         ),
         CheckConstraint("period_month BETWEEN 1 AND 12", name="ck_budgets_month_range"),
         CheckConstraint(
@@ -152,7 +155,7 @@ class Budget(Base):
     )
 
 
-class BudgetLine(Base):
+class BudgetLine(CompanyScopedMixin, Base):
     """Monto presupuestado para una cuenta PUC dentro de un presupuesto."""
 
     __tablename__ = "budget_lines"

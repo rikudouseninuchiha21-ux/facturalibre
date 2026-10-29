@@ -18,6 +18,7 @@ from app.domain.models.invoice import Invoice, LifecycleStatus, PaymentStatus
 from app.domain.models.invoice_line import InvoiceLine
 from app.domain.models.number_sequence import NumberSequence
 from app.domain.models.payment import Payment
+from app.infrastructure.tenancy import require_company_id
 
 INVOICE_SEQUENCE_NAME = "invoice"
 INVOICE_SEQUENCE_PREFIX = "FV"
@@ -144,11 +145,12 @@ class InvoiceRepository:
             self.db.execute(
                 pg_insert(NumberSequence)
                 .values(
+                    company_id=require_company_id(self.db),
                     name=INVOICE_SEQUENCE_NAME,
                     prefix=INVOICE_SEQUENCE_PREFIX,
                     next_number=1,
                 )
-                .on_conflict_do_nothing(index_elements=["name"])
+                .on_conflict_do_nothing(index_elements=["company_id", "name"])
             )
             sequence = self.db.scalar(
                 select(NumberSequence)

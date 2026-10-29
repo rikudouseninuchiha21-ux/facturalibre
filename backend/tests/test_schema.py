@@ -27,6 +27,7 @@ EXPECTED_TABLES = {
     "accounting_accounts",
     "accounting_entries",
     "accounting_entry_lines",
+    "companies",
     "contacts",
     "depreciation_entries",
     "employees",
@@ -44,6 +45,7 @@ EXPECTED_TABLES = {
     "stock_balances",
     "stock_movements",
     "taxes",
+    "user_companies",
     "users",
     "warehouses",
 }
@@ -122,7 +124,7 @@ def test_monetary_columns_are_numeric_not_float(engine: Engine) -> None:
 
 
 def test_version_columns_and_idempotency_unique_key(engine: Engine) -> None:
-    """Los agregados editables tienen version y la clave idempotente es única."""
+    """Los agregados editables tienen version y la idempotencia es por empresa."""
     inspector = inspect(engine)
 
     for table_name in ("contacts", "items", "taxes", "invoices", "number_sequences"):
@@ -133,4 +135,4 @@ def test_version_columns_and_idempotency_unique_key(engine: Engine) -> None:
         tuple(constraint["column_names"])
         for constraint in inspector.get_unique_constraints("idempotency_keys")
     }
-    assert ("key",) in unique_columns
+    assert ("company_id", "key") in unique_columns

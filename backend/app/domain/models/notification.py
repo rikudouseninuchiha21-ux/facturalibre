@@ -20,6 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -39,7 +40,7 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class Notification(Base):
+class Notification(CompanyScopedMixin, Base):
     """Notificación in-app dirigida a un usuario concreto.
 
     El cuerpo es texto plano (nunca se renderiza como HTML) y ``link`` es una

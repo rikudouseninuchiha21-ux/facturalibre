@@ -23,6 +23,7 @@ from app.domain.models.purchase import (
     PurchasePayment,
     PurchaseStatus,
 )
+from app.infrastructure.tenancy import require_company_id
 
 PURCHASE_SEQUENCE_NAME = "purchase"
 PURCHASE_SEQUENCE_PREFIX = "FC"
@@ -141,11 +142,12 @@ class PurchaseRepository:
             self.db.execute(
                 pg_insert(NumberSequence)
                 .values(
+                    company_id=require_company_id(self.db),
                     name=PURCHASE_SEQUENCE_NAME,
                     prefix=PURCHASE_SEQUENCE_PREFIX,
                     next_number=1,
                 )
-                .on_conflict_do_nothing(index_elements=["name"])
+                .on_conflict_do_nothing(index_elements=["company_id", "name"])
             )
             sequence = self.db.scalar(
                 select(NumberSequence)

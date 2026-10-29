@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import DateTime, Enum, Integer, String, Uuid, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -35,7 +36,7 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class Contact(Base):
+class Contact(CompanyScopedMixin, Base):
     __tablename__ = "contacts"
 
     id: Mapped[uuid.UUID] = mapped_column(

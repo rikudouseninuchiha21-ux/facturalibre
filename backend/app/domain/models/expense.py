@@ -20,10 +20,11 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 
-class Expense(Base):
+class Expense(CompanyScopedMixin, Base):
     """Gasto operativo (arriendo, servicios, papelería, etc.).
 
     Cada gasto genera automáticamente un asiento contable:

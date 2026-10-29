@@ -30,6 +30,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
@@ -56,7 +57,7 @@ def _enum_values(enum_cls: type[enum.StrEnum]) -> list[str]:
     return [member.value for member in enum_cls]
 
 
-class BankAccount(Base):
+class BankAccount(CompanyScopedMixin, Base):
     """Cuenta bancaria de la empresa.
 
     ``accounting_account_code`` apunta a la cuenta auxiliar del PUC que
@@ -69,9 +70,10 @@ class BankAccount(Base):
 
     __table_args__ = (
         UniqueConstraint(
+            "company_id",
             "bank_name",
             "account_number",
-            name="uq_bank_accounts_bank_name_account_number",
+            name="uq_bank_accounts_company_bank_account",
         ),
         CheckConstraint("currency = 'COP'", name="ck_bank_accounts_currency_cop"),
     )
@@ -142,7 +144,7 @@ class BankAccount(Base):
         return self.accounting_account.name
 
 
-class BankTransaction(Base):
+class BankTransaction(CompanyScopedMixin, Base):
     """Movimiento bancario inmutable.
 
     - ``DEPOSIT``: entra dinero a la cuenta. Débito al banco, crédito a la

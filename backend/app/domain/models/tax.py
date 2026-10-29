@@ -10,13 +10,14 @@ from typing import TYPE_CHECKING
 from sqlalchemy import CheckConstraint, DateTime, Integer, Numeric, String, Uuid, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.domain.models.tenancy import CompanyScopedMixin
 from app.infrastructure.database import Base
 
 if TYPE_CHECKING:
     from app.domain.models.item import Item
 
 
-class Tax(Base):
+class Tax(CompanyScopedMixin, Base):
     __tablename__ = "taxes"
 
     __table_args__ = (CheckConstraint("rate >= 0 AND rate <= 100", name="ck_taxes_rate_range"),)
