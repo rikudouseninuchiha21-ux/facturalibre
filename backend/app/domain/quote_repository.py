@@ -26,7 +26,7 @@ QUOTE_SEQUENCE_PREFIX = "QT"
 class NewQuoteLine:
     """Línea ya calculada y lista para persistir."""
 
-    item_id: UUID
+    item_id: UUID | None
     description: str
     quantity: Decimal
     unit_price: Decimal

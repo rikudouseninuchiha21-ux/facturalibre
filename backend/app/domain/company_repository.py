@@ -80,6 +80,10 @@ class CompanyRepository:
         self.db.flush()
         self.db.add(CompanySetting(company_id=company.id, name=company.name))
         self.db.flush()
+
+        from app.domain.crm_defaults import seed_default_stages
+
+        seed_default_stages(self.db, company.id)
         return company
 
     def add_membership(

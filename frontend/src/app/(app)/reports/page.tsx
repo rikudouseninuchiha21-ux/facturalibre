@@ -9,9 +9,9 @@ export const metadata: Metadata = { title: "Reportes" };
 const REPORTS = [
   {
     href: "/reports/niif",
-    title: "Estados financieros NIIF",
+    title: "Cockpit financiero NIIF",
     description:
-      "Estado de Resultados por función, Balance General corriente/no corriente y Flujo de Efectivo por método indirecto.",
+      "Estado de Resultados, Balance General y Flujo de Efectivo con comparativos, drill-down por cuenta, gráficos ejecutivos y exportación.",
     icon: FileSpreadsheet,
   },
   {

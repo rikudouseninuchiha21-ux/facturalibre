@@ -102,6 +102,30 @@ class NiifReportsService:
     def _names(self) -> dict[str, str]:
         return dict(self.db.execute(select(AccountingAccount.code, AccountingAccount.name)).all())
 
+    @staticmethod
+    def _account_rows(
+        balances: dict[str, Decimal],
+        names: dict[str, str],
+        *prefixes: str,
+        credit_side: bool,
+    ) -> list[dict[str, object]]:
+        """Convierte saldos débito/crédito en filas presentables por cuenta."""
+        rows: list[dict[str, object]] = []
+        for code in sorted(balances):
+            if not code.startswith(prefixes):
+                continue
+            value = _credit(balances[code]) if credit_side else _round(balances[code])
+            if value == ZERO:
+                continue
+            rows.append(
+                {
+                    "code": code,
+                    "name": names.get(code, code),
+                    "balance": value,
+                }
+            )
+        return rows
+
     # -- 39C.1.1 Estado de Resultados --------------------------------------
 
     def income_statement_niif(
@@ -148,6 +172,9 @@ class NiifReportsService:
             operating_result + other_income - other_expenses + financial_income - financial_expenses
         )
         net_income = pretax_income - income_tax
+        total_expenses = _round(
+            cost_of_sales + admin_expenses + other_expenses + financial_expenses + income_tax
+        )
 
         return {
             "from_date": from_date,
@@ -215,6 +242,7 @@ class NiifReportsService:
             "revenue": revenue,
             "cost_of_sales": cost_of_sales,
             "gross_profit": gross_profit,
+            "total_expenses": total_expenses,
             "pretax_income": pretax_income,
             "income_tax": income_tax,
             "net_income": net_income,
@@ -259,6 +287,7 @@ class NiifReportsService:
                 f"(descuadre {difference})"
             )
 
+        names = self._names()
         return {
             "as_of_date": as_of_date,
             "current_assets": current_assets,
@@ -271,6 +300,21 @@ class NiifReportsService:
             "period_result": net_income,
             "total_equity": total_equity,
             "difference": difference,
+            "asset_accounts": self._account_rows(balances, names, "1", credit_side=False),
+            "liability_accounts": self._account_rows(balances, names, "2", credit_side=True),
+            "equity_accounts": self._account_rows(balances, names, "3", credit_side=True),
+            "asset_composition": {
+                "cash": debit("11"),
+                "receivables": debit("13"),
+                "inventory": debit("14"),
+                "other_current": debit("17"),
+                "non_current": non_current_assets,
+            },
+            "liability_equity_composition": {
+                "current_liabilities": current_liabilities,
+                "non_current_liabilities": non_current_liabilities,
+                "equity": total_equity,
+            },
         }
 
     # -- 39C.1.3 Flujo de Efectivo (método indirecto) --------------------------

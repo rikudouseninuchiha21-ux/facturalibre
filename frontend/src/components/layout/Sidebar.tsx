@@ -12,6 +12,7 @@ import {
   CircleDollarSign,
   FilePlus,
   FileText,
+  Filter,
   GraduationCap,
   Landmark,
   LayoutDashboard,
@@ -46,6 +47,7 @@ const NAVIGATION = [
     label: "Operaciones",
     items: [
       { href: "/pos", label: "Punto de Venta", icon: ShoppingCart, roles: ["ADMIN", "CASHIER"] },
+      { href: "/crm", label: "CRM", icon: Filter, roles: ["ADMIN", "ACCOUNTANT", "CASHIER"] },
       { href: "/invoices", label: "Ventas", icon: FileText, roles: ["ADMIN", "ACCOUNTANT"] },
       { href: "/quotes", label: "Cotizaciones", icon: FilePlus, roles: ["ADMIN", "ACCOUNTANT"] },
       { href: "/purchases", label: "Compras", icon: Package, roles: ["ADMIN", "ACCOUNTANT"] },

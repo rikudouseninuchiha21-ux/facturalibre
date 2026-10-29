@@ -79,6 +79,68 @@ export interface CompanyUserAssignInput {
   role: string;
 }
 
+export interface CrmStage {
+  id: string;
+  name: string;
+  order: number;
+  color: string;
+  is_won: boolean;
+  is_lost: boolean;
+}
+
+export interface CrmOpportunity {
+  id: string;
+  contact_id: string;
+  contact_name: string;
+  stage_id: string;
+  stage_name: string;
+  owner_id: string;
+  owner_name: string;
+  title: string;
+  amount: string;
+  expected_close_date: string | null;
+  notes: string | null;
+  quote_id: string | null;
+  invoice_id: string | null;
+  is_won: boolean;
+  is_lost: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CrmActivityType = "CALL" | "EMAIL" | "MEETING" | "NOTE";
+
+export interface CrmActivity {
+  id: string;
+  opportunity_id: string;
+  type: CrmActivityType;
+  description: string;
+  activity_date: string;
+  created_by: string;
+  created_by_name: string;
+  created_at: string;
+}
+
+export interface CrmOpportunityDetail extends CrmOpportunity {
+  activities: CrmActivity[];
+}
+
+export interface CrmOpportunityCreateInput {
+  contact_id: string;
+  stage_id: string;
+  owner_id?: string;
+  title: string;
+  amount: string;
+  expected_close_date?: string;
+  notes?: string;
+}
+
+export interface CrmActivityCreateInput {
+  type: CrmActivityType;
+  description: string;
+  activity_date?: string;
+}
+
 export interface LoginInput {
   email: string;
   password: string;
@@ -1315,6 +1377,64 @@ export function assignCompanyUser(
   );
 }
 
+export function getCrmStages(cookieHeader?: string): Promise<CrmStage[]> {
+  return apiGet<CrmStage[]>("/crm/stages", cookieHeader);
+}
+
+export function getCrmOpportunities(
+  cookieHeader?: string,
+): Promise<CrmOpportunity[]> {
+  return apiGet<CrmOpportunity[]>("/crm/opportunities", cookieHeader);
+}
+
+export function getCrmOpportunity(
+  id: string,
+  cookieHeader?: string,
+): Promise<CrmOpportunityDetail> {
+  return apiGet<CrmOpportunityDetail>(
+    `/crm/opportunities/${encodeURIComponent(id)}`,
+    cookieHeader,
+  );
+}
+
+export function createCrmOpportunity(
+  payload: CrmOpportunityCreateInput,
+): Promise<CrmOpportunity> {
+  return apiPost<CrmOpportunity>("/crm/opportunities", payload);
+}
+
+export function moveCrmOpportunity(
+  id: string,
+  stageId: string,
+): Promise<CrmOpportunity> {
+  return apiPatch<CrmOpportunity>(
+    `/crm/opportunities/${encodeURIComponent(id)}/move`,
+    { stage_id: stageId },
+  );
+}
+
+export function deleteCrmOpportunity(id: string): Promise<void> {
+  return apiDelete<void>(`/crm/opportunities/${encodeURIComponent(id)}`);
+}
+
+export function addCrmActivity(
+  opportunityId: string,
+  payload: CrmActivityCreateInput,
+): Promise<CrmActivity> {
+  return apiPost<CrmActivity>(
+    `/crm/opportunities/${encodeURIComponent(opportunityId)}/activities`,
+    payload,
+  );
+}
+
+export function convertCrmOpportunityToQuote(
+  opportunityId: string,
+): Promise<CrmOpportunity> {
+  return apiPost<CrmOpportunity>(
+    `/crm/opportunities/${encodeURIComponent(opportunityId)}/convert-to-quote`,
+  );
+}
+
 export function getPurchases(cookieHeader?: string): Promise<Purchase[]> {
   return apiGet<Purchase[]>("/purchases", cookieHeader);
 }
@@ -1500,12 +1620,29 @@ export interface AccountReportRow {
   balance: string;
 }
 
+export interface IncomeStatementPreviousPeriod {
+  start_date: string;
+  end_date: string;
+  total_income: string;
+  total_expenses: string;
+  net_income: string;
+}
+
 export interface IncomeStatementResponse {
   income_accounts: AccountReportRow[];
   expense_accounts: AccountReportRow[];
   total_income: string;
   total_expenses: string;
   net_income: string;
+  previous_period?: IncomeStatementPreviousPeriod | null;
+}
+
+export interface BalanceSheetPreviousPeriod {
+  as_of_date: string;
+  total_assets: string;
+  total_liabilities: string;
+  total_equity: string;
+  balanced: boolean;
 }
 
 export interface BalanceSheetResponse {
@@ -1516,6 +1653,7 @@ export interface BalanceSheetResponse {
   total_liabilities: string;
   total_equity: string;
   balanced: boolean;
+  previous_period?: BalanceSheetPreviousPeriod | null;
 }
 
 export interface AgingBucketSummary {
@@ -2584,9 +2722,20 @@ export interface NiifIncomeStatement {
   revenue: string;
   cost_of_sales: string;
   gross_profit: string;
+  total_expenses: string;
   pretax_income: string;
   income_tax: string;
   net_income: string;
+}
+
+export interface ReportAccountRow {
+  code: string;
+  name: string;
+  balance: string;
+}
+
+export interface ReportComposition {
+  [key: string]: string;
 }
 
 export interface NiifBalanceSheet {
@@ -2601,6 +2750,35 @@ export interface NiifBalanceSheet {
   period_result: string;
   total_equity: string;
   difference: string;
+  asset_accounts: ReportAccountRow[];
+  liability_accounts: ReportAccountRow[];
+  equity_accounts: ReportAccountRow[];
+  asset_composition: ReportComposition;
+  liability_equity_composition: ReportComposition;
+}
+
+export interface DrillDownMovement {
+  id: string;
+  entry_id: string;
+  entry_number: string;
+  entry_date: string;
+  description: string;
+  debit: string;
+  credit: string;
+  balance: string;
+}
+
+export interface DrillDownReport {
+  account_code: string;
+  account_name: string;
+  nature: string;
+  from_date: string | null;
+  to_date: string | null;
+  opening_balance: string;
+  total_debits: string;
+  total_credits: string;
+  closing_balance: string;
+  movements: DrillDownMovement[];
 }
 
 export interface NiifCashFlow {
@@ -2647,4 +2825,35 @@ export function getNiifCashFlow(
 ): Promise<NiifCashFlow> {
   const params = new URLSearchParams({ from_date: fromDate, to_date: toDate });
   return apiGet<NiifCashFlow>(`/reports/niif/cash-flow?${params}`, cookieHeader);
+}
+
+export function getDrillDownReport(
+  accountCode: string,
+  fromDate: string,
+  toDate: string,
+  cookieHeader?: string,
+): Promise<DrillDownReport> {
+  const params = new URLSearchParams({
+    account_code: accountCode,
+    from_date: fromDate,
+    to_date: toDate,
+  });
+  return apiGet<DrillDownReport>(`/reports/drill-down?${params}`, cookieHeader);
+}
+
+export function getFinancialReportExportUrl(
+  report: "income-statement" | "balance-sheet",
+  params: { fromDate?: string; toDate?: string; asOfDate?: string },
+): string {
+  const search = new URLSearchParams({ report });
+  if (params.fromDate) {
+    search.set("from_date", params.fromDate);
+  }
+  if (params.toDate) {
+    search.set("to_date", params.toDate);
+  }
+  if (params.asOfDate) {
+    search.set("as_of_date", params.asOfDate);
+  }
+  return `/api/v1/reports/export/csv?${search.toString()}`;
 }

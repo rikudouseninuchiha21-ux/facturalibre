@@ -10,6 +10,8 @@ interface ModalProps {
   children: ReactNode;
   /** Ancho máximo del panel (clases max-w-* de Tailwind). */
   maxWidthClassName?: string;
+  /** Acción opcional junto al botón de cerrar de la cabecera. */
+  headerAction?: ReactNode;
 }
 
 /**
@@ -23,6 +25,7 @@ export function Modal({
   onClose,
   children,
   maxWidthClassName = "max-w-xl",
+  headerAction,
 }: ModalProps) {
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-zinc-950/50 p-4">
@@ -39,14 +42,17 @@ export function Modal({
               <p className="mt-1 text-sm text-zinc-500">{description}</p>
             ) : null}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Cerrar"
-            className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
-          >
-            <X className="size-5" aria-hidden="true" />
-          </button>
+          <div className="flex items-center gap-2">
+            {headerAction}
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Cerrar"
+              className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-100 hover:text-zinc-900"
+            >
+              <X className="size-5" aria-hidden="true" />
+            </button>
+          </div>
         </div>
         <div className="px-6 py-5">{children}</div>
       </div>

@@ -91,6 +91,7 @@ def test_income_statement_niif(niif_books: Session) -> None:
     assert statement["revenue"] == D("1000000.00")
     assert statement["cost_of_sales"] == D("400000.00")
     assert statement["gross_profit"] == D("600000.00")
+    assert statement["total_expenses"] == D("500000.00")
     # Ganancia neta = 1.000.000 - 400.000 - 100.000 (gastos administración).
     assert statement["net_income"] == D("500000.00")
     # Las secciones NIIF están completas y en orden.
@@ -111,6 +112,8 @@ def test_balance_sheet_niif_equation(niif_books: Session) -> None:
     assert balance["total_equity"] == D("2500000.00")
     assert balance["difference"] == D("0.00")
     assert balance["total_assets"] == balance["total_liabilities"] + balance["total_equity"]
+    assert balance["asset_composition"]["cash"] == D("2500000.00")
+    assert any(account["code"] == "110505" for account in balance["asset_accounts"])
 
 
 def test_cash_flow_niif_matches_bank(niif_books: Session) -> None:

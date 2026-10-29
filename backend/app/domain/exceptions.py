@@ -65,6 +65,18 @@ class BudgetValidationError(BudgetError):
     """Datos de presupuesto inconsistentes con el catálogo o el periodo."""
 
 
+class CrmError(Exception):
+    """Operación inválida sobre oportunidades o actividades del CRM."""
+
+
+class CrmStateError(CrmError):
+    """La oportunidad no permite la operación en su estado actual."""
+
+
+class CrmValidationError(CrmError):
+    """Datos del CRM inconsistentes con contactos, etapas o usuarios."""
+
+
 class ReceivablesError(Exception):
     """Operación inválida sobre cartera, recordatorios o acuerdos."""
 

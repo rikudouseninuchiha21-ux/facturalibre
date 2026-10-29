@@ -19,6 +19,16 @@ class AccountReportRow(BaseModel):
     balance: str  # Decimal serializado como string
 
 
+class IncomeStatementPreviousPeriod(BaseModel):
+    """Totales del periodo comparable inmediatamente anterior."""
+
+    start_date: date
+    end_date: date
+    total_income: str
+    total_expenses: str
+    net_income: str
+
+
 class IncomeStatementResponse(BaseModel):
     """Estado de Resultados: ingresos, gastos y utilidad neta."""
 
@@ -27,6 +37,17 @@ class IncomeStatementResponse(BaseModel):
     total_income: str
     total_expenses: str
     net_income: str
+    previous_period: IncomeStatementPreviousPeriod | None = None
+
+
+class BalanceSheetPreviousPeriod(BaseModel):
+    """Totales del cierre comparable inmediatamente anterior."""
+
+    as_of_date: date
+    total_assets: str
+    total_liabilities: str
+    total_equity: str
+    balanced: bool
 
 
 class BalanceSheetResponse(BaseModel):
@@ -39,6 +60,35 @@ class BalanceSheetResponse(BaseModel):
     total_liabilities: str
     total_equity: str
     balanced: bool
+    previous_period: BalanceSheetPreviousPeriod | None = None
+
+
+class DrillDownMovement(BaseModel):
+    """Movimiento individual del auxiliar de una cuenta."""
+
+    id: UUID
+    entry_id: UUID
+    entry_number: str
+    entry_date: date
+    description: str
+    debit: Decimal
+    credit: Decimal
+    balance: Decimal
+
+
+class DrillDownResponse(BaseModel):
+    """Auxiliar de una cuenta con saldo de apertura y acumulado."""
+
+    account_code: str
+    account_name: str
+    nature: str
+    from_date: date | None
+    to_date: date | None
+    opening_balance: Decimal
+    total_debits: Decimal
+    total_credits: Decimal
+    closing_balance: Decimal
+    movements: list[DrillDownMovement]
 
 
 class LedgerMovementRead(BaseModel):

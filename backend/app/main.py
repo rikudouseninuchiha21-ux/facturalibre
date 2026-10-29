@@ -15,6 +15,7 @@ from app.api.v1 import (
     consent,
     contacts,
     cost_centers,
+    crm,
     dashboard,
     employees,
     expenses,
@@ -108,6 +109,7 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api/v1")
 app.include_router(companies.router, prefix="/api/v1")
+app.include_router(crm.router, prefix="/api/v1")
 app.include_router(consent.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(contacts.router, prefix="/api/v1")

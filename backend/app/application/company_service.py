@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.application.company_schemas import CompanyCreate
 from app.domain.company_repository import CompanyMembership, CompanyRepository
+from app.domain.crm_defaults import seed_default_stages
 from app.domain.exceptions import ResourceNotFoundError
 from app.domain.models.auth import User, UserRole
 from app.domain.models.company import Company, UserCompany
@@ -40,6 +41,7 @@ class CompanyService:
             )
             self.db.add(company)
             self.db.flush()
+            seed_default_stages(self.db, company.id)
 
             self.repository.add_membership(creator_id, company.id, UserRole.ADMIN)
             self.db.add(

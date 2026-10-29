@@ -26,12 +26,16 @@ from app.application.report_schemas import (
     AgingBucketSummary,
     AgingClientRow,
     AgingReportResponse,
+    BalanceSheetPreviousPeriod,
     BalanceSheetResponse,
     CashFlowExpenseSources,
     CashFlowIncomeSources,
     CashFlowMonth,
     CashFlowProjection,
     CashFlowReportResponse,
+    DrillDownMovement,
+    DrillDownResponse,
+    IncomeStatementPreviousPeriod,
     IncomeStatementResponse,
     LedgerMovementRead,
     LedgerReportResponse,
@@ -381,20 +385,12 @@ def get_cash_flow_report(
     )
 
 
-@router.get("/income-statement", response_model=IncomeStatementResponse)
-def get_income_statement(
-    repository: AccountingRepositoryDep,
-    start_date: Annotated[str | None, Query()] = None,
-    end_date: Annotated[str | None, Query()] = None,
+def _compute_income_statement(
+    repository: AccountingRepository,
+    start: date | None,
+    end: date | None,
 ) -> IncomeStatementResponse:
-    """Estado de Resultados: ingresos, costos, gastos y utilidad neta en un rango."""
-    start = _parse_date(start_date)
-    end = _parse_date(end_date)
-
-    # Para el estado de resultados usamos el rango de fechas del asiento.
-    # Calculamos saldos de cuentas INGRESO, GASTO y COSTO entre start_date y
-    # end_date. Sin el costo de ventas (PUC 61) la utilidad neta queda inflada
-    # y el Balance General deja de cuadrar por ese monto.
+    """Calcula el Estado de Resultados para un rango de fechas."""
     line_subquery = (
         select(
             AccountingEntryLine.account_code,
@@ -477,14 +473,54 @@ def get_income_statement(
     )
 
 
-@router.get("/balance-sheet", response_model=BalanceSheetResponse)
-def get_balance_sheet(
+@router.get("/income-statement", response_model=IncomeStatementResponse)
+def get_income_statement(
     repository: AccountingRepositoryDep,
-    as_of_date: Annotated[str | None, Query()] = None,
-) -> BalanceSheetResponse:
-    """Balance General: activos, pasivos, patrimonio a una fecha de corte."""
-    cutoff = _parse_date(as_of_date)
+    start_date: Annotated[str | None, Query()] = None,
+    end_date: Annotated[str | None, Query()] = None,
+    compare_with_previous: Annotated[bool, Query()] = False,
+) -> IncomeStatementResponse:
+    """Estado de Resultados: ingresos, costos, gastos y utilidad neta en un rango."""
+    start = _parse_date(start_date)
+    end = _parse_date(end_date)
 
+    if compare_with_previous:
+        # El comparativo necesita un rango explícito. Si el cliente no lo
+        # envía, usamos el año en curso hasta hoy.
+        if end is None:
+            end = date.today()
+        if start is None:
+            start = date(end.year, 1, 1)
+    if start is not None and end is not None and start > end:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="La fecha inicial no puede ser posterior a la fecha final",
+        )
+
+    statement = _compute_income_statement(repository, start, end)
+
+    if compare_with_previous:
+        assert start is not None and end is not None
+        period_days = (end - start).days + 1
+        previous_end = start - timedelta(days=1)
+        previous_start = previous_end - timedelta(days=period_days - 1)
+        previous = _compute_income_statement(repository, previous_start, previous_end)
+        statement.previous_period = IncomeStatementPreviousPeriod(
+            start_date=previous_start,
+            end_date=previous_end,
+            total_income=previous.total_income,
+            total_expenses=previous.total_expenses,
+            net_income=previous.net_income,
+        )
+
+    return statement
+
+
+def _compute_balance_sheet(
+    repository: AccountingRepository,
+    cutoff: date | None,
+) -> BalanceSheetResponse:
+    """Calcula el Balance General a una fecha de corte."""
     balances = repository.get_account_balances(as_of_date=cutoff)
 
     asset_accounts: list[AccountReportRow] = []
@@ -567,11 +603,7 @@ def get_balance_sheet(
 
     # El resultado del ejercicio (Ingresos - Gastos) se incorpora al patrimonio
     # para que el balance cuadre: Activo = Pasivo + Patrimonio + Resultado
-    income_stmt = get_income_statement(
-        repository,
-        start_date=None,
-        end_date=cutoff.isoformat() if cutoff else None,
-    )
+    income_stmt = _compute_income_statement(repository, None, cutoff)
     net_income = Decimal(income_stmt.net_income)
     total_equity += net_income
 
@@ -586,6 +618,45 @@ def get_balance_sheet(
         total_equity=_format_money(total_equity),
         balanced=balanced,
     )
+
+
+@router.get("/balance-sheet", response_model=BalanceSheetResponse)
+def get_balance_sheet(
+    repository: AccountingRepositoryDep,
+    as_of_date: Annotated[str | None, Query()] = None,
+    compare_with_previous: Annotated[bool, Query()] = False,
+    from_date: Annotated[str | None, Query()] = None,
+) -> BalanceSheetResponse:
+    """Balance General: activos, pasivos, patrimonio a una fecha de corte."""
+    cutoff = _parse_date(as_of_date)
+    period_start = _parse_date(from_date)
+
+    if compare_with_previous and cutoff is None:
+        cutoff = date.today()
+    if cutoff is not None and period_start is not None and period_start > cutoff:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="La fecha inicial no puede ser posterior a la fecha de corte",
+        )
+
+    sheet = _compute_balance_sheet(repository, cutoff)
+
+    if compare_with_previous:
+        assert cutoff is not None
+        if period_start is not None:
+            previous_as_of = period_start - timedelta(days=1)
+        else:
+            previous_as_of = cutoff - timedelta(days=365)
+        previous = _compute_balance_sheet(repository, previous_as_of)
+        sheet.previous_period = BalanceSheetPreviousPeriod(
+            as_of_date=previous_as_of,
+            total_assets=previous.total_assets,
+            total_liabilities=previous.total_liabilities,
+            total_equity=previous.total_equity,
+            balanced=previous.balanced,
+        )
+
+    return sheet
 
 
 @router.get("/ledger/accounts", response_model=list[AccountingAccountRead])
@@ -701,6 +772,210 @@ def get_ledger(
         total_credits=total_credits,
         closing_balance=running_balance,
         movements=movements,
+    )
+
+
+@router.get("/drill-down", response_model=DrillDownResponse)
+def get_drill_down(
+    repository: AccountingRepositoryDep,
+    account_code: Annotated[str, Query(min_length=1, max_length=20)],
+    from_date: Annotated[str | None, Query()] = None,
+    to_date: Annotated[str | None, Query()] = None,
+) -> DrillDownResponse:
+    """Auxiliar de una cuenta: movimientos y saldo acumulado del periodo."""
+    start = _parse_date(from_date)
+    end = _parse_date(to_date)
+    if start is not None and end is not None and start > end:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="La fecha inicial no puede ser posterior a la fecha final",
+        )
+
+    account = repository.get_account_by_code(account_code)
+    if account is None:
+        raise ResourceNotFoundError("Cuenta contable no encontrada")
+
+    if start is None:
+        opening_debit = ZERO_MONEY
+        opening_credit = ZERO_MONEY
+    else:
+        opening_debit, opening_credit = repository.get_account_totals_before(
+            account_code=account_code,
+            before_date=start,
+        )
+    opening_balance = _natural_balance(
+        debit=opening_debit,
+        credit=opening_credit,
+        nature=account.nature.value,
+    )
+
+    rows = repository.list_account_movements(
+        account_code=account_code,
+        start_date=start,
+        end_date=end,
+    )
+    running_balance = opening_balance
+    total_debits = ZERO_MONEY
+    total_credits = ZERO_MONEY
+    movements: list[DrillDownMovement] = []
+    for row in rows:
+        total_debits = round_money(total_debits + row.debit)
+        total_credits = round_money(total_credits + row.credit)
+        running_balance = round_money(
+            running_balance
+            + _natural_balance(
+                debit=row.debit,
+                credit=row.credit,
+                nature=account.nature.value,
+            )
+        )
+        movements.append(
+            DrillDownMovement(
+                id=row.id,
+                entry_id=row.entry_id,
+                entry_number=f"AS-{row.entry_id.hex[:8].upper()}",
+                entry_date=row.entry_date,
+                description=row.description,
+                debit=row.debit,
+                credit=row.credit,
+                balance=running_balance,
+            )
+        )
+
+    return DrillDownResponse(
+        account_code=account.code,
+        account_name=account.name,
+        nature=account.nature.value,
+        from_date=start,
+        to_date=end,
+        opening_balance=opening_balance,
+        total_debits=total_debits,
+        total_credits=total_credits,
+        closing_balance=running_balance,
+        movements=movements,
+    )
+
+
+@router.get("/export/csv")
+def export_financial_report_csv(
+    repository: AccountingRepositoryDep,
+    report: Annotated[str, Query()],
+    from_date: Annotated[str | None, Query()] = None,
+    to_date: Annotated[str | None, Query()] = None,
+    as_of_date: Annotated[str | None, Query()] = None,
+) -> StreamingResponse:
+    """Exporta el Estado de Resultados o el Balance General a CSV."""
+    fieldnames = ["Tipo", "Código", "Cuenta", "Saldo"]
+
+    if report == "income-statement":
+        statement = _compute_income_statement(
+            repository,
+            _parse_date(from_date),
+            _parse_date(to_date),
+        )
+        rows: list[dict[str, str]] = [
+            {
+                "Tipo": "Ingreso",
+                "Código": account.code,
+                "Cuenta": account.name,
+                "Saldo": account.balance,
+            }
+            for account in statement.income_accounts
+        ]
+        rows.extend(
+            {
+                "Tipo": "Gasto/Costo",
+                "Código": account.code,
+                "Cuenta": account.name,
+                "Saldo": account.balance,
+            }
+            for account in statement.expense_accounts
+        )
+        rows.extend(
+            [
+                {
+                    "Tipo": "TOTAL INGRESOS",
+                    "Código": "",
+                    "Cuenta": "",
+                    "Saldo": statement.total_income,
+                },
+                {
+                    "Tipo": "TOTAL GASTOS Y COSTOS",
+                    "Código": "",
+                    "Cuenta": "",
+                    "Saldo": statement.total_expenses,
+                },
+                {
+                    "Tipo": "UTILIDAD NETA",
+                    "Código": "",
+                    "Cuenta": "",
+                    "Saldo": statement.net_income,
+                },
+            ]
+        )
+        filename = "estado-resultados.csv"
+    elif report == "balance-sheet":
+        sheet = _compute_balance_sheet(repository, _parse_date(as_of_date))
+        rows = [
+            {
+                "Tipo": "Activo",
+                "Código": account.code,
+                "Cuenta": account.name,
+                "Saldo": account.balance,
+            }
+            for account in sheet.asset_accounts
+        ]
+        rows.extend(
+            {
+                "Tipo": "Pasivo",
+                "Código": account.code,
+                "Cuenta": account.name,
+                "Saldo": account.balance,
+            }
+            for account in sheet.liability_accounts
+        )
+        rows.extend(
+            {
+                "Tipo": "Patrimonio",
+                "Código": account.code,
+                "Cuenta": account.name,
+                "Saldo": account.balance,
+            }
+            for account in sheet.equity_accounts
+        )
+        rows.extend(
+            [
+                {
+                    "Tipo": "TOTAL ACTIVO",
+                    "Código": "",
+                    "Cuenta": "",
+                    "Saldo": sheet.total_assets,
+                },
+                {
+                    "Tipo": "TOTAL PASIVO",
+                    "Código": "",
+                    "Cuenta": "",
+                    "Saldo": sheet.total_liabilities,
+                },
+                {
+                    "Tipo": "TOTAL PATRIMONIO",
+                    "Código": "",
+                    "Cuenta": "",
+                    "Saldo": sheet.total_equity,
+                },
+            ]
+        )
+        filename = "balance-general.csv"
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="report debe ser income-statement o balance-sheet",
+        )
+
+    return StreamingResponse(
+        _csv_stream(fieldnames, rows),
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
 
 
