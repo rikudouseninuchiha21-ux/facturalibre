@@ -1081,16 +1081,31 @@ export async function downloadFile(
   const fileName =
     filenameFromDisposition(response.headers.get("Content-Disposition")) ??
     fallbackFileName;
-  const blob = await response.blob();
+  const buffer = await response.arrayBuffer();
+  const blob = new Blob([buffer], { type: contentType || "application/octet-stream" });
   const url = URL.createObjectURL(blob);
 
   const link = document.createElement("a");
   link.href = url;
   link.download = fileName;
+  link.rel = "noopener";
+  link.style.display = "none";
   document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  try {
+    link.click();
+  } catch {
+    // Fallback para navegadores/webviews que bloquean clicks programáticos
+    // sobre blob URLs: deja que el navegador gestione la descarga nativa.
+    if (typeof window !== "undefined") {
+      window.location.assign(path);
+    }
+    return;
+  }
+  // Mantener el ancla en el DOM mientras el navegador procesa la descarga.
+  // Retirarla de inmediato puede cancelarla en Firefox/Safari.
+  window.setTimeout(() => link.remove(), 5000);
+  // Revocar el blob demasiado pronto también puede cancelar la descarga.
+  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 export function createWarehouse(
