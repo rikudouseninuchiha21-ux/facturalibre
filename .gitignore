@@ -29,3 +29,8 @@ build/
 # Sistema
 .DS_Store
 .playwright-mcp/
+
+# Artefactos de pruebas y archivos generados
+/test_*
+*.xlsx
+*.pdf

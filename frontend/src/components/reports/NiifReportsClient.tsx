@@ -24,6 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DownloadLinkModal } from "@/components/ui/download-link-modal";
 import { Modal } from "@/components/ui/modal";
 import {
   Table,
@@ -34,7 +35,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  downloadFileNative,
   getDrillDownReport,
   getFinancialReportExportUrl,
   getNiifBalanceSheet,
@@ -214,6 +214,11 @@ export function NiifReportsClient() {
   const [drillData, setDrillData] = useState<DrillDownReport | null>(null);
   const [drillLoading, setDrillLoading] = useState(false);
   const [drillError, setDrillError] = useState<string | null>(null);
+
+  const [downloadPrompt, setDownloadPrompt] = useState<{
+    url: string;
+    fileName: string;
+  } | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -530,19 +535,12 @@ export function NiifReportsClient() {
     setDrillError(null);
   }
 
-  async function handleExport(): Promise<void> {
-    try {
-      await downloadFileNative(
-        exportHref,
+  function handleExport(): void {
+    setDownloadPrompt({
+      url: exportHref,
+      fileName:
         tab === "balance" ? "balance-general.xlsx" : "estado-resultados.xlsx",
-      );
-    } catch (cause) {
-      window.alert(
-        cause instanceof Error
-          ? cause.message
-          : "No se pudo descargar el archivo. Inténtalo de nuevo.",
-      );
-    }
+    });
   }
 
   return (
@@ -583,12 +581,7 @@ export function NiifReportsClient() {
             ) : null}
           </div>
           {tab !== "cash" ? (
-            <Button
-              onClick={() => {
-                void handleExport();
-              }}
-              className="self-start lg:self-auto"
-            >
+            <Button onClick={handleExport} className="self-start lg:self-auto">
               <Download className="mr-2 size-4" aria-hidden="true" />
               Exportar a Excel
             </Button>
@@ -894,6 +887,16 @@ export function NiifReportsClient() {
             </div>
           ) : null}
         </Modal>
+      ) : null}
+
+      {downloadPrompt ? (
+        <DownloadLinkModal
+          title="Descargar reporte"
+          description="La descarga automática fue bloqueada por el navegador."
+          url={downloadPrompt.url}
+          fileName={downloadPrompt.fileName}
+          onClose={() => setDownloadPrompt(null)}
+        />
       ) : null}
     </div>
   );

@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { DownloadLinkModal } from "@/components/ui/download-link-modal";
 import {
   Table,
   TableBody,
@@ -30,8 +31,6 @@ import {
   CreditNote,
   Invoice,
   Payment,
-  downloadInvoicePdf,
-  downloadInvoiceXml,
   regenerateInvoiceCufe,
 } from "@/lib/api";
 import {
@@ -79,7 +78,12 @@ export function InvoiceDetail({
   );
   const [dianError, setDianError] = useState<string | null>(null);
   const [dianSuccess, setDianSuccess] = useState<string | null>(null);
+  const [downloadPrompt, setDownloadPrompt] = useState<{
+    url: string;
+    fileName: string;
+  } | null>(null);
 
+  const invoiceFileBase = invoice.number ? `FV-${invoice.number}` : "factura";
   const isIssued = invoice.lifecycle_status === "issued";
   const canRegisterPayment =
     invoice.lifecycle_status === "issued" && Number(invoice.balance) > 0;
@@ -385,48 +389,28 @@ export function InvoiceDetail({
             {isIssued ? (
               <div className="flex flex-wrap gap-2">
                 <Button
-                  onClick={async () => {
+                  onClick={() => {
                     setDianError(null);
                     setDianSuccess(null);
-                    setDianBusy("xml");
-                    try {
-                      await downloadInvoiceXml(invoice.id);
-                      setDianSuccess("XML DIAN descargado.");
-                    } catch (cause) {
-                      setDianError(
-                        cause instanceof ApiError
-                          ? cause.message
-                          : "No se pudo descargar el XML.",
-                      );
-                    } finally {
-                      setDianBusy(null);
-                    }
+                    setDownloadPrompt({
+                      url: `/api/v1/invoices/${encodeURIComponent(invoice.id)}/xml`,
+                      fileName: `${invoiceFileBase}.xml`,
+                    });
                   }}
-                  disabled={dianBusy !== null}
                   className="border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
                 >
                   <FileCode className="mr-2 size-4" aria-hidden="true" />
                   Descargar XML
                 </Button>
                 <Button
-                  onClick={async () => {
+                  onClick={() => {
                     setDianError(null);
                     setDianSuccess(null);
-                    setDianBusy("pdf");
-                    try {
-                      await downloadInvoicePdf(invoice.id);
-                      setDianSuccess("PDF DIAN descargado.");
-                    } catch (cause) {
-                      setDianError(
-                        cause instanceof ApiError
-                          ? cause.message
-                          : "No se pudo descargar el PDF.",
-                      );
-                    } finally {
-                      setDianBusy(null);
-                    }
+                    setDownloadPrompt({
+                      url: `/api/v1/invoices/${encodeURIComponent(invoice.id)}/pdf`,
+                      fileName: `${invoiceFileBase}.pdf`,
+                    });
                   }}
-                  disabled={dianBusy !== null}
                   className="border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-50"
                 >
                   <FileText className="mr-2 size-4" aria-hidden="true" />
@@ -515,6 +499,16 @@ export function InvoiceDetail({
           <CreditNoteForm
             invoice={invoice}
             onClose={() => setIsCreditNoteOpen(false)}
+          />
+        ) : null}
+
+        {downloadPrompt ? (
+          <DownloadLinkModal
+            title="Descargar documento DIAN"
+            description="La descarga automática fue bloqueada por el navegador."
+            url={downloadPrompt.url}
+            fileName={downloadPrompt.fileName}
+            onClose={() => setDownloadPrompt(null)}
           />
         ) : null}
       </div>
